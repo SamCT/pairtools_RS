@@ -1,0 +1,43 @@
+[project]
+name = "pairtools-rs-hpc"
+channels = ["conda-forge", "bioconda"]
+platforms = ["linux-64"]
+
+[dependencies]
+rust = "*"
+c-compiler = "*"
+cxx-compiler = "*"
+clang = "*"
+pkg-config = "*"
+cmake = "*"
+make = "*"
+git = "*"
+bash = "*"
+python = "3.10.*"
+bwa = "*"
+samtools = "*"
+htslib = "*"
+pairtools = "*"
+coreutils = "*"
+pbgzip = "*"
+lz4-c = "*"
+zlib = "*"
+bzip2 = "*"
+xz = "*"
+libcurl = "*"
+openssl = "*"
+libdeflate = "*"
+hyperfine = "*"
+
+[tasks]
+fmt = "cargo fmt --all"
+fmt-check = "cargo fmt --all -- --check"
+check = "cargo check --all-targets"
+clippy = "cargo clippy --all-targets -- -D warnings"
+test = "cargo test --all"
+build = "cargo build"
+release = "cargo build --release"
+release-native = { cmd = "cargo build --release", env = { RUSTFLAGS = "-C target-cpu=native" } }
+tools = "bash -lc 'rustc --version && cargo --version && samtools --version | head -n 1 && pairtools --version && bwa 2>&1 | head -n 1'"
+smoke = "bash scripts/hpc_smoke_test.sh"
+ci = "pixi run fmt-check && pixi run clippy && pixi run test"
