@@ -101,3 +101,24 @@ _*.c
 
 # Files generated as the examples
 examples/*
+
+# Pixi environment
+/.pixi/
+
+# Rust build output
+/target/
+
+# Benchmark outputs
+benchmark/
+benchmarks/
+*.bench
+*.benchmark
+
+# Generated alignment and pairs files
+*.sam
+*.bam
+*.cram
+*.pairs
+*.pairs.gz
+*.pairsam
+*.pairsam.gz
