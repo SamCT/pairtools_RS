@@ -28,7 +28,7 @@ Use the same alignments and compare line counts + timing:
 ```bash
 # Rust parse-lite
 bwa-mem2 mem -t 4 -5SP /path/to/index R1.fq.gz R2.fq.gz \
-  | cargo run --release -- --no-header > rust.pairs
+  | cargo run --release -- --no-header --walks-policy 5unique --drop-readid --nproc 4 > rust.pairs
 
 # Traditional pairtools parse
 bwa-mem2 mem -t 4 -5SP /path/to/index R1.fq.gz R2.fq.gz \
@@ -40,9 +40,9 @@ wc -l rust.pairs py.pairs
 ## Optional benchmark helper
 If you already have an input SAM/BAM, run:
 ```bash
-./scripts/parse_lite_benchmark.sh /path/to/input.sam bench_out
+./scripts/parse_lite_benchmark.sh /path/to/input.sam bench_out 4
 # or
-./scripts/parse_lite_benchmark.sh /path/to/input.bam bench_out
+./scripts/parse_lite_benchmark.sh /path/to/input.bam bench_out 4
 ```
 
 

@@ -18,7 +18,7 @@ THREADS="${6:-8}"
 # 3) Keep pairtools sort/dedup unchanged
 /usr/bin/time -f 'pairs-rs pipeline real=%E user=%U sys=%S maxrss_kb=%M' \
   bash -lc "bwa-mem2 mem -t ${THREADS} -5SP '${IDX}' '${R1}' '${R2}' \
-  | cargo run --release -- --no-header \
+  | cargo run --release -- --no-header --nproc ${THREADS} \
   > '${OUT}.pairs'"
 
 /usr/bin/time -f 'pairtools sort real=%E user=%U sys=%S maxrss_kb=%M' \
