@@ -58,10 +58,8 @@ pairtools parse \
 
 For the parse-only comparison, the script removes `#samheader:` lines before diffing to avoid irrelevant BAM header provenance differences while preserving pair rows, pair columns, and parse metadata.
 
-The rest of the full pipeline remains a future parity target because it uses currently unsupported behavior:
+The front-half target now includes pairsam parse, multithreaded sort, and BGZF-compatible `.gz` sort output. The rest of the full pipeline remains a future Rust parity target because it uses downstream commands that are not implemented in `pairs-rs` yet:
 
-- compressed sort output
-- `sort --nproc`
 - downstream `merge`, `dedup`, `select`, `split`, and `stats`
 
 The harness checks that still-unsupported parse flags fail loudly instead of being accepted as no-ops.
@@ -71,15 +69,15 @@ The harness checks that still-unsupported parse flags fail loudly instead of bei
 Build outside the benchmark timing:
 
 ```bash
-cd /mnt/c/Users/talbots/pairtools_RS
-export CARGO_TARGET_DIR="$HOME/pairtools_RS_target"
+cd /mnt/d/pairtools_RS
+export CARGO_TARGET_DIR="$HOME/pairtools_RS_target_codex"
 pixi run cargo build --release
 ```
 
 If the binary is in the external target directory, pass it explicitly:
 
 ```bash
-export PAIRS_RS_BIN="$HOME/pairtools_RS_target/release/pairs-rs"
+export PAIRS_RS_BIN="$HOME/pairtools_RS_target_codex/release/pairs-rs"
 ```
 
 ## Exact Comparison
@@ -87,9 +85,9 @@ export PAIRS_RS_BIN="$HOME/pairtools_RS_target/release/pairs-rs"
 This compares live `pairtools 1.1.3` output to `pairs-rs` output. It runs both the original parse+sort drop-sam comparison and the parse-only normalized pairsam comparison. If `out_s01.PAIRTOOLSDEF.sorted.pairs` exists, it is also compared to the live pairtools parse+sort output.
 
 ```bash
-cd /mnt/c/Users/talbots/pairtools_RS
+cd /mnt/d/pairtools_RS
 export PAIRTOOLS_RS_TESTDATA=/mnt/d/pairtools_RS_testdata/hop_s01
-export PAIRS_RS_BIN="$HOME/pairtools_RS_target/release/pairs-rs"
+export PAIRS_RS_BIN="$HOME/pairtools_RS_target_codex/release/pairs-rs"
 pixi run bash scripts/real_bam_compare.sh --compare
 ```
 

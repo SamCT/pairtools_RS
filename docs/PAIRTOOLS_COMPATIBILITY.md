@@ -10,6 +10,12 @@ pixi run pairtools <command> --help
 
 Policy: pairtools is permitted only as a test oracle. The Rust binary must not call pairtools at runtime. Every accepted option must either match pairtools 1.1.3 semantics or fail loudly with `not implemented`.
 
+## Current Binary Classification
+
+The current binary is a partial pairtools-compatible `parse`/`sort` implementation. It is not the older parse-lite prototype. Legacy parse-lite scripts remain in `scripts/` as historical artifacts and are not authoritative for current binary behavior.
+
+Runtime code uses `rust-htslib`/HTSlib for SAM/BAM/CRAM input and BGZF output. The Rust runtime does not shell out to `pairtools`, `samtools`, `bgzip`, or `gzip`; those commands are used only in tests, benchmarks, and shell pipeline scripts.
+
 ## Top-Level Options
 
 | Option | Rust status |
@@ -71,7 +77,14 @@ Arguments: optional `SAM_PATH`.
 | `--cmd-in` | explicitly not implemented |
 | `--cmd-out` | explicitly not implemented |
 
-Current parse oracle fixtures cover small SAM inputs for UU pairs, unmapped and low-MAPQ mates, reverse-strand 5'/3' coordinates, soft/hard clipping, indel reference span, interchromosomal and same-chromosome flipping, secondary alignments, supplementary alignments, pairsam SAM columns, supported extra columns, parse-time stats, and a BWA-MEM2-style leading soft-clipped split affected by `--max-inter-align-gap`.
+Current parse oracle fixtures cover small SAM inputs for UU pairs, unmapped and low-MAPQ mates, reverse-strand 5'/3' coordinates, soft/hard clipping, indel reference span, interchromosomal and same-chromosome flipping, secondary alignments, supplementary alignments, pairsam SAM columns, supported extra columns, parse-time stats, a BWA-MEM2-style leading soft-clipped split affected by `--max-inter-align-gap`, and loud rejection of non-adjacent repeated read names.
+
+Known correctness limitations:
+- Input must be query-name grouped: all SAM/BAM/CRAM records for a read name must be adjacent. Non-adjacent repeated read names fail loudly with `not implemented`.
+- `--walks-policy` support is limited to `5unique`; other walk policies fail loudly.
+- `--max-molecule-size` is not configurable yet; rescue logic currently uses the built-in pairtools default of 750 bp.
+- Compressed parse output and compressed parse stats output are not implemented.
+- Only `mapq,pos5,pos3,cigar,read_len` are accepted for `--add-columns`.
 
 ## `sort`
 

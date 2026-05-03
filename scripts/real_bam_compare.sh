@@ -112,9 +112,13 @@ if [[ -z "$pairs_rs_bin" ]]; then
     pairs_rs_bin="$repo_root/target/release/pairs-rs"
   elif [[ -x "$repo_root/target/debug/pairs-rs" ]]; then
     pairs_rs_bin="$repo_root/target/debug/pairs-rs"
+  elif [[ -x "$HOME/pairtools_RS_target_codex/release/pairs-rs" ]]; then
+    pairs_rs_bin="$HOME/pairtools_RS_target_codex/release/pairs-rs"
+  elif [[ -x "$HOME/pairtools_RS_target_codex/debug/pairs-rs" ]]; then
+    pairs_rs_bin="$HOME/pairtools_RS_target_codex/debug/pairs-rs"
   else
     echo "Missing pairs-rs binary. Build first, e.g.:" >&2
-    echo "  export CARGO_TARGET_DIR=\"\$HOME/pairtools_RS_target\"" >&2
+    echo "  export CARGO_TARGET_DIR=\"\$HOME/pairtools_RS_target_codex\"" >&2
     echo "  pixi run cargo build --release" >&2
     echo "Then set PAIRS_RS_BIN if the binary is outside target/." >&2
     exit 2

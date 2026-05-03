@@ -209,6 +209,7 @@ pub fn cmd_parse(args: ParseArgs) -> Result<(), Box<dyn std::error::Error>> {
     };
     let mut stats = StatsCounter::new();
     let mut current: Option<Template> = None;
+    let mut emitted_read_ids = HashSet::new();
 
     for (ordinal, rec) in bam.records().enumerate() {
         let record = rec?;
@@ -218,10 +219,17 @@ pub fn cmd_parse(args: ParseArgs) -> Result<(), Box<dyn std::error::Error>> {
             .is_some_and(|template| template.read_id != qname)
         {
             let template = current.take().expect("template exists");
+            emitted_read_ids.insert(template.read_id.clone());
             emit_template(out.as_mut(), template, &config, &mut stats)?;
         }
 
         if current.is_none() {
+            if emitted_read_ids.contains(&qname) {
+                return Err(format!(
+                    "not implemented: pairs-rs parse requires query-name grouped input; read {qname} appears in non-adjacent records"
+                )
+                .into());
+            }
             current = Some(Template::new(qname));
         }
 

@@ -471,6 +471,32 @@ fn parse_rejects_unsupported_pairtools_options_loudly() {
 }
 
 #[test]
+fn parse_rejects_non_adjacent_read_names_loudly() {
+    let tmp = TempDir::new().unwrap();
+    let chroms = tmp.path().join("chrom.sizes");
+    let input = tmp.path().join("non-adjacent.sam");
+    fs::write(&chroms, "chr1\t1000\n").unwrap();
+    fs::write(
+        &input,
+        "\
+@HD\tVN:1.6\tSO:unsorted
+@SQ\tSN:chr1\tLN:1000
+r1\t99\tchr1\t10\t60\t10M\t=\t50\t40\tAAAAAAAAAA\tIIIIIIIIII
+r2\t99\tchr1\t20\t60\t10M\t=\t60\t40\tCCCCCCCCCC\tIIIIIIIIII
+r1\t147\tchr1\t50\t60\t10M\t=\t10\t-40\tTTTTTTTTTT\tIIIIIIIIII
+",
+    )
+    .unwrap();
+
+    let chroms_s = chroms.to_string_lossy();
+    let input_s = input.to_string_lossy();
+    assert_pairs_rs_failure(
+        &["parse", "-c", chroms_s.as_ref(), input_s.as_ref()],
+        "not implemented: pairs-rs parse requires query-name grouped input",
+    );
+}
+
+#[test]
 fn sort_rejects_accepted_but_unimplemented_pairtools_options_loudly() {
     assert_pairs_rs_failure(
         &[
