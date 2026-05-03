@@ -86,7 +86,7 @@ Arguments: optional `PAIRS_PATH`.
 | `--p2` | explicitly not implemented |
 | `--pt` | explicitly not implemented |
 | `--extra-col` | explicitly not implemented |
-| `--nproc` | implemented as a Rayon thread-pool size for parallel chunk sorting; `0` is rejected |
+| `--nproc` | implemented as the Rayon chunk-sort pool size and BGZF compression thread count for `.gz` output; `0` is rejected |
 | `--tmpdir` | implemented |
 | `--memory` | explicitly not implemented |
 | `--compress-program` | explicitly not implemented |
@@ -95,7 +95,7 @@ Arguments: optional `PAIRS_PATH`.
 | `--cmd-in` | explicitly not implemented |
 | `--cmd-out` | explicitly not implemented |
 
-Current sort oracle coverage includes default column sorting, parse-generated `.pairsam` with `sam1`, `sam2`, and supported parse extra columns, header preservation with `#sorted: chr1-chr2-pos1-pos2` insertion, stable ordering of equal keys across spilled chunks, identical `--nproc 1` and `--nproc 8` output, and `.gz` output. `scripts/benchmark_sort_threads.sh` measures `--nproc 1` versus `--nproc 8` on parse-generated `.pairsam` without rebuilding Rust and reports wall time, CPU utilization, max RSS, temp disk usage, and output size.
+Current sort oracle coverage includes default column sorting, parse-generated `.pairsam` with `sam1`, `sam2`, and supported parse extra columns, header preservation with `#sorted: chr1-chr2-pos1-pos2` insertion, stable ordering of equal keys across spilled chunks, identical `--nproc 1` and `--nproc 8` output, BGZF-compatible `.gz` output validated by `gzip -dc` and `bgzip -t`, and equivalent decompressed `.gz` output for `--nproc 1` and `--nproc 8`. `scripts/benchmark_sort_threads.sh` measures `--nproc 1` versus `--nproc 8` without rebuilding Rust and reports wall time, CPU utilization, max RSS, temp disk usage, compressed output size, uncompressed output size, and compression throughput MB/s. Its `--compression-dominates` mode generates presorted wide `.pairsam` input and reports whether `--nproc 8` used more than one CPU (`nproc8_cpu_gt_100_percent`).
 
 ## Other Command Inventories
 

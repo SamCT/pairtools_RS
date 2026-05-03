@@ -744,7 +744,6 @@ dependencies = [
  "bstr",
  "clap",
  "indexmap",
- "libz-sys",
  "memchr",
  "rayon",
  "rust-htslib",

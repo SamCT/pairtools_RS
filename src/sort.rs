@@ -1,12 +1,13 @@
 use crate::cli::SortArgs;
 use rayon::prelude::*;
 use rayon::ThreadPoolBuilder;
+use rust_htslib::htslib;
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
-use std::ffi::{c_void, CString};
+use std::ffi::CString;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, BufWriter, Write};
-use std::os::raw::{c_int, c_uint};
+use std::os::raw::{c_int, c_void};
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{self, Sender};
 use tempfile::NamedTempFile;
@@ -115,7 +116,7 @@ pub fn cmd_sort(args: SortArgs) -> Result<(), Box<dyn std::error::Error>> {
     let mut files = sort_to_temp_files(reader.as_mut(), first_body_line, &columns, tmpdir, nproc)?;
     files.sort_by_key(|chunk| chunk.index);
 
-    let mut out = open_output(args.output.as_deref())?;
+    let mut out = open_output(args.output.as_deref(), nproc)?;
     for header in &headers {
         writeln!(out, "{header}")?;
     }
@@ -175,11 +176,14 @@ fn open_input(path: Option<&Path>) -> Result<Box<dyn BufRead + Send>, Box<dyn st
     }
 }
 
-fn open_output(path: Option<&Path>) -> Result<Box<dyn Write>, Box<dyn std::error::Error>> {
+fn open_output(
+    path: Option<&Path>,
+    nproc: usize,
+) -> Result<Box<dyn Write>, Box<dyn std::error::Error>> {
     match path {
         Some(path) if path == Path::new("-") => Ok(Box::new(BufWriter::new(io::stdout()))),
         Some(path) if has_suffix(path, ".gz") => {
-            Ok(Box::new(BufWriter::new(GzipWriter::create(path)?)))
+            Ok(Box::new(BufWriter::new(BgzfWriter::create(path, nproc)?)))
         }
         Some(path) if has_suffix(path, ".lz4") => {
             Err("not implemented: compressed sort output .lz4".into())
@@ -585,19 +589,31 @@ fn trim_line_end(line: &str) -> &str {
     line.strip_suffix('\r').unwrap_or(line)
 }
 
-struct GzipWriter {
-    handle: libz_sys::gzFile,
+struct BgzfWriter {
+    handle: *mut htslib::BGZF,
 }
 
-impl GzipWriter {
-    fn create(path: &Path) -> io::Result<Self> {
+impl BgzfWriter {
+    fn create(path: &Path, nproc: usize) -> io::Result<Self> {
         let path = CString::new(path.to_string_lossy().as_bytes()).map_err(|_| {
             io::Error::new(io::ErrorKind::InvalidInput, "output path contains NUL byte")
         })?;
-        let mode = CString::new("wb").expect("static gzip mode has no NUL bytes");
-        let handle = unsafe { libz_sys::gzopen(path.as_ptr(), mode.as_ptr()) };
+        let mode = CString::new("w").expect("static BGZF mode has no NUL bytes");
+        let handle = unsafe { htslib::bgzf_open(path.as_ptr(), mode.as_ptr()) };
         if handle.is_null() {
             return Err(io::Error::last_os_error());
+        }
+        if nproc > 1 {
+            let status = unsafe { htslib::bgzf_mt(handle, nproc as c_int, 256) };
+            if status != 0 {
+                unsafe {
+                    htslib::bgzf_close(handle);
+                }
+                return Err(io::Error::new(
+                    io::ErrorKind::Other,
+                    format!("failed to enable BGZF compression threads, HTSlib status {status}"),
+                ));
+            }
         }
         Ok(Self { handle })
     }
@@ -606,31 +622,30 @@ impl GzipWriter {
         if self.handle.is_null() {
             return Ok(());
         }
-        let status = unsafe { libz_sys::gzclose(self.handle) };
+        let status = unsafe { htslib::bgzf_close(self.handle) };
         self.handle = std::ptr::null_mut();
-        if status == libz_sys::Z_OK as c_int {
+        if status == 0 {
             Ok(())
         } else {
             Err(io::Error::new(
                 io::ErrorKind::Other,
-                format!("failed to close gzip stream, zlib status {status}"),
+                format!("failed to close BGZF stream, HTSlib status {status}"),
             ))
         }
     }
 }
 
-impl Write for GzipWriter {
+impl Write for BgzfWriter {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         if buf.is_empty() {
             return Ok(0);
         }
-        let len = buf.len().min(c_uint::MAX as usize);
         let written =
-            unsafe { libz_sys::gzwrite(self.handle, buf.as_ptr() as *mut c_void, len as c_uint) };
-        if written <= 0 {
+            unsafe { htslib::bgzf_write(self.handle, buf.as_ptr() as *const c_void, buf.len()) };
+        if written < 0 {
             Err(io::Error::new(
                 io::ErrorKind::Other,
-                "failed to write gzip stream",
+                "failed to write BGZF stream",
             ))
         } else {
             Ok(written as usize)
@@ -638,19 +653,19 @@ impl Write for GzipWriter {
     }
 
     fn flush(&mut self) -> io::Result<()> {
-        let status = unsafe { libz_sys::gzflush(self.handle, libz_sys::Z_SYNC_FLUSH as c_int) };
-        if status == libz_sys::Z_OK as c_int {
+        let status = unsafe { htslib::bgzf_flush(self.handle) };
+        if status == 0 {
             Ok(())
         } else {
             Err(io::Error::new(
                 io::ErrorKind::Other,
-                format!("failed to flush gzip stream, zlib status {status}"),
+                format!("failed to flush BGZF stream, HTSlib status {status}"),
             ))
         }
     }
 }
 
-impl Drop for GzipWriter {
+impl Drop for BgzfWriter {
     fn drop(&mut self) {
         let _ = self.close();
     }

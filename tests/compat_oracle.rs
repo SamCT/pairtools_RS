@@ -42,6 +42,10 @@ fn assert_pairs_rs_success(args: &[&str]) {
     );
 }
 
+fn run_pairs_rs_to_path(args: &[&str]) {
+    assert_pairs_rs_success(args);
+}
+
 fn parsed_pairsam_fixture(name: &str, extra_args: &[&str]) -> String {
     let chroms = format!("tests/fixtures/parse_milestone1/{name}/chrom.sizes");
     let input = format!("tests/fixtures/parse_milestone1/{name}/input.sam");
@@ -113,24 +117,31 @@ fn stable_equal_key_pairsam(rows: usize) -> String {
     pairsam
 }
 
-fn read_gzip_with_python(path: &Path) -> String {
+fn read_gzip_with_gzip(path: &Path) -> Vec<u8> {
     let path_s = path.to_string_lossy();
     let output = Command::new("pixi")
-        .args([
-            "run",
-            "python",
-            "-c",
-            "import gzip, sys; sys.stdout.buffer.write(gzip.open(sys.argv[1], 'rb').read())",
-            path_s.as_ref(),
-        ])
+        .args(["run", "gzip", "-dc", path_s.as_ref()])
         .output()
         .unwrap();
     assert!(
         output.status.success(),
-        "python gzip read failed:\n{}",
+        "gzip -dc failed:\n{}",
         String::from_utf8_lossy(&output.stderr)
     );
-    String::from_utf8(output.stdout).unwrap()
+    output.stdout
+}
+
+fn assert_bgzip_compatible(path: &Path) {
+    let path_s = path.to_string_lossy();
+    let output = Command::new("pixi")
+        .args(["run", "bgzip", "-t", path_s.as_ref()])
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "bgzip -t failed:\n{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
 }
 
 fn assert_parse_fixture(name: &str, extra_args: &[&str]) {
@@ -350,7 +361,7 @@ fn sort_writes_gz_output() {
     let input_s = input.to_string_lossy();
     let output_s = output.to_string_lossy();
     let expected = run_pairs_rs(&["sort", "--nproc", "4", input_s.as_ref()]);
-    assert_pairs_rs_success(&[
+    run_pairs_rs_to_path(&[
         "sort",
         "--nproc",
         "4",
@@ -358,7 +369,41 @@ fn sort_writes_gz_output() {
         output_s.as_ref(),
         input_s.as_ref(),
     ]);
-    assert_eq!(read_gzip_with_python(&output), expected);
+    assert_bgzip_compatible(&output);
+    assert_eq!(read_gzip_with_gzip(&output), expected.into_bytes());
+}
+
+#[test]
+fn sort_gz_nproc_1_and_8_decompress_identically() {
+    let tmp = TempDir::new().unwrap();
+    let input = tmp.path().join("stable-equal-key.pairsam");
+    let out1 = tmp.path().join("sorted.nproc1.pairsam.gz");
+    let out8 = tmp.path().join("sorted.nproc8.pairsam.gz");
+    fs::write(&input, stable_equal_key_pairsam(20_050)).unwrap();
+
+    let input_s = input.to_string_lossy();
+    let out1_s = out1.to_string_lossy();
+    let out8_s = out8.to_string_lossy();
+    run_pairs_rs_to_path(&[
+        "sort",
+        "--nproc",
+        "1",
+        "-o",
+        out1_s.as_ref(),
+        input_s.as_ref(),
+    ]);
+    run_pairs_rs_to_path(&[
+        "sort",
+        "--nproc",
+        "8",
+        "-o",
+        out8_s.as_ref(),
+        input_s.as_ref(),
+    ]);
+
+    assert_bgzip_compatible(&out1);
+    assert_bgzip_compatible(&out8);
+    assert_eq!(read_gzip_with_gzip(&out1), read_gzip_with_gzip(&out8));
 }
 
 #[test]
