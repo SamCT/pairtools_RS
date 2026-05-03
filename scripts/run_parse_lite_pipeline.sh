@@ -18,15 +18,15 @@ THREADS="${6:-8}"
 # 3) Keep pairtools sort/dedup unchanged
 /usr/bin/time -f 'pairs-rs pipeline real=%E user=%U sys=%S maxrss_kb=%M' \
   bash -lc "bwa-mem2 mem -t ${THREADS} -5SP '${IDX}' '${R1}' '${R2}' \
-  | cargo run --release -- --no-header --nproc ${THREADS} \
+  | cargo run --release -- --no-header --threads ${THREADS} \
   > '${OUT}.pairs'"
 
 /usr/bin/time -f 'pairtools sort real=%E user=%U sys=%S maxrss_kb=%M' \
-  bash -lc "pairtools sort --nproc ${THREADS} --tmpdir . --chroms-path '${CHROMSIZES}' \
+  bash -lc "pairtools sort --threads ${THREADS} --tmpdir . --chroms-path '${CHROMSIZES}' \
   '${OUT}.pairs' > '${OUT}.sorted.pairs'"
 
 /usr/bin/time -f 'pairtools dedup real=%E user=%U sys=%S maxrss_kb=%M' \
-  bash -lc "pairtools dedup --nproc-in ${THREADS} --nproc-out ${THREADS} \
+  bash -lc "pairtools dedup --threads-in ${THREADS} --threads-out ${THREADS} \
   '${OUT}.sorted.pairs' > '${OUT}.dedup.pairs'"
 
 wc -l "${OUT}.pairs" "${OUT}.sorted.pairs" "${OUT}.dedup.pairs"

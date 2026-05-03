@@ -28,7 +28,7 @@ Use the same alignments and compare line counts + timing:
 ```bash
 # Rust parse-lite
 bwa-mem2 mem -t 4 -5SP /path/to/index R1.fq.gz R2.fq.gz \
-  | cargo run --release -- --no-header --walks-policy 5unique --drop-readid --nproc 4 > rust.pairs
+  | cargo run --release -- --no-header --walks-policy 5unique --drop-readid --threads 4 > rust.pairs
 
 # Traditional pairtools parse
 bwa-mem2 mem -t 4 -5SP /path/to/index R1.fq.gz R2.fq.gz \

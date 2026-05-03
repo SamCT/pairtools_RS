@@ -15,7 +15,7 @@ struct Config {
     print_header: bool,
     walks_policy: String,
     drop_readid: bool,
-    nproc: usize,
+    threads: usize,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -42,7 +42,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut bytes = Vec::new();
     io::stdin().read_to_end(&mut bytes)?;
     if bytes.starts_with(b"BAM\x01") {
-        let sam = bam_to_sam(&bytes, cfg.nproc)?;
+        let sam = bam_to_sam(&bytes, cfg.threads)?;
         parse_sam_records(sam.as_bytes(), &cfg)?;
     } else {
         parse_sam_records(&bytes, &cfg)?;
@@ -54,7 +54,7 @@ fn parse_args() -> Result<Config, Box<dyn std::error::Error>> {
     let mut print_header = true;
     let mut walks_policy = String::from("5unique");
     let mut drop_readid = false;
-    let mut nproc: usize = 1;
+    let mut threads: usize = 1;
 
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
@@ -66,10 +66,10 @@ fn parse_args() -> Result<Config, Box<dyn std::error::Error>> {
                     .next()
                     .ok_or("missing value after --walks-policy")?;
             }
-            "--nproc" | "--threads" => {
-                let raw = args.next().ok_or("missing value after --nproc/--threads")?;
-                nproc = raw.parse::<usize>().map_err(|_| "--nproc/--threads must be a positive integer")?;
-                if nproc == 0 { return Err("--nproc/--threads must be >= 1".into()); }
+            "--threads" | "-@" => {
+                let raw = args.next().ok_or("missing value after --threads/-@")?;
+                threads = raw.parse::<usize>().map_err(|_| "--threads/-@ must be a positive integer")?;
+                if threads == 0 { return Err("--threads/-@ must be >= 1".into()); }
             }
             "-h" | "--help" => {
                 print_help();
@@ -83,19 +83,19 @@ fn parse_args() -> Result<Config, Box<dyn std::error::Error>> {
         print_header,
         walks_policy,
         drop_readid,
-        nproc,
+        threads,
     })
 }
 
 fn print_help() {
     eprintln!(
-        "pairs-rs parse-lite\n\nUsage: pairs-rs [--no-header] [--drop-readid] [--walks-policy 5unique] [--nproc N]\n\nThis parse-lite implementation currently supports only --walks-policy 5unique for pairtools parity tests."
+        "pairs-rs parse-lite\n\nUsage: pairs-rs [--no-header] [--drop-readid] [--walks-policy 5unique] [--threads N | -@ N]\n\nThis parse-lite implementation currently supports only --walks-policy 5unique for pairtools parity tests."
     );
 }
 
-fn bam_to_sam(bam_bytes: &[u8], nproc: usize) -> Result<String, Box<dyn std::error::Error>> {
+fn bam_to_sam(bam_bytes: &[u8], threads: usize) -> Result<String, Box<dyn std::error::Error>> {
     let mut child = Command::new("samtools")
-        .args(["view", "-h", "-@", &nproc.to_string(), "-"])
+        .args(["view", "-h", "-@", &threads.to_string(), "-"])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .spawn()?;
