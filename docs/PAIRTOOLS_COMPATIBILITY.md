@@ -26,7 +26,7 @@ Policy: pairtools is permitted only as a test oracle. The Rust binary must not c
 | Command | Rust status |
 |---|---|
 | `parse` | partial, oracle-gated subset |
-| `sort` | partial, oracle-gated minimal default sort |
+| `sort` | partial, oracle-gated multithreaded default sort |
 | `dedup` | explicitly not implemented |
 | `filterbycov` | explicitly not implemented |
 | `flip` | explicitly not implemented |
@@ -79,14 +79,14 @@ Arguments: optional `PAIRS_PATH`.
 
 | Option | Rust status |
 |---|---|
-| `-o`, `--output` | implemented for uncompressed output; compressed `.gz` and `.lz4` explicitly not implemented |
+| `-o`, `--output` | implemented for uncompressed output and `.gz`; `.lz4` explicitly not implemented |
 | `--c1` | explicitly not implemented |
 | `--c2` | explicitly not implemented |
 | `--p1` | explicitly not implemented |
 | `--p2` | explicitly not implemented |
 | `--pt` | explicitly not implemented |
 | `--extra-col` | explicitly not implemented |
-| `--nproc` | explicitly not implemented |
+| `--nproc` | implemented as a Rayon thread-pool size for parallel chunk sorting; `0` is rejected |
 | `--tmpdir` | implemented |
 | `--memory` | explicitly not implemented |
 | `--compress-program` | explicitly not implemented |
@@ -95,7 +95,7 @@ Arguments: optional `PAIRS_PATH`.
 | `--cmd-in` | explicitly not implemented |
 | `--cmd-out` | explicitly not implemented |
 
-Current sort oracle coverage is intentionally minimal: default column sorting, header preservation, and `#sorted: chr1-chr2-pos1-pos2` insertion. Sort must not expand until parse parity is real, except to reject accepted-but-unimplemented compatibility flags.
+Current sort oracle coverage includes default column sorting, parse-generated `.pairsam` with `sam1`, `sam2`, and supported parse extra columns, header preservation with `#sorted: chr1-chr2-pos1-pos2` insertion, stable ordering of equal keys across spilled chunks, identical `--nproc 1` and `--nproc 8` output, and `.gz` output. `scripts/benchmark_sort_threads.sh` measures `--nproc 1` versus `--nproc 8` on parse-generated `.pairsam` without rebuilding Rust and reports wall time, CPU utilization, max RSS, temp disk usage, and output size.
 
 ## Other Command Inventories
 

@@ -1,3 +1,5 @@
+use std::fs;
+use std::path::Path;
 use std::process::Command;
 use std::sync::Mutex;
 use tempfile::TempDir;
@@ -25,6 +27,107 @@ fn run_pairtools(args: &[&str]) -> String {
     assert!(
         output.status.success(),
         "pairtools oracle failed:\n{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    String::from_utf8(output.stdout).unwrap()
+}
+
+fn assert_pairs_rs_success(args: &[&str]) {
+    let bin = env!("CARGO_BIN_EXE_pairs-rs");
+    let output = Command::new(bin).args(args).output().unwrap();
+    assert!(
+        output.status.success(),
+        "pairs-rs failed:\n{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+fn parsed_pairsam_fixture(name: &str, extra_args: &[&str]) -> String {
+    let chroms = format!("tests/fixtures/parse_milestone1/{name}/chrom.sizes");
+    let input = format!("tests/fixtures/parse_milestone1/{name}/input.sam");
+
+    let mut args = vec!["parse", "-c", chroms.as_str()];
+    args.extend_from_slice(extra_args);
+    args.push(input.as_str());
+
+    run_pairs_rs(&args)
+}
+
+fn parse_generated_pairsam_with_extra_columns() -> String {
+    let mut header = Vec::new();
+    let mut body = Vec::new();
+    for name in [
+        "unmapped_mate",
+        "hard_clipped",
+        "simple_uu",
+        "interchrom_flip",
+        "same_chrom_position_flip",
+    ] {
+        let parsed = parsed_pairsam_fixture(
+            name,
+            &[
+                "--assembly",
+                "test_assembly",
+                "--add-columns",
+                "mapq,pos5,pos3,cigar,read_len",
+            ],
+        );
+        if header.is_empty() {
+            header.extend(
+                parsed
+                    .lines()
+                    .filter(|line| line.starts_with('#'))
+                    .map(str::to_string),
+            );
+        }
+        body.extend(
+            parsed
+                .lines()
+                .filter(|line| !line.starts_with('#'))
+                .map(str::to_string),
+        );
+    }
+    body.reverse();
+
+    let mut pairsam = String::new();
+    for line in header {
+        pairsam.push_str(&line);
+        pairsam.push('\n');
+    }
+    for line in body {
+        pairsam.push_str(&line);
+        pairsam.push('\n');
+    }
+    pairsam
+}
+
+fn stable_equal_key_pairsam(rows: usize) -> String {
+    let mut pairsam = String::from(
+        "## pairs format v1.0.0\n#columns: readID chrom1 pos1 chrom2 pos2 strand1 strand2 pair_type sam1 sam2 mapq1 mapq2 pos51 pos52 pos31 pos32 cigar1 cigar2 read_len1 read_len2\n",
+    );
+    for idx in 0..rows {
+        pairsam.push_str(&format!(
+            "r{idx:05}\tchr1\t10\tchr1\t10\t+\t-\tUU\tread{idx}\x19Yt:Z:UU\tread{idx}\x19Yt:Z:UU\t60\t60\t10\t10\t14\t14\t5M\t5M\t5\t5\n"
+        ));
+    }
+    pairsam
+}
+
+fn read_gzip_with_python(path: &Path) -> String {
+    let path_s = path.to_string_lossy();
+    let output = Command::new("pixi")
+        .args([
+            "run",
+            "python",
+            "-c",
+            "import gzip, sys; sys.stdout.buffer.write(gzip.open(sys.argv[1], 'rb').read())",
+            path_s.as_ref(),
+        ])
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "python gzip read failed:\n{}",
         String::from_utf8_lossy(&output.stderr)
     );
     String::from_utf8(output.stdout).unwrap()
@@ -173,6 +276,105 @@ fn sort_simple_matches_pairtools_1_1_3_oracle() {
     assert_eq!(run_pairs_rs(&args), run_pairtools(&args));
 }
 
+#[test]
+fn sort_parse_generated_pairsam_matches_pairtools_1_1_3_oracle() {
+    let tmp = TempDir::new().unwrap();
+    let input = tmp.path().join("parse-generated.pairsam");
+    let tmpdir = tmp.path().join("sort-tmp");
+    fs::create_dir(&tmpdir).unwrap();
+    fs::write(&input, parse_generated_pairsam_with_extra_columns()).unwrap();
+
+    let input_s = input.to_string_lossy();
+    let tmpdir_s = tmpdir.to_string_lossy();
+    let args = [
+        "sort",
+        "--nproc",
+        "8",
+        "--tmpdir",
+        tmpdir_s.as_ref(),
+        input_s.as_ref(),
+    ];
+    assert_eq!(run_pairs_rs(&args), run_pairtools(&args));
+}
+
+#[test]
+fn sort_nproc_1_and_8_are_identical_and_stable_across_spills() {
+    let tmp = TempDir::new().unwrap();
+    let input = tmp.path().join("stable-equal-key.pairsam");
+    let tmpdir1 = tmp.path().join("sort-tmp-1");
+    let tmpdir8 = tmp.path().join("sort-tmp-8");
+    fs::create_dir(&tmpdir1).unwrap();
+    fs::create_dir(&tmpdir8).unwrap();
+    fs::write(&input, stable_equal_key_pairsam(20_050)).unwrap();
+
+    let input_s = input.to_string_lossy();
+    let tmpdir1_s = tmpdir1.to_string_lossy();
+    let tmpdir8_s = tmpdir8.to_string_lossy();
+    let out1 = run_pairs_rs(&[
+        "sort",
+        "--nproc",
+        "1",
+        "--tmpdir",
+        tmpdir1_s.as_ref(),
+        input_s.as_ref(),
+    ]);
+    let out8 = run_pairs_rs(&[
+        "sort",
+        "--nproc",
+        "8",
+        "--tmpdir",
+        tmpdir8_s.as_ref(),
+        input_s.as_ref(),
+    ]);
+
+    assert_eq!(out1, out8);
+    for (idx, line) in out8
+        .lines()
+        .filter(|line| !line.starts_with('#'))
+        .enumerate()
+    {
+        assert!(
+            line.starts_with(&format!("r{idx:05}\t")),
+            "equal-key rows were not emitted stably at body row {idx}: {line}"
+        );
+    }
+}
+
+#[test]
+fn sort_writes_gz_output() {
+    let tmp = TempDir::new().unwrap();
+    let input = tmp.path().join("input.pairsam");
+    let output = tmp.path().join("sorted.pairsam.gz");
+    fs::write(&input, parse_generated_pairsam_with_extra_columns()).unwrap();
+
+    let input_s = input.to_string_lossy();
+    let output_s = output.to_string_lossy();
+    let expected = run_pairs_rs(&["sort", "--nproc", "4", input_s.as_ref()]);
+    assert_pairs_rs_success(&[
+        "sort",
+        "--nproc",
+        "4",
+        "-o",
+        output_s.as_ref(),
+        input_s.as_ref(),
+    ]);
+    assert_eq!(read_gzip_with_python(&output), expected);
+}
+
+#[test]
+fn sort_updates_existing_samheader_pg_chain() {
+    let input = "## pairs format v1.0.0\n#samheader: @HD\tVN:1.6\tSO:unsorted\n#samheader: @SQ\tSN:chr1\tLN:100\n#samheader: @PG\tID:bwa\tPN:bwa\tVN:0.7.17\n#columns: readID chrom1 pos1 chrom2 pos2 strand1 strand2 pair_type sam1 sam2\nr1\tchr1\t1\tchr1\t2\t+\t-\tUU\t.\t.\n";
+    let tmp = TempDir::new().unwrap();
+    let path = tmp.path().join("with-pg.pairsam");
+    fs::write(&path, input).unwrap();
+
+    let path_s = path.to_string_lossy();
+    let sorted = run_pairs_rs(&["sort", path_s.as_ref()]);
+    assert!(sorted.contains("#sorted: chr1-chr2-pos1-pos2\n"));
+    assert!(sorted.contains("#samheader: @PG\tID:pairtools_sort\tPN:pairtools_sort\tCL:"));
+    assert!(sorted.contains("\tPP:bwa\tVN:1.1.3\n"));
+}
+
 fn assert_pairs_rs_failure(args: &[&str], expected_stderr: &str) {
     let bin = env!("CARGO_BIN_EXE_pairs-rs");
     let output = Command::new(bin).args(args).output().unwrap();
@@ -238,10 +440,19 @@ fn sort_rejects_accepted_but_unimplemented_pairtools_options_loudly() {
         &[
             "sort",
             "--nproc",
-            "2",
+            "0",
             "tests/fixtures/sort_simple/input.pairs",
         ],
-        "not implemented: pairtools sort --nproc",
+        "--nproc must be greater than zero",
+    );
+    assert_pairs_rs_failure(
+        &[
+            "sort",
+            "--memory",
+            "1G",
+            "tests/fixtures/sort_simple/input.pairs",
+        ],
+        "not implemented: pairtools sort --memory",
     );
     assert_pairs_rs_failure(
         &[
