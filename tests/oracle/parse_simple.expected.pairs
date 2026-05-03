@@ -1,3 +1,10 @@
 ## pairs format v1.0.0
+#shape: upper triangle
+#genome_assembly: unknown
+#chromsize: chr1 1000
+#chromsize: chr2 1000
+#samheader: @HD	VN:1.6	SO:unsorted
+#samheader: @SQ	SN:chr1	LN:1000
+#samheader: @SQ	SN:chr2	LN:1000
 #columns: readID chrom1 pos1 chrom2 pos2 strand1 strand2 pair_type
 r1	chr1	10	chr2	24	+	-	UU

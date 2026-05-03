@@ -31,7 +31,7 @@ pub struct ParseArgs {
     pub chroms_path: PathBuf,
     #[arg(short = 'o', long)]
     pub output: Option<PathBuf>,
-    #[arg(long="drop-sam", action=ArgAction::SetTrue)]
+    #[arg(long = "drop-sam", action = ArgAction::SetTrue)]
     pub drop_sam: bool,
     #[arg(long = "min-mapq", default_value_t = 1)]
     pub min_mapq: u8,
@@ -39,8 +39,6 @@ pub struct ParseArgs {
     pub walks_policy: String,
     #[arg(long = "report-alignment-end", default_value = "5")]
     pub report_alignment_end: String,
-    #[arg(long = "output-stats")]
-    pub output_stats: Option<PathBuf>,
     pub input: Option<PathBuf>,
 }
 

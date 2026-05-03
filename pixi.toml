@@ -28,6 +28,7 @@ libcurl = "*"
 openssl = "*"
 libdeflate = "*"
 hyperfine = "*"
+libclang = ">=22.1.4,<23"
 
 [tasks]
 fmt = "cargo fmt --all"
