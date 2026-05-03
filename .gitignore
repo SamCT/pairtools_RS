@@ -113,6 +113,8 @@ benchmark/
 benchmarks/
 *.bench
 *.benchmark
+.pairtools_rs_compare/
+compare_outputs/
 
 # Generated alignment and pairs files
 *.sam

@@ -1,38 +1,129 @@
-# PAIRTOOLS_COMPATIBILITY
+# Pairtools Compatibility Inventory
 
-Command inventory derived from repository CLI definitions (`pairtools/cli/*.py`).
+Oracle source: installed Pixi `pairtools, version 1.1.3`, generated from:
+
+```bash
+pixi run pairtools --version
+pixi run pairtools --help
+pixi run pairtools <command> --help
+```
+
+Policy: pairtools is permitted only as a test oracle. The Rust binary must not call pairtools at runtime. Every accepted option must either match pairtools 1.1.3 semantics or fail loudly with `not implemented`.
+
+## Top-Level Options
+
+| Option | Rust status |
+|---|---|
+| `--post-mortem` | explicitly not implemented |
+| `--output-profile` | explicitly not implemented |
+| `-v`, `--verbose` | explicitly not implemented |
+| `-d`, `--debug` | explicitly not implemented |
+| `--version` | implemented |
+| `-h`, `--help` | implemented by CLI parser |
 
 ## Commands
 
-| Command | Status |
+| Command | Rust status |
 |---|---|
-| parse | partial implementation |
-| sort | partial implementation |
-| parse2, dedup, flip, merge, split, select, stats, restrict, filterbycov, phase, markasdup, sample, header, scaling | explicitly `not implemented` |
+| `parse` | partial, oracle-gated subset |
+| `sort` | partial, oracle-gated minimal default sort |
+| `dedup` | explicitly not implemented |
+| `filterbycov` | explicitly not implemented |
+| `flip` | explicitly not implemented |
+| `header` | explicitly not implemented |
+| `markasdup` | explicitly not implemented |
+| `merge` | explicitly not implemented |
+| `parse2` | explicitly not implemented |
+| `phase` | explicitly not implemented |
+| `restrict` | explicitly not implemented |
+| `sample` | explicitly not implemented |
+| `scaling` | explicitly not implemented |
+| `select` | explicitly not implemented |
+| `split` | explicitly not implemented |
+| `stats` | explicitly not implemented |
 
-## Parse options
+## `parse`
 
-| Option | Pairtools | Rust status |
+Arguments: optional `SAM_PATH`.
+
+| Option | Rust status |
+|---|---|
+| `-c`, `--chroms-path` | tested oracle parity |
+| `-o`, `--output` | implemented for uncompressed output; compressed `.gz` and `.lz4` explicitly not implemented |
+| `--assembly` | implemented |
+| `--min-mapq` | tested oracle parity |
+| `--max-molecule-size` | explicitly not implemented |
+| `--drop-readid` | explicitly not implemented |
+| `--drop-seq` | explicitly not implemented |
+| `--drop-sam` | tested oracle parity; currently required |
+| `--add-pair-index` | explicitly not implemented |
+| `--add-columns` | explicitly not implemented |
+| `--output-parsed-alignments` | explicitly not implemented |
+| `--output-stats` | explicitly not implemented |
+| `--report-alignment-end` | tested oracle parity for `5` and `3` |
+| `--max-inter-align-gap` | explicitly not implemented |
+| `--walks-policy` | tested oracle parity only for default `5unique`; all other values explicitly not implemented |
+| `--readid-transform` | explicitly not implemented |
+| `--flip` | implemented as default flipping behavior |
+| `--no-flip` | explicitly not implemented |
+| `--nproc-in` | explicitly not implemented |
+| `--nproc-out` | explicitly not implemented |
+| `--cmd-in` | explicitly not implemented |
+| `--cmd-out` | explicitly not implemented |
+
+Current parse oracle fixtures cover small SAM inputs for UU pairs, unmapped and low-MAPQ mates, reverse-strand 5'/3' coordinates, soft/hard clipping, indel reference span, interchromosomal and same-chromosome flipping, secondary alignments, and supplementary alignments. Pairsam output without `--drop-sam` is explicitly not implemented until SAM column parity is implemented.
+
+## `sort`
+
+Arguments: optional `PAIRS_PATH`.
+
+| Option | Rust status |
+|---|---|
+| `-o`, `--output` | implemented for uncompressed output; compressed `.gz` and `.lz4` explicitly not implemented |
+| `--c1` | explicitly not implemented |
+| `--c2` | explicitly not implemented |
+| `--p1` | explicitly not implemented |
+| `--p2` | explicitly not implemented |
+| `--pt` | explicitly not implemented |
+| `--extra-col` | explicitly not implemented |
+| `--nproc` | explicitly not implemented |
+| `--tmpdir` | implemented |
+| `--memory` | explicitly not implemented |
+| `--compress-program` | explicitly not implemented |
+| `--nproc-in` | explicitly not implemented |
+| `--nproc-out` | explicitly not implemented |
+| `--cmd-in` | explicitly not implemented |
+| `--cmd-out` | explicitly not implemented |
+
+Current sort oracle coverage is intentionally minimal: default column sorting, header preservation, and `#sorted: chr1-chr2-pos1-pos2` insertion. Sort must not expand until parse parity is real, except to reject accepted-but-unimplemented compatibility flags.
+
+## Other Command Inventories
+
+These commands are present so they fail loudly instead of looking absent. Their pairtools 1.1.3 options are inventoried here, but the Rust implementation currently rejects the command as explicitly not implemented.
+
+| Command | Arguments | Options |
 |---|---|---|
-| `-c/--chroms-path` | yes | implemented |
-| `-o/--output` | yes | implemented |
-| `--drop-sam` | yes | required for now; otherwise explicit error |
-| `--min-mapq` | yes | implemented |
-| `--walks-policy` (`mask,5any,5unique,3any,3unique,all`) | yes | accepted (selection logic in progress) |
-| `--report-alignment-end` (`5,3`) | yes | implemented |
-| `--max-inter-align-gap` | yes | not implemented |
-| `--output-stats` | yes | implemented (basic total counter) |
-| other parse options from pairtools (`--assembly`, `--drop-readid`, etc.) | yes | not implemented |
+| `dedup` | optional `PAIRS_PATH` | `-o`/`--output`, `--output-dups`, `--output-unmapped`, `--output-stats`, `--output-bytile-stats`, `--max-mismatch`, `--method`, `--backend`, `--chunksize`, `--carryover`, `-p`/`--n-proc`, `--mark-dups`/`--no-mark-dups`, `--keep-parent-id`, `--extra-col-pair`, `--sep`, `--send-header-to`, `--c1`, `--c2`, `--p1`, `--p2`, `--s1`, `--s2`, `--unmapped-chrom`, `--yaml`/`--no-yaml`, `--filter`, `--engine`, `--chrom-subset`, `--startup-code`, `-t`/`--type-cast`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
+| `filterbycov` | optional `PAIRS_PATH` | `-o`/`--output`, `--output-highcov`, `--output-unmapped`, `--output-stats`, `--max-cov`, `--max-dist`, `--method`, `--sep`, `--comment-char`, `--send-header-to`, `--c1`, `--c2`, `--p1`, `--p2`, `--s1`, `--s2`, `--unmapped-chrom`, `--mark-multi`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
+| `flip` | optional `PAIRS_PATH` | `-c`/`--chroms-path`, `-o`/`--output`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
+| `markasdup` | optional `PAIRSAM_PATH` | `-o`/`--output`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
+| `merge` | zero or more `PAIRS_PATH` values | `-o`/`--output`, `--max-nmerge`, `--tmpdir`, `--memory`, `--compress-program`, `--nproc`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out`, `--keep-first-header`/`--no-keep-first-header`, `--concatenate`/`--no-concatenate` |
+| `parse2` | optional `SAM_PATH` | `-c`/`--chroms-path`, `-o`/`--output`, `--report-position`, `--report-orientation`, `--assembly`, `--min-mapq`, `--max-inter-align-gap`, `--max-insert-size`, `--dedup-max-mismatch`, `--single-end`, `--expand`/`--no-expand`, `--max-expansion-depth`, `--add-pair-index`, `--flip`/`--no-flip`, `--add-columns`, `--drop-readid`/`--keep-readid`, `--readid-transform`, `--drop-seq`/`--keep-seq`, `--drop-sam`/`--keep-sam`, `--output-parsed-alignments`, `--output-stats`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
+| `phase` | optional `PAIRS_PATH` | `-o`/`--output`, `--phase-suffixes`, `--clean-output`, `--tag-mode`, `--report-scores`/`--no-report-scores`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
+| `restrict` | optional `PAIRS_PATH` | `-f`/`--frags`, `-o`/`--output`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
+| `sample` | required `FRACTION`, optional `PAIRS_PATH` | `-o`/`--output`, `-s`/`--seed`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
+| `scaling` | zero or more `INPUT_PATH` values | `-o`/`--output`, `--view`/`--regions`, `--chunksize`, `--dist-range`, `--n-dist-bins-decade`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
+| `select` | required `CONDITION`, optional `PAIRS_PATH` | `-o`/`--output`, `--output-rest`, `--chrom-subset`, `--startup-code`, `-t`/`--type-cast`, `-r`/`--remove-columns`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
+| `split` | optional `PAIRSAM_PATH` | `--output-pairs`, `--output-sam`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
+| `stats` | zero or more `INPUT_PATH` values | `-o`/`--output`, `--merge`, `--n-dist-bins-decade`, `--with-chromsizes`/`--no-chromsizes`, `--yaml`/`--no-yaml`, `--bytile-dups`/`--no-bytile-dups`, `--output-bytile-stats`, `--filter`, `--engine`, `--chrom-subset`, `--startup-code`, `-t`/`--type-cast`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
 
-## Sort options
+## `header` Subcommands
 
-| Option | Pairtools | Rust status |
+The `header` command is explicitly not implemented. Pairtools 1.1.3 exposes these subcommands and options:
+
+| Header subcommand | Arguments | Options |
 |---|---|---|
-| `-o/--output` | yes | implemented |
-| `--c1 --c2 --p1 --p2 --pt --extra-col` | yes | accepted, core keying uses default columns |
-| `--nproc --tmpdir --memory` | yes | accepted; external merge implemented with chunk spills |
-| `--compress-program --cmd-in --cmd-out` | yes | accepted but not wired |
-
-## Notes
-- SAM/BAM/CRAM input remains through rust-htslib/HTSlib.
-- Non-implemented commands intentionally fail fast with `not implemented`.
+| `header generate` | optional `PAIRS_PATH` | `-o`/`--output`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out`, `--chroms-path`, `--sam-path`, `--columns`, `--extra-columns`, `--assembly`, `--no-flip`, `--pairs`/`--pairsam` |
+| `header transfer` | optional `PAIRS_PATH` | `-o`/`--output`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out`, `-r`/`--reference-file` |
+| `header set-columns` | optional `PAIRS_PATH` | `-o`/`--output`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out`, `-c`/`--columns` |
+| `header validate-columns` | optional `PAIRS_PATH` | `-o`/`--output`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out`, `-r`/`--reference-file`, `-c`/`--reference-columns` |

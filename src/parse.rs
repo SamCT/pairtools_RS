@@ -87,10 +87,13 @@ impl Template {
 #[derive(Clone)]
 struct ChromInfo {
     name: String,
-    len: u32,
+    len: u64,
 }
 
+type ChromOrder = (Vec<ChromInfo>, HashMap<String, usize>);
+
 pub fn cmd_parse(args: ParseArgs) -> Result<(), Box<dyn std::error::Error>> {
+    reject_unsupported_parse_options(&args)?;
     if args.walks_policy != "5unique" {
         return Err("not implemented: only --walks-policy 5unique is supported".into());
     }
@@ -119,11 +122,10 @@ pub fn cmd_parse(args: ParseArgs) -> Result<(), Box<dyn std::error::Error>> {
         Box::new(BufWriter::new(io::stdout()))
     };
 
-    write_pairs_header(out.as_mut(), &header, &chroms)?;
+    write_pairs_header(out.as_mut(), &header, &chroms, args.assembly.as_deref())?;
 
     let mut current: Option<Template> = None;
-    let mut ordinal = 0usize;
-    for rec in bam.records() {
+    for (ordinal, rec) in bam.records().enumerate() {
         let record = rec?;
         let qname = String::from_utf8_lossy(record.qname()).to_string();
         if current
@@ -139,7 +141,6 @@ pub fn cmd_parse(args: ParseArgs) -> Result<(), Box<dyn std::error::Error>> {
         }
 
         let aln = parse_record(&record, &header, &qname, args.min_mapq, ordinal)?;
-        ordinal += 1;
         let template = current.as_mut().expect("template exists");
         if record.flags() & 0x40 != 0 {
             template.read1.push(aln);
@@ -155,14 +156,62 @@ pub fn cmd_parse(args: ParseArgs) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+fn reject_unsupported_parse_options(args: &ParseArgs) -> Result<(), Box<dyn std::error::Error>> {
+    if args.max_molecule_size.is_some() {
+        return Err("not implemented: pairtools parse --max-molecule-size".into());
+    }
+    if args.drop_readid {
+        return Err("not implemented: pairtools parse --drop-readid".into());
+    }
+    if args.drop_seq {
+        return Err("not implemented: pairtools parse --drop-seq".into());
+    }
+    if args.add_pair_index {
+        return Err("not implemented: pairtools parse --add-pair-index".into());
+    }
+    if args.add_columns.is_some() {
+        return Err("not implemented: pairtools parse --add-columns".into());
+    }
+    if args.output_parsed_alignments.is_some() {
+        return Err("not implemented: pairtools parse --output-parsed-alignments".into());
+    }
+    if args.output_stats.is_some() {
+        return Err("not implemented: pairtools parse --output-stats".into());
+    }
+    if args.max_inter_align_gap.is_some() {
+        return Err("not implemented: pairtools parse --max-inter-align-gap".into());
+    }
+    if args.readid_transform.is_some() {
+        return Err("not implemented: pairtools parse --readid-transform".into());
+    }
+    let _explicit_flip = args.flip;
+    if args.no_flip {
+        return Err("not implemented: pairtools parse --no-flip".into());
+    }
+    if args.nproc_in.is_some() {
+        return Err("not implemented: pairtools parse --nproc-in".into());
+    }
+    if args.nproc_out.is_some() {
+        return Err("not implemented: pairtools parse --nproc-out".into());
+    }
+    if args.cmd_in.is_some() {
+        return Err("not implemented: pairtools parse --cmd-in".into());
+    }
+    if args.cmd_out.is_some() {
+        return Err("not implemented: pairtools parse --cmd-out".into());
+    }
+    Ok(())
+}
+
 fn write_pairs_header(
     out: &mut dyn Write,
     header: &HeaderView,
     chroms: &[ChromInfo],
+    assembly: Option<&str>,
 ) -> io::Result<()> {
     writeln!(out, "## pairs format v1.0.0")?;
     writeln!(out, "#shape: upper triangle")?;
-    writeln!(out, "#genome_assembly: unknown")?;
+    writeln!(out, "#genome_assembly: {}", assembly.unwrap_or("unknown"))?;
     for chrom in chroms {
         writeln!(out, "#chromsize: {} {}", chrom.name, chrom.len)?;
     }
@@ -342,7 +391,7 @@ fn should_flip(a: &Aln, b: &Aln, order: &HashMap<String, usize>, report_end: Rep
 fn read_chrom_order(
     chroms_path: &Path,
     header: &HeaderView,
-) -> Result<(Vec<ChromInfo>, HashMap<String, usize>), Box<dyn std::error::Error>> {
+) -> Result<ChromOrder, Box<dyn std::error::Error>> {
     let mut sam_chroms = HashMap::new();
     for tid in 0..header.target_count() {
         let name = String::from_utf8_lossy(header.tid2name(tid)).to_string();

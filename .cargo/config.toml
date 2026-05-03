@@ -1,0 +1,2 @@
+[env]
+LIBCLANG_PATH = { value = ".pixi/envs/default/lib", relative = true }

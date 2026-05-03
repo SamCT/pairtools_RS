@@ -5,6 +5,9 @@ use std::fs::File;
 use std::io::{self, BufRead, BufReader, BufWriter, Write};
 use tempfile::NamedTempFile;
 
+const DEFAULT_CHUNK_LINES: usize = 10_000;
+const SORTED_HEADER: &str = "#sorted: chr1-chr2-pos1-pos2";
+
 #[derive(Eq)]
 struct HeapItem {
     line: String,
@@ -27,7 +30,9 @@ impl PartialEq for HeapItem {
 }
 
 pub fn cmd_sort(args: SortArgs) -> Result<(), Box<dyn std::error::Error>> {
+    reject_unsupported_sort_options(&args)?;
     let reader: Box<dyn BufRead> = if let Some(p) = args.input {
+        reject_compressed_path(&p, "compressed sort input")?;
         Box::new(BufReader::new(File::open(p)?))
     } else {
         Box::new(BufReader::new(io::stdin()))
@@ -45,22 +50,99 @@ pub fn cmd_sort(args: SortArgs) -> Result<(), Box<dyn std::error::Error>> {
             continue;
         }
         chunk.push(s);
-        if chunk.len() >= args.max_lines {
-            spill_chunk(&mut chunk, &mut files, &args.tmpdir)?;
+        if chunk.len() >= DEFAULT_CHUNK_LINES {
+            spill_chunk(&mut chunk, &mut files, args.tmpdir.as_deref())?;
         }
     }
     if !chunk.is_empty() {
-        spill_chunk(&mut chunk, &mut files, &args.tmpdir)?;
+        spill_chunk(&mut chunk, &mut files, args.tmpdir.as_deref())?;
     }
     let mut out: Box<dyn Write> = if let Some(p) = args.output {
+        reject_compressed_path(&p, "compressed sort output")?;
         Box::new(BufWriter::new(File::create(p)?))
     } else {
         Box::new(BufWriter::new(io::stdout()))
     };
-    for h in headers {
-        writeln!(out, "{h}")?;
-    }
+    write_sort_headers(&headers, &mut out)?;
     merge_files(&files, &mut out)?;
+    Ok(())
+}
+
+fn reject_unsupported_sort_options(args: &SortArgs) -> Result<(), Box<dyn std::error::Error>> {
+    if args.c1.is_some() {
+        return Err("not implemented: pairtools sort --c1".into());
+    }
+    if args.c2.is_some() {
+        return Err("not implemented: pairtools sort --c2".into());
+    }
+    if args.p1.is_some() {
+        return Err("not implemented: pairtools sort --p1".into());
+    }
+    if args.p2.is_some() {
+        return Err("not implemented: pairtools sort --p2".into());
+    }
+    if args.pt.is_some() {
+        return Err("not implemented: pairtools sort --pt".into());
+    }
+    if !args.extra_col.is_empty() {
+        return Err("not implemented: pairtools sort --extra-col".into());
+    }
+    if args.nproc.is_some() {
+        return Err("not implemented: pairtools sort --nproc".into());
+    }
+    if args.memory.is_some() {
+        return Err("not implemented: pairtools sort --memory".into());
+    }
+    if args.compress_program.is_some() {
+        return Err("not implemented: pairtools sort --compress-program".into());
+    }
+    if args.nproc_in.is_some() {
+        return Err("not implemented: pairtools sort --nproc-in".into());
+    }
+    if args.nproc_out.is_some() {
+        return Err("not implemented: pairtools sort --nproc-out".into());
+    }
+    if args.cmd_in.is_some() {
+        return Err("not implemented: pairtools sort --cmd-in".into());
+    }
+    if args.cmd_out.is_some() {
+        return Err("not implemented: pairtools sort --cmd-out".into());
+    }
+    Ok(())
+}
+
+fn reject_compressed_path(
+    path: &std::path::Path,
+    feature: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let path = path.to_string_lossy();
+    if path.ends_with(".gz") || path.ends_with(".lz4") {
+        return Err(format!("not implemented: {feature}").into());
+    }
+    Ok(())
+}
+
+fn write_sort_headers(headers: &[String], out: &mut Box<dyn Write>) -> io::Result<()> {
+    let mut wrote_sorted = false;
+    for header in headers {
+        if header.starts_with("#sorted:") {
+            if !wrote_sorted {
+                writeln!(out, "{SORTED_HEADER}")?;
+                wrote_sorted = true;
+            }
+            continue;
+        }
+
+        writeln!(out, "{header}")?;
+        if !wrote_sorted && header.starts_with("## pairs format") {
+            writeln!(out, "{SORTED_HEADER}")?;
+            wrote_sorted = true;
+        }
+    }
+
+    if !wrote_sorted {
+        writeln!(out, "{SORTED_HEADER}")?;
+    }
     Ok(())
 }
 
@@ -99,10 +181,14 @@ fn merge_files(
 fn spill_chunk(
     chunk: &mut Vec<String>,
     files: &mut Vec<NamedTempFile>,
-    tmp: &std::path::Path,
+    tmp: Option<&std::path::Path>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     chunk.sort_by(|a, b| cmp_rows(a, b));
-    let mut f = NamedTempFile::new_in(tmp)?;
+    let mut f = if let Some(tmp) = tmp {
+        NamedTempFile::new_in(tmp)?
+    } else {
+        NamedTempFile::new()?
+    };
     for r in chunk.iter() {
         writeln!(f, "{r}")?;
     }
