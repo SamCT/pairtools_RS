@@ -30,20 +30,21 @@ Environment knobs:
   BENCHMARK_RUNS            hyperfine runs. Default: 3
   COMPARE_WORKDIR           Working/output directory. Default: mktemp dir.
   KEEP_COMPARE_WORKDIR      If set to 1, do not delete the workdir.
-  ASM                       Full-pipeline gate assembly. Default: HopH1_282
-  FULL_MAPQ                 Full-pipeline gate MAPQ. Default: 10
-  FULL_MAX_INTER_ALIGN_GAP  Full-pipeline gate gap. Default: 30
+  ASM                       Parse-only pairsam assembly. Default: HopH1_282
+  FULL_MAPQ                 Parse-only pairsam MAPQ. Default: 10
+  FULL_MAX_INTER_ALIGN_GAP  Parse-only pairsam gap. Default: 30
 
 Modes:
   --compare     Run exact supported-subset comparison. Default if no mode is set.
   --benchmark   Run hyperfine only after exact comparison passes.
-  --full-gate   Verify current pairs-rs rejects unsupported full-pipeline parse flags.
+  --full-gate   Verify currently unsupported parse options still fail loudly.
   -h, --help    Show this help.
 
 Notes:
-  This intentionally benchmarks only the currently implemented supported subset:
+  The benchmark still covers only the original drop-sam supported subset:
     parse --drop-sam --min-mapq MAPQ --walks-policy 5unique --report-alignment-end 5 | sort
-  Full pairtools modes are currently expected to fail loudly in pairs-rs until implemented.
+  --compare also runs a parse-only pairsam comparison with assembly, max-inter-align-gap,
+  and add-columns mapq,pos5,pos3,cigar,read_len, then diffs normalized output.
 USAGE
 }
 
@@ -140,6 +141,10 @@ trap cleanup EXIT
 
 pairtools_out="$workdir/pairtools.supported.sorted.pairs"
 pairs_rs_out="$workdir/pairs-rs.supported.sorted.pairs"
+pairtools_parse_out="$workdir/pairtools.supported.pairsam"
+pairs_rs_parse_out="$workdir/pairs-rs.supported.pairsam"
+pairtools_parse_norm="$workdir/pairtools.supported.normalized.pairsam"
+pairs_rs_parse_norm="$workdir/pairs-rs.supported.normalized.pairsam"
 
 run_pairtools_supported() {
   pairtools parse \
@@ -161,6 +166,36 @@ run_pairs_rs_supported() {
     --report-alignment-end "$report_end" \
     "$bam" \
     | "$pairs_rs_bin" sort > "$pairs_rs_out"
+}
+
+run_pairtools_parse_only() {
+  pairtools parse \
+    --chroms-path "$chroms" \
+    --assembly "$asm" \
+    --min-mapq "$full_mapq" \
+    --walks-policy 5unique \
+    --max-inter-align-gap "$full_gap" \
+    --report-alignment-end 5 \
+    --add-columns mapq,pos5,pos3,cigar,read_len \
+    "$bam" > "$pairtools_parse_out"
+}
+
+run_pairs_rs_parse_only() {
+  "$pairs_rs_bin" parse \
+    --chroms-path "$chroms" \
+    --assembly "$asm" \
+    --min-mapq "$full_mapq" \
+    --walks-policy 5unique \
+    --max-inter-align-gap "$full_gap" \
+    --report-alignment-end 5 \
+    --add-columns mapq,pos5,pos3,cigar,read_len \
+    "$bam" > "$pairs_rs_parse_out"
+}
+
+normalize_parse_output() {
+  local input="$1"
+  local output="$2"
+  sed '/^#samheader:/d' "$input" > "$output"
 }
 
 compare_outputs() {
@@ -186,33 +221,41 @@ compare_outputs() {
   echo "Comparing pairs-rs output to live pairtools oracle..."
   diff -u "$pairtools_out" "$pairs_rs_out"
   echo "Exact supported-subset parity passed."
+
+  echo "Running live pairtools parse-only pairsam oracle..."
+  run_pairtools_parse_only
+  normalize_parse_output "$pairtools_parse_out" "$pairtools_parse_norm"
+
+  echo "Running pairs-rs parse-only pairsam candidate..."
+  run_pairs_rs_parse_only
+  normalize_parse_output "$pairs_rs_parse_out" "$pairs_rs_parse_norm"
+
+  echo "Comparing normalized parse-only pairsam output to live pairtools oracle..."
+  diff -u "$pairtools_parse_norm" "$pairs_rs_parse_norm"
+  echo "Normalized parse-only pairsam parity passed."
 }
 
 full_gate() {
-  local stderr="$workdir/full-mode-gate.stderr"
+  local stderr="$workdir/unsupported-parse-gate.stderr"
   set +e
   "$pairs_rs_bin" parse \
-    --chroms-path "$chroms" \
-    --assembly "$asm" \
-    --min-mapq "$full_mapq" \
-    --walks-policy 5unique \
-    --max-inter-align-gap "$full_gap" \
-    --report-alignment-end 5 \
-    --add-columns mapq,pos5,pos3,cigar,read_len \
+    -c "$chroms" \
+    --drop-sam \
+    --add-columns matched_bp \
     "$bam" > /dev/null 2> "$stderr"
   local status=$?
   set -e
 
   if ((status == 0)); then
-    echo "Expected full-mode parse to fail loudly, but it succeeded." >&2
+    echo "Expected unsupported parse option to fail loudly, but it succeeded." >&2
     exit 1
   fi
   if ! grep -q "not implemented" "$stderr"; then
-    echo "Full-mode parse failed, but not with a not-implemented gate:" >&2
+    echo "Unsupported parse option failed, but not with a not-implemented gate:" >&2
     cat "$stderr" >&2
     exit 1
   fi
-  echo "Full-pipeline unsupported parse flags are gated loudly."
+  echo "Unsupported parse flags are gated loudly."
 }
 
 benchmark_outputs() {

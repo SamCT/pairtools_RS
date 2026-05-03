@@ -1,5 +1,6 @@
 use std::process::Command;
 use std::sync::Mutex;
+use tempfile::TempDir;
 
 static ORACLE_LOCK: Mutex<()> = Mutex::new(());
 
@@ -40,6 +41,17 @@ fn assert_parse_fixture(name: &str, extra_args: &[&str]) {
     assert_eq!(run_pairs_rs(&args), run_pairtools(&args), "{name}");
 }
 
+fn assert_parse_fixture_pairsam(name: &str, extra_args: &[&str]) {
+    let chroms = format!("tests/fixtures/parse_milestone1/{name}/chrom.sizes");
+    let input = format!("tests/fixtures/parse_milestone1/{name}/input.sam");
+
+    let mut args = vec!["parse", "-c", chroms.as_str()];
+    args.extend_from_slice(extra_args);
+    args.push(input.as_str());
+
+    assert_eq!(run_pairs_rs(&args), run_pairtools(&args), "{name}");
+}
+
 #[test]
 fn parse_milestone1_matches_pairtools_1_1_3_oracle() {
     let fixtures: &[(&str, &[&str])] = &[
@@ -64,6 +76,98 @@ fn parse_milestone1_matches_pairtools_1_1_3_oracle() {
 }
 
 #[test]
+fn parse_pairsam_matches_pairtools_1_1_3_oracle() {
+    let fixtures: &[(&str, &[&str])] = &[
+        ("simple_uu", &[]),
+        ("unmapped_mate", &[]),
+        ("low_mapq_mate", &[]),
+        ("secondary_present", &[]),
+        ("supplementary_present", &[]),
+        ("soft_clipped", &[]),
+        ("hard_clipped", &[]),
+        ("indel_ref_span", &[]),
+    ];
+
+    for (name, extra_args) in fixtures {
+        assert_parse_fixture_pairsam(name, extra_args);
+    }
+}
+
+#[test]
+fn parse_add_columns_matches_pairtools_1_1_3_oracle() {
+    let fixtures = [
+        "simple_uu",
+        "unmapped_mate",
+        "low_mapq_mate",
+        "soft_clipped",
+        "hard_clipped",
+        "indel_ref_span",
+    ];
+    for name in fixtures {
+        assert_parse_fixture(name, &["--add-columns", "mapq,pos5,pos3,cigar,read_len"]);
+    }
+    assert_parse_fixture_pairsam(
+        "simple_uu",
+        &["--add-columns", "mapq,pos5,pos3,cigar,read_len"],
+    );
+}
+
+#[test]
+fn parse_max_inter_align_gap_matches_pairtools_1_1_3_oracle() {
+    let chroms = "tests/fixtures/parse_milestone2/bwa_mem2_leading_gap/chrom.sizes";
+    let input = "tests/fixtures/parse_milestone2/bwa_mem2_leading_gap/input.sam";
+    for gap in ["30", "100"] {
+        let args = [
+            "parse",
+            "-c",
+            chroms,
+            "--drop-sam",
+            "--max-inter-align-gap",
+            gap,
+            input,
+        ];
+        assert_eq!(run_pairs_rs(&args), run_pairtools(&args), "gap {gap}");
+    }
+}
+
+#[test]
+fn parse_output_stats_matches_pairtools_1_1_3_oracle() {
+    for name in ["simple_uu", "same_chrom_position_flip"] {
+        let chroms = format!("tests/fixtures/parse_milestone1/{name}/chrom.sizes");
+        let input = format!("tests/fixtures/parse_milestone1/{name}/input.sam");
+        let tmp = TempDir::new().unwrap();
+        let pairs_rs_stats = tmp.path().join("pairs-rs.stats");
+        let pairtools_stats = tmp.path().join("pairtools.stats");
+        let pairs_rs_stats_s = pairs_rs_stats.to_string_lossy();
+        let pairtools_stats_s = pairtools_stats.to_string_lossy();
+
+        let pairs_rs_args = [
+            "parse",
+            "-c",
+            chroms.as_str(),
+            "--output-stats",
+            pairs_rs_stats_s.as_ref(),
+            input.as_str(),
+        ];
+        let pairtools_args = [
+            "parse",
+            "-c",
+            chroms.as_str(),
+            "--output-stats",
+            pairtools_stats_s.as_ref(),
+            input.as_str(),
+        ];
+
+        assert_eq!(run_pairs_rs(&pairs_rs_args), run_pairtools(&pairtools_args));
+        assert_eq!(
+            std::fs::read_to_string(&pairs_rs_stats).unwrap(),
+            std::fs::read_to_string(&pairtools_stats).unwrap(),
+            "{name}"
+        );
+    }
+}
+
+#[test]
 fn sort_simple_matches_pairtools_1_1_3_oracle() {
     let args = ["sort", "tests/fixtures/sort_simple/input.pairs"];
     assert_eq!(run_pairs_rs(&args), run_pairtools(&args));
@@ -82,15 +186,6 @@ fn assert_pairs_rs_failure(args: &[&str], expected_stderr: &str) {
 
 #[test]
 fn parse_rejects_unsupported_pairtools_options_loudly() {
-    assert_pairs_rs_failure(
-        &[
-            "parse",
-            "-c",
-            "tests/fixtures/parse_milestone1/simple_uu/chrom.sizes",
-            "tests/fixtures/parse_milestone1/simple_uu/input.sam",
-        ],
-        "not implemented",
-    );
     assert_pairs_rs_failure(
         &[
             "parse",
@@ -120,11 +215,11 @@ fn parse_rejects_unsupported_pairtools_options_loudly() {
             "-c",
             "tests/fixtures/parse_milestone1/simple_uu/chrom.sizes",
             "--drop-sam",
-            "--output-stats",
-            "stats.txt",
+            "--add-columns",
+            "matched_bp",
             "tests/fixtures/parse_milestone1/simple_uu/input.sam",
         ],
-        "not implemented: pairtools parse --output-stats",
+        "not implemented: pairtools parse --add-columns matched_bp",
     );
 }
 

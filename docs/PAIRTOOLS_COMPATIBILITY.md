@@ -55,13 +55,13 @@ Arguments: optional `SAM_PATH`.
 | `--max-molecule-size` | explicitly not implemented |
 | `--drop-readid` | explicitly not implemented |
 | `--drop-seq` | explicitly not implemented |
-| `--drop-sam` | tested oracle parity; currently required |
+| `--drop-sam` | tested oracle parity; pairsam output is also supported when omitted |
 | `--add-pair-index` | explicitly not implemented |
-| `--add-columns` | explicitly not implemented |
+| `--add-columns` | tested oracle parity only for `mapq,pos5,pos3,cigar,read_len`; all other values explicitly not implemented |
 | `--output-parsed-alignments` | explicitly not implemented |
-| `--output-stats` | explicitly not implemented |
+| `--output-stats` | tested oracle parity for parse-time PairCounter TSV output |
 | `--report-alignment-end` | tested oracle parity for `5` and `3` |
-| `--max-inter-align-gap` | explicitly not implemented |
+| `--max-inter-align-gap` | tested oracle parity for supported `5unique` walks |
 | `--walks-policy` | tested oracle parity only for default `5unique`; all other values explicitly not implemented |
 | `--readid-transform` | explicitly not implemented |
 | `--flip` | implemented as default flipping behavior |
@@ -71,7 +71,7 @@ Arguments: optional `SAM_PATH`.
 | `--cmd-in` | explicitly not implemented |
 | `--cmd-out` | explicitly not implemented |
 
-Current parse oracle fixtures cover small SAM inputs for UU pairs, unmapped and low-MAPQ mates, reverse-strand 5'/3' coordinates, soft/hard clipping, indel reference span, interchromosomal and same-chromosome flipping, secondary alignments, and supplementary alignments. Pairsam output without `--drop-sam` is explicitly not implemented until SAM column parity is implemented.
+Current parse oracle fixtures cover small SAM inputs for UU pairs, unmapped and low-MAPQ mates, reverse-strand 5'/3' coordinates, soft/hard clipping, indel reference span, interchromosomal and same-chromosome flipping, secondary alignments, supplementary alignments, pairsam SAM columns, supported extra columns, parse-time stats, and a BWA-MEM2-style leading soft-clipped split affected by `--max-inter-align-gap`.
 
 ## `sort`
 

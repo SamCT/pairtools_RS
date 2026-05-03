@@ -29,7 +29,7 @@ D:\pairtools_RS_testdata\hop_s01\
   merged.valid.stats.txt                   # optional full-mode output
 ```
 
-The current Rust milestone supports only this real-data subset:
+The harness still benchmarks this original supported subset:
 
 ```bash
 pairtools parse \
@@ -42,18 +42,29 @@ pairtools parse \
 | pairtools sort
 ```
 
-The full pipeline remains a future parity target because it uses currently unsupported behavior:
+The harness now also compares parse-only pairsam output for the current target parse surface:
 
-- pairsam output without `--drop-sam`
-- `--output-stats`
-- `--assembly`
-- `--max-inter-align-gap`
-- `--add-columns`
+```bash
+pairtools parse \
+  -c Hop282H1.chrom.sizes \
+  --assembly "$ASM" \
+  --min-mapq "$FULL_MAPQ" \
+  --walks-policy 5unique \
+  --max-inter-align-gap "$FULL_MAX_INTER_ALIGN_GAP" \
+  --report-alignment-end 5 \
+  --add-columns mapq,pos5,pos3,cigar,read_len \
+  BWAMEM2_R1R2_s01.bam
+```
+
+For the parse-only comparison, the script removes `#samheader:` lines before diffing to avoid irrelevant BAM header provenance differences while preserving pair rows, pair columns, and parse metadata.
+
+The rest of the full pipeline remains a future parity target because it uses currently unsupported behavior:
+
 - compressed sort output
 - `sort --nproc`
 - downstream `merge`, `dedup`, `select`, `split`, and `stats`
 
-The harness checks that unsupported full-mode parse flags fail loudly instead of being accepted as no-ops.
+The harness checks that still-unsupported parse flags fail loudly instead of being accepted as no-ops.
 
 ## Build First
 
@@ -73,7 +84,7 @@ export PAIRS_RS_BIN="$HOME/pairtools_RS_target/release/pairs-rs"
 
 ## Exact Comparison
 
-This compares live `pairtools 1.1.3` output to `pairs-rs` output. If `out_s01.PAIRTOOLSDEF.sorted.pairs` exists, it is also compared to the live pairtools output.
+This compares live `pairtools 1.1.3` output to `pairs-rs` output. It runs both the original parse+sort drop-sam comparison and the parse-only normalized pairsam comparison. If `out_s01.PAIRTOOLSDEF.sorted.pairs` exists, it is also compared to the live pairtools parse+sort output.
 
 ```bash
 cd /mnt/c/Users/talbots/pairtools_RS
@@ -96,9 +107,9 @@ COMPARE_WORKDIR=/mnt/d/pairtools_RS_testdata/hop_s01/compare_outputs \
 pixi run bash scripts/real_bam_compare.sh --compare
 ```
 
-## Full-Mode Gate
+## Unsupported-Option Gate
 
-This verifies that the current Rust parser rejects the full pipeline's unsupported parse options with a `not implemented` error.
+This verifies that currently unsupported parse options still fail with a `not implemented` error.
 
 ```bash
 pixi run bash scripts/real_bam_compare.sh --full-gate
