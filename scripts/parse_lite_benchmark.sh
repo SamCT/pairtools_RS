@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [[ $# -lt 2 ]]; then
-  echo "Usage: $0 <input.sam|input.bam> <out_prefix> [threads]"
+  echo "Usage: $0 <input.sam|input.bam> <out_prefix>"
   exit 1
 fi
 
