@@ -1,196 +1,287 @@
-use std::io::{self, BufRead, BufReader, Read, Write};
-use std::process::{Command, Stdio};
+use std::cmp::Ordering;
+use std::collections::HashMap;
+use std::env;
+use std::fs::File;
+use std::io::{self, BufRead, BufReader, BufWriter, Write};
+use std::path::PathBuf;
 
-#[derive(Debug, Clone)]
-struct LiteRec {
-    qname: String,
-    chrom: String,
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut args: Vec<String> = env::args().skip(1).collect();
+    if args.is_empty() {
+        return Err("usage: pairs-rs <command> [options]".into());
+    }
+    let cmd = args.remove(0);
+    match cmd.as_str() {
+        "parse" => cmd_parse(args),
+        "sort" => cmd_sort(args),
+        "parse2" | "dedup" | "flip" | "merge" | "split" | "select" | "stats" | "restrict"
+        | "filterbycov" | "phase" | "markasdup" => Err(format!(
+            "command '{cmd}' is recognized but not implemented yet; failing loudly for compatibility tracking"
+        )
+        .into()),
+        _ => Err(format!("unknown command: {cmd}").into()),
+    }
+}
+
+#[derive(Clone)]
+struct Aln {
+    q: String,
+    chr: String,
     pos: i64,
     strand: char,
     mapped: bool,
 }
 
-#[derive(Debug, Clone)]
-struct Config {
-    print_header: bool,
-    walks_policy: String,
-    drop_readid: bool,
-    threads: usize,
-}
-
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let cfg = parse_args()?;
-
-    if cfg.walks_policy != "5unique" {
-        return Err(format!(
-            "unsupported --walks-policy={} for parse-lite; use --walks-policy 5unique for parity",
-            cfg.walks_policy
-        )
-        .into());
-    }
-
-    if cfg.print_header {
-        if cfg.drop_readid {
-            println!("## pairs format v1.0.0");
-            println!("#columns: chrom1 pos1 chrom2 pos2 strand1 strand2 pair_type");
-        } else {
-            println!("## pairs format v1.0.0");
-            println!("#columns: readID chrom1 pos1 chrom2 pos2 strand1 strand2 pair_type");
-        }
-    }
-
-    let mut bytes = Vec::new();
-    io::stdin().read_to_end(&mut bytes)?;
-    if bytes.starts_with(b"BAM\x01") {
-        let sam = bam_to_sam(&bytes, cfg.threads)?;
-        parse_sam_records(sam.as_bytes(), &cfg)?;
-    } else {
-        parse_sam_records(&bytes, &cfg)?;
-    }
-    Ok(())
-}
-
-fn parse_args() -> Result<Config, Box<dyn std::error::Error>> {
-    let mut print_header = true;
-    let mut walks_policy = String::from("5unique");
+fn cmd_parse(args: Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
+    let mut chroms: Option<PathBuf> = None;
+    let mut output: Option<PathBuf> = None;
+    let mut min_mapq: u8 = 1;
+    let mut report = "5prime".to_string();
     let mut drop_readid = false;
-    let mut threads: usize = 1;
-
-    let mut args = std::env::args().skip(1);
-    while let Some(arg) = args.next() {
-        match arg.as_str() {
-            "--no-header" => print_header = false,
-            "--drop-readid" => drop_readid = true,
-            "--walks-policy" => {
-                walks_policy = args
-                    .next()
-                    .ok_or("missing value after --walks-policy")?;
+    let mut input: Option<PathBuf> = None;
+    let mut _threads: usize = 1;
+    let mut i = 0;
+    while i < args.len() {
+        match args[i].as_str() {
+            "-c" | "--chroms-path" => {
+                i += 1;
+                chroms = Some(PathBuf::from(args.get(i).ok_or("missing chroms path")?));
+            }
+            "-o" | "--output" => {
+                i += 1;
+                output = Some(PathBuf::from(args.get(i).ok_or("missing output")?));
             }
             "--threads" | "-@" => {
-                let raw = args.next().ok_or("missing value after --threads/-@")?;
-                threads = raw.parse::<usize>().map_err(|_| "--threads/-@ must be a positive integer")?;
-                if threads == 0 { return Err("--threads/-@ must be >= 1".into()); }
+                i += 1;
+                _threads = args.get(i).ok_or("missing threads value")?.parse()?;
+                if _threads == 0 {
+                    return Err("--threads/-@ must be >= 1".into());
+                }
             }
-            "-h" | "--help" => {
-                print_help();
-                std::process::exit(0);
+            "--min-mapq" => {
+                i += 1;
+                min_mapq = args.get(i).ok_or("missing min-mapq")?.parse()?;
             }
-            _ => return Err(format!("unknown argument: {arg}").into()),
+            "--report-alignment-end" => {
+                i += 1;
+                report = args.get(i).ok_or("missing report-alignment-end")?.clone();
+                if report != "5prime" && report != "3prime" {
+                    return Err("--report-alignment-end must be 5prime or 3prime".into());
+                }
+            }
+            "--drop-readid" => drop_readid = true,
+            s if s.starts_with('-') => return Err(format!("unsupported parse option: {s}").into()),
+            p => input = Some(PathBuf::from(p)),
         }
+        i += 1;
     }
 
-    Ok(Config {
-        print_header,
-        walks_policy,
-        drop_readid,
-        threads,
-    })
-}
+    let order = read_chroms(chroms.ok_or("parse requires -c/--chroms-path")?)?;
+    let reader: Box<dyn BufRead> = if let Some(p) = input {
+        Box::new(BufReader::new(File::open(p)?))
+    } else {
+        Box::new(BufReader::new(io::stdin()))
+    };
+    let mut out: Box<dyn Write> = if let Some(p) = output {
+        Box::new(BufWriter::new(File::create(p)?))
+    } else {
+        Box::new(BufWriter::new(io::stdout()))
+    };
 
-fn print_help() {
-    eprintln!(
-        "pairs-rs parse-lite\n\nUsage: pairs-rs [--no-header] [--drop-readid] [--walks-policy 5unique] [--threads N | -@ N]\n\nThis parse-lite implementation currently supports only --walks-policy 5unique for pairtools parity tests."
-    );
-}
+    writeln!(out, "## pairs format v1.0.0")?;
+    writeln!(
+        out,
+        "#columns: {}chrom1 pos1 chrom2 pos2 strand1 strand2 pair_type",
+        if drop_readid { "" } else { "readID " }
+    )?;
 
-fn bam_to_sam(bam_bytes: &[u8], threads: usize) -> Result<String, Box<dyn std::error::Error>> {
-    let mut child = Command::new("samtools")
-        .args(["view", "-h", "-@", &threads.to_string(), "-"])
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .spawn()?;
-
-    child.stdin.as_mut().unwrap().write_all(bam_bytes)?;
-    let output = child.wait_with_output()?;
-    if !output.status.success() {
-        return Err("samtools view failed while decoding BAM stdin".into());
-    }
-    Ok(String::from_utf8(output.stdout)?)
-}
-
-fn parse_sam_records(data: &[u8], cfg: &Config) -> Result<(), Box<dyn std::error::Error>> {
-    let reader = BufReader::new(data);
-    let mut pending: Option<LiteRec> = None;
-
-    for line in reader.lines() {
-        let line = line?;
-        if line.starts_with('@') || line.trim().is_empty() {
+    let mut pending: Option<Aln> = None;
+    for l in reader.lines() {
+        let line = l?;
+        if line.starts_with('@') || line.is_empty() {
             continue;
         }
-        let fields: Vec<&str> = line.split('\t').collect();
-        if fields.len() < 11 {
+        let f: Vec<&str> = line.split('\t').collect();
+        if f.len() < 5 {
             continue;
         }
-        let qname = fields[0].to_string();
-        let flag: u16 = fields[1].parse().unwrap_or(0);
-        let rname = fields[2].to_string();
-        let pos: i64 = fields[3].parse().unwrap_or(0);
-        let mapped = (flag & 0x4) == 0 && rname != "*";
-        let strand = if (flag & 0x10) != 0 { '-' } else { '+' };
-
-        let rec = LiteRec {
-            qname,
-            chrom: rname,
-            pos,
-            strand,
+        let flag: u16 = f[1].parse().unwrap_or(0);
+        let mapq: u8 = f[4].parse().unwrap_or(0);
+        let mapped = (flag & 0x4) == 0 && f[2] != "*" && mapq >= min_mapq;
+        let pos = i64::from(f[3].parse::<i32>().unwrap_or(0));
+        let adj = if mapped && report == "3prime" { 1 } else { 0 };
+        let rec = Aln {
+            q: f[0].into(),
+            chr: f[2].into(),
+            pos: pos + adj,
+            strand: if flag & 16 != 0 { '-' } else { '+' },
             mapped,
         };
-        pending = flush_or_set_pending(pending, rec, cfg);
+
+        pending = match pending {
+            None => Some(rec),
+            Some(p) => {
+                if p.q == rec.q {
+                    emit_pair(&mut out, p, rec, drop_readid, &order)?;
+                    None
+                } else {
+                    emit_unpaired(&mut out, p, drop_readid)?;
+                    Some(rec)
+                }
+            }
+        };
     }
-    if let Some(last) = pending {
-        emit_unpaired(&last, cfg);
+    if let Some(p) = pending {
+        emit_unpaired(&mut out, p, drop_readid)?;
     }
     Ok(())
 }
 
-fn flush_or_set_pending(pending: Option<LiteRec>, current: LiteRec, cfg: &Config) -> Option<LiteRec> {
-    match pending {
-        None => Some(current),
-        Some(prev) => {
-            if prev.qname == current.qname {
-                emit_pair(&prev, &current, cfg);
-                None
-            } else {
-                emit_unpaired(&prev, cfg);
-                Some(current)
-            }
-        }
-    }
-}
-
-fn emit_unpaired(r: &LiteRec, cfg: &Config) {
-    let (chrom1, pos1, strand1) = map_side(r);
-    let pair_type = if r.mapped { "MU" } else { "NN" };
-    if cfg.drop_readid {
-        println!("{}\t{}\t!\t0\t{}\t.\t{}", chrom1, pos1, strand1, pair_type);
+fn emit_unpaired(out: &mut Box<dyn Write>, r: Aln, drop_id: bool) -> io::Result<()> {
+    let (c, p, s) = side(&r);
+    if drop_id {
+        writeln!(out, "{}\t{}\t!\t0\t{}\t.\tMU", c, p, s)
     } else {
-        println!("{}\t{}\t{}\t!\t0\t{}\t.\t{}", r.qname, chrom1, pos1, strand1, pair_type);
+        writeln!(out, "{}\t{}\t{}\t!\t0\t{}\t.\tMU", r.q, c, p, s)
     }
 }
 
-fn emit_pair(a: &LiteRec, b: &LiteRec, cfg: &Config) {
-    let (chrom1, pos1, strand1) = map_side(a);
-    let (chrom2, pos2, strand2) = map_side(b);
-    let pair_type = match (a.mapped, b.mapped) {
+fn emit_pair(
+    out: &mut Box<dyn Write>,
+    a: Aln,
+    b: Aln,
+    drop_id: bool,
+    order: &HashMap<String, usize>,
+) -> io::Result<()> {
+    let (x, y) = if should_flip(&a, &b, order) {
+        (b, a)
+    } else {
+        (a, b)
+    };
+    let (c1, p1, s1) = side(&x);
+    let (c2, p2, s2) = side(&y);
+    let pt = match (x.mapped, y.mapped) {
         (true, true) => "UU",
         (true, false) => "UM",
         (false, true) => "MU",
         (false, false) => "NN",
     };
-    if cfg.drop_readid {
-        println!("{}\t{}\t{}\t{}\t{}\t{}\t{}", chrom1, pos1, chrom2, pos2, strand1, strand2, pair_type);
+    if drop_id {
+        writeln!(
+            out,
+            "{}\t{}\t{}\t{}\t{}\t{}\t{}",
+            c1, p1, c2, p2, s1, s2, pt
+        )
     } else {
-        println!(
+        writeln!(
+            out,
             "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
-            a.qname, chrom1, pos1, chrom2, pos2, strand1, strand2, pair_type
-        );
+            x.q, c1, p1, c2, p2, s1, s2, pt
+        )
     }
 }
 
-fn map_side(r: &LiteRec) -> (String, i64, char) {
+fn side(r: &Aln) -> (String, i64, char) {
     if r.mapped {
-        (r.chrom.clone(), r.pos, r.strand)
+        (r.chr.clone(), r.pos, r.strand)
     } else {
-        ("!".to_string(), 0, '.')
+        ("!".into(), 0, '.')
     }
+}
+
+fn should_flip(a: &Aln, b: &Aln, o: &HashMap<String, usize>) -> bool {
+    let oa = *o.get(&a.chr).unwrap_or(&usize::MAX);
+    let ob = *o.get(&b.chr).unwrap_or(&usize::MAX);
+    oa > ob || (oa == ob && a.pos > b.pos)
+}
+
+fn read_chroms(p: PathBuf) -> Result<HashMap<String, usize>, Box<dyn std::error::Error>> {
+    let mut m = HashMap::new();
+    for (i, l) in BufReader::new(File::open(p)?).lines().enumerate() {
+        let s = l?;
+        if let Some(c) = s.split('\t').next() {
+            if !c.is_empty() {
+                m.insert(c.into(), i);
+            }
+        }
+    }
+    Ok(m)
+}
+
+fn cmd_sort(args: Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
+    let mut input: Option<PathBuf> = None;
+    let mut output: Option<PathBuf> = None;
+    let mut _threads: usize = 1;
+    let mut i = 0;
+    while i < args.len() {
+        match args[i].as_str() {
+            "-o" | "--output" => {
+                i += 1;
+                output = Some(PathBuf::from(args.get(i).ok_or("missing output")?));
+            }
+            "--nproc" | "--threads" | "-@" => {
+                i += 1;
+                _threads = args.get(i).ok_or("missing threads value")?.parse()?;
+                if _threads == 0 {
+                    return Err("--nproc/--threads/-@ must be >= 1".into());
+                }
+            }
+            s if s.starts_with('-') => return Err(format!("unsupported sort option: {s}").into()),
+            p => input = Some(PathBuf::from(p)),
+        }
+        i += 1;
+    }
+
+    let reader: Box<dyn BufRead> = if let Some(p) = input {
+        Box::new(BufReader::new(File::open(p)?))
+    } else {
+        Box::new(BufReader::new(io::stdin()))
+    };
+    let mut h = Vec::new();
+    let mut rows = Vec::new();
+    for l in reader.lines() {
+        let s = l?;
+        if s.starts_with('#') {
+            h.push(s)
+        } else if !s.is_empty() {
+            rows.push(s)
+        }
+    }
+    rows.sort_by(|a, b| cmp_rows(a, b));
+
+    let mut out: Box<dyn Write> = if let Some(p) = output {
+        Box::new(BufWriter::new(File::create(p)?))
+    } else {
+        Box::new(BufWriter::new(io::stdout()))
+    };
+    for x in h {
+        writeln!(out, "{x}")?;
+    }
+    for x in rows {
+        writeln!(out, "{x}")?;
+    }
+    Ok(())
+}
+
+fn cmp_rows(a: &str, b: &str) -> Ordering {
+    let fa: Vec<&str> = a.split('\t').collect();
+    let fb: Vec<&str> = b.split('\t').collect();
+    let (c1, p1, c2, p2, t1) = extract(&fa);
+    let (d1, q1, d2, q2, t2) = extract(&fb);
+    c1.cmp(d1)
+        .then(c2.cmp(d2))
+        .then(p1.cmp(&q1))
+        .then(p2.cmp(&q2))
+        .then(t1.cmp(t2))
+}
+
+fn extract<'a>(f: &[&'a str]) -> (&'a str, i64, &'a str, i64, &'a str) {
+    let o = if f.len() > 7 { 1 } else { 0 };
+    (
+        f.get(o).copied().unwrap_or(""),
+        f.get(o + 1).and_then(|x| x.parse().ok()).unwrap_or(0),
+        f.get(o + 2).copied().unwrap_or(""),
+        f.get(o + 3).and_then(|x| x.parse().ok()).unwrap_or(0),
+        f.get(o + 6).copied().unwrap_or(""),
+    )
 }

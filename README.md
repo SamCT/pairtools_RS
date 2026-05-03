@@ -1,3 +1,11 @@
+# pairtools-rs rewrite scope
+
+This repository now targets a **full Rust rewrite** of pairtools with command-line and output compatibility as the primary goal.
+
+- No parse-lite framing: partial/fast-path behavior is transitional and tracked as compatibility gaps.
+- Oracle for behavior is pairtools CLI behavior and deterministic fixture outputs.
+- Performance work is explicitly secondary to compatibility parity.
+
 # pairtools
 
 [![Documentation Status](https://readthedocs.org/projects/pairtools/badge/?version=latest)](http://pairtools.readthedocs.org/en/latest/)
