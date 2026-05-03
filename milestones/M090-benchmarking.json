@@ -1,0 +1,79 @@
+{
+  "id": "M090",
+  "name": "Benchmarking",
+  "status": "planned",
+  "summary": "Benchmark only after parity tests pass.",
+  "goal": "Maintain benchmark harnesses and report performance only after normalized oracle parity passes.",
+  "explicit_non_goals": [
+    "Do not implement new parse or sort behavior.",
+    "Do not claim speedups when oracle parity has not passed.",
+    "Do not benchmark downstream commands as Rust-supported behavior."
+  ],
+  "allowed_paths": [
+    "scripts/benchmark_sort_threads.sh",
+    "scripts/real_bam_compare.sh",
+    "docs/**",
+    "milestones/M090-benchmarking.json"
+  ],
+  "forbidden_paths": [
+    "src/**"
+  ],
+  "allowed_commands": [
+    "bash -n scripts/benchmark_sort_threads.sh",
+    "bash -n scripts/real_bam_compare.sh"
+  ],
+  "forbidden_commands": [],
+  "allowed_pairtools_commands": [
+    "pairtools parse",
+    "pairtools sort"
+  ],
+  "forbidden_pairtools_commands": [
+    "pairtools merge",
+    "pairtools dedup",
+    "pairtools select",
+    "pairtools split",
+    "pairtools stats"
+  ],
+  "oracle_commands": [
+    "pixi run pairtools parse ... | pixi run pairtools sort ..."
+  ],
+  "candidate_commands": [
+    "scripts/benchmark_sort_threads.sh --help"
+  ],
+  "required_tests": [
+    "bash -n scripts/benchmark_sort_threads.sh",
+    "git diff --check"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "Benchmark commands state the parity prerequisite.",
+    "Benchmark output records wall time, CPU, RSS, temp disk, and output sizes when applicable."
+  ],
+  "known_risks": [
+    "Benchmarks are host- and input-sensitive."
+  ],
+  "next_milestone_candidates": [
+    "M100"
+  ]
+}

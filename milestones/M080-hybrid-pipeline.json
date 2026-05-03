@@ -1,0 +1,85 @@
+{
+  "id": "M080",
+  "name": "Hybrid pipeline",
+  "status": "planned",
+  "summary": "Production bridge script using pairs-rs only for implemented front-half and pairtools only for downstream shell steps.",
+  "goal": "Maintain the shell pipeline that uses pairs-rs for parse+sort only and pairtools for downstream commands that are not implemented in Rust.",
+  "explicit_non_goals": [
+    "Do not implement downstream commands in Rust.",
+    "Do not call pairtools from Rust runtime code.",
+    "Do not tune Rust parse or sort performance."
+  ],
+  "allowed_paths": [
+    "scripts/run_hic_hybrid_pairs_rs_pipeline.sh",
+    "README.md",
+    "docs/**",
+    "milestones/M080-hybrid-pipeline.json"
+  ],
+  "forbidden_paths": [
+    "src/**",
+    "Cargo.toml",
+    "pixi.toml"
+  ],
+  "allowed_commands": [
+    "bash -n scripts/run_hic_hybrid_pairs_rs_pipeline.sh",
+    "git diff --check"
+  ],
+  "forbidden_commands": [
+    "cargo check",
+    "pixi run cargo check"
+  ],
+  "allowed_pairtools_commands": [
+    "pairtools merge",
+    "pairtools dedup",
+    "pairtools select",
+    "pairtools split",
+    "pairtools stats"
+  ],
+  "forbidden_pairtools_commands": [
+    "pairtools parse2"
+  ],
+  "oracle_commands": [
+    "Not applicable as a Rust runtime oracle; pairtools downstream commands are intentionally shell-pipeline-only for this milestone."
+  ],
+  "candidate_commands": [
+    "DRY_RUN=1 scripts/run_hic_hybrid_pairs_rs_pipeline.sh"
+  ],
+  "required_tests": [
+    "bash -n scripts/run_hic_hybrid_pairs_rs_pipeline.sh",
+    "git diff --check"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "Pipeline script remains explicit that pairs-rs accelerates parse+sort only.",
+    "Downstream pairtools use remains confined to shell pipeline code.",
+    "No Rust runtime code calls pairtools or samtools."
+  ],
+  "known_risks": [
+    "Shell pipeline integration does not imply Rust downstream command support."
+  ],
+  "next_milestone_candidates": [
+    "M090",
+    "M100"
+  ]
+}

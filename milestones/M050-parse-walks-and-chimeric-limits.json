@@ -1,0 +1,81 @@
+{
+  "id": "M050",
+  "name": "Parse walks and chimeric limits",
+  "status": "planned",
+  "summary": "Bounded pairtools parse behavior for walks/chimeric/supplementary cases.",
+  "goal": "Clearly bound pairtools parse behavior for walks, chimeric reads, and supplementary alignments with loud failures for unsupported walks.",
+  "explicit_non_goals": [
+    "Do not implement parse2.",
+    "Do not implement downstream commands.",
+    "Do not claim full complex-walk parity unless oracle fixtures prove it."
+  ],
+  "allowed_paths": [
+    "src/cli.rs",
+    "src/main.rs",
+    "src/parse.rs",
+    "tests/**",
+    "docs/**",
+    "milestones/M050-parse-walks-and-chimeric-limits.json"
+  ],
+  "forbidden_paths": [
+    "src/sort.rs"
+  ],
+  "allowed_commands": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "forbidden_commands": [],
+  "allowed_pairtools_commands": [
+    "pairtools parse"
+  ],
+  "forbidden_pairtools_commands": [
+    "pairtools parse2",
+    "pairtools merge",
+    "pairtools dedup",
+    "pairtools select",
+    "pairtools split",
+    "pairtools stats"
+  ],
+  "oracle_commands": [
+    "pixi run pairtools parse -c tests/fixtures/M050_walk.chrom.sizes --walks-policy 5unique tests/fixtures/M050_walk.sam"
+  ],
+  "candidate_commands": [
+    "pixi run cargo run -- parse -c tests/fixtures/M050_walk.chrom.sizes --walks-policy 5unique tests/fixtures/M050_walk.sam"
+  ],
+  "required_tests": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "Supported walk behavior is covered by deterministic oracle fixtures.",
+    "Unsupported walk policies fail loudly."
+  ],
+  "known_risks": [
+    "Complex walk parity may need several smaller follow-up milestones."
+  ],
+  "next_milestone_candidates": [
+    "M060"
+  ]
+}

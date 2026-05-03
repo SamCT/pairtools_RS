@@ -1,43 +1,82 @@
 # Repository Guidance
 
-## Pairtools-rs milestone workflow
+This repository is a full pairtools-compatible Rust rewrite. The long-term goal is complete pairtools-compatible behavior in Rust. The immediate rule is one bounded, oracle-tested milestone at a time.
 
-This repository is a full pairtools-compatible Rust rewrite.
+## Enforced Milestone Workflow
 
-Rules:
-- Do not implement broad feature surface in one task.
-- Work one milestone at a time.
-- Do not implement downstream milestones unless explicitly requested.
-- Pairtools may be used only as an oracle in tests and shell validation scripts, never as a runtime dependency inside pairs-rs.
-- Every accepted option must either match pairtools semantics or fail loudly with not implemented.
-- No no-op compatibility flags are allowed.
-- Use rust-htslib/HTSlib for SAM/BAM/CRAM parsing and BGZF output.
+At task start:
+
+1. Identify the milestone ID from `milestones/ACTIVE_MILESTONE` or explicitly justify changing it.
+2. Run:
+
+   ```bash
+   python3 scripts/milestone_gate.py pre --milestone <ID>
+   ```
+
+3. If preflight fails, do not code.
+
+During the task:
+
+1. Stay within the milestone `allowed_paths`.
+2. Do not implement milestone non-goals.
+3. Do not run Cargo directly.
+4. Use `scripts/cargo_guard.sh` if Cargo validation is required.
+5. Record each validation with `scripts/record_test_result.py`.
+
+Before the final response:
+
+1. Run the required tests from the active milestone JSON.
+2. Run:
+
+   ```bash
+   python3 scripts/milestone_gate.py post --milestone <ID>
+   python3 scripts/codex_report.py --milestone <ID>
+   ```
+
+3. Copy the report fields into the final answer. Do not fabricate tests, benchmarks, or compatibility claims.
+
+## Cargo Policy
+
+- Documentation-only and governance-only changes do not require Cargo validation.
+- Rust source, `Cargo.toml`, `Cargo.lock`, `pixi.toml`, `pixi.lock`, `build.rs`, tests, benches, or examples changes require `scripts/cargo_guard.sh check`.
+- Never launch duplicate Cargo jobs.
+- Never delete `.pixi` without explicit user authorization.
+- Never delete `CARGO_TARGET_DIR` without explicit user authorization.
+- Always use the local checkout path for Codex work: `/mnt/d/pairtools_RS` (Windows: `D:\pairtools_RS`).
+- The default target directory for guarded Cargo commands is:
+
+  ```bash
+  export CARGO_TARGET_DIR="$HOME/pairtools_RS_target_codex"
+  ```
+
+- If Cargo reports an artifact-directory lock, inspect active processes before retrying.
+
+## Compatibility Policy
+
+- Every accepted option must implement pairtools-compatible semantics or fail loudly with `not implemented`.
+- Compatibility flags with ignored behavior are forbidden.
+- Placeholder success paths are forbidden.
+- Pairtools may be used only as an oracle in tests, scripts, and benchmarks.
+- Rust runtime must not call pairtools.
+- Rust runtime must not shell out to samtools, bgzip, or gzip unless a future milestone explicitly allows it.
+- Use `rust-htslib`/HTSlib for SAM/BAM/CRAM input and BGZF output.
 - Preserve exact or normalized oracle parity before claiming performance.
 - Performance claims require parity to pass first.
 
-Cargo / WSL:
-- Always use local checkout path for codex work: /mnt/d/pairtools_RS (Windows: D:\pairtools_RS).
-  export CARGO_TARGET_DIR="$HOME/pairtools_RS_target_codex"
-- Before running Cargo, inspect existing cargo/rustc processes.
-- Use pixi
-- Do not launch duplicate cargo builds/tests.
-- If Cargo reports an artifact-directory lock, inspect processes before retrying.
+## Milestone Policy
 
-Cargo validation policy:
-- Documentation-only changes do not require cargo check.
-- Cargo.toml, pixi.toml, build.rs, src/, tests/, benches/, or examples/ changes require cargo check.
-- Do not delete .pixi or CARGO_TARGET_DIR unless the user explicitly authorizes it.
-- Do not recreate generated environments as a routine fix.
-- If cargo check times out at the wrapper level but the Cargo process is still running, continue monitoring the same process and capture logs from tee.
-- Do not rerun cargo check solely because the wrapper timed out.
-- Use a long timeout for the first cold native build.
-- Treat native dependency compilation as expected, not as a hang, unless CPU usage is near zero for several minutes and no new output appears.
+- `milestones/ACTIVE_MILESTONE` is authoritative.
+- Future work must fit the active milestone or explicitly change `ACTIVE_MILESTONE` in the same commit with justification.
+- Downstream commands are non-goals unless the active milestone explicitly lists them.
+- Do not implement broad feature surface in one task.
+- Every Codex task must end by updating or explicitly confirming no content change is needed in:
+  - `docs/PAIRTOOLS_COMPATIBILITY.md`
+  - `docs/STATUS.md`
 
-Every Codex task must end by updating:
-- docs/PAIRTOOLS_COMPATIBILITY.md
-- docs/STATUS.md
+## Required Final Report Fields
 
 Every Codex task must report:
+
 - branch
 - commit SHA
 - files changed
@@ -47,6 +86,3 @@ Every Codex task must report:
 - tests not run and why
 - benchmark results, if applicable
 - next recommended milestone
-
-Long-term goal: full pairtools-compatible Rust implementation.
-Immediate goal: one bounded, oracle-tested milestone at a time.

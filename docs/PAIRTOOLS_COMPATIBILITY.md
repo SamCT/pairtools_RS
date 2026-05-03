@@ -10,11 +10,17 @@ pixi run pairtools <command> --help
 
 Policy: pairtools is permitted only as a test oracle. The Rust binary must not call pairtools at runtime. Every accepted option must either match pairtools 1.1.3 semantics or fail loudly with `not implemented`.
 
+Compatibility claims in this file are controlled by milestone-gated oracle tests. M000 adds governance automation only; it does not expand parse/sort compatibility and does not rerun oracle parity. Any stale or uncertain claim must be reconciled in a future milestone before it can support performance claims.
+
 ## Current Binary Classification
 
 The current binary is a partial pairtools-compatible `parse`/`sort` implementation. It is not the older parse-lite prototype. Legacy parse-lite scripts remain in `scripts/` as historical artifacts and are not authoritative for current binary behavior.
 
 Runtime code uses `rust-htslib`/HTSlib for SAM/BAM/CRAM input and BGZF output. The Rust runtime does not shell out to `pairtools`, `samtools`, `bgzip`, or `gzip`; those commands are used only in tests, benchmarks, and shell pipeline scripts.
+
+## M000 Governance Note
+
+M000 adds repository-enforced milestone automation only. It does not change Rust parse, sort, or downstream pairtools behavior. Parse/sort oracle parity was not rerun in M000, so this file records the previously reconciled compatibility baseline rather than new behavioral evidence from this milestone.
 
 ## Top-Level Options
 
@@ -77,7 +83,7 @@ Arguments: optional `SAM_PATH`.
 | `--cmd-in` | explicitly not implemented |
 | `--cmd-out` | explicitly not implemented |
 
-Current parse oracle fixtures cover small SAM inputs for UU pairs, unmapped and low-MAPQ mates, reverse-strand 5'/3' coordinates, soft/hard clipping, indel reference span, interchromosomal and same-chromosome flipping, secondary alignments, supplementary alignments, pairsam SAM columns, supported extra columns, parse-time stats, a BWA-MEM2-style leading soft-clipped split affected by `--max-inter-align-gap`, and loud rejection of non-adjacent repeated read names.
+Previously recorded parse oracle fixtures cover small SAM inputs for UU pairs, unmapped and low-MAPQ mates, reverse-strand 5'/3' coordinates, soft/hard clipping, indel reference span, interchromosomal and same-chromosome flipping, secondary alignments, supplementary alignments, pairsam SAM columns, supported extra columns, parse-time stats, a BWA-MEM2-style leading soft-clipped split affected by `--max-inter-align-gap`, and loud rejection of non-adjacent repeated read names. These fixtures were not rerun in M000.
 
 Known correctness limitations:
 - Input must be query-name grouped: all SAM/BAM/CRAM records for a read name must be adjacent. Non-adjacent repeated read names fail loudly with `not implemented`.
@@ -108,7 +114,7 @@ Arguments: optional `PAIRS_PATH`.
 | `--cmd-in` | explicitly not implemented |
 | `--cmd-out` | explicitly not implemented |
 
-Current sort oracle coverage includes default column sorting, parse-generated `.pairsam` with `sam1`, `sam2`, and supported parse extra columns, header preservation with `#sorted: chr1-chr2-pos1-pos2` insertion, stable ordering of equal keys across spilled chunks, identical `--nproc 1` and `--nproc 8` output, BGZF-compatible `.gz` output validated by `gzip -dc` and `bgzip -t`, and equivalent decompressed `.gz` output for `--nproc 1` and `--nproc 8`. `scripts/benchmark_sort_threads.sh` measures `--nproc 1` versus `--nproc 8` without rebuilding Rust and reports wall time, CPU utilization, max RSS, temp disk usage, compressed output size, uncompressed output size, and compression throughput MB/s. Its `--compression-dominates` mode generates presorted wide `.pairsam` input and reports whether `--nproc 8` used more than one CPU (`nproc8_cpu_gt_100_percent`).
+Previously recorded sort oracle coverage includes default column sorting, parse-generated `.pairsam` with `sam1`, `sam2`, and supported parse extra columns, header preservation with `#sorted: chr1-chr2-pos1-pos2` insertion, stable ordering of equal keys across spilled chunks, identical `--nproc 1` and `--nproc 8` output, BGZF-compatible `.gz` output validated by `gzip -dc` and `bgzip -t`, and equivalent decompressed `.gz` output for `--nproc 1` and `--nproc 8`. These checks were not rerun in M000. `scripts/benchmark_sort_threads.sh` is a previously added harness; M000 does not run benchmarks or add performance evidence.
 
 ## Other Command Inventories
 

@@ -1,0 +1,88 @@
+{
+  "id": "M100",
+  "name": "Downstream command planning",
+  "status": "planned",
+  "summary": "Design documents and fixture inventory only for downstream commands.",
+  "goal": "Plan merge, dedup, select, split, stats, and related downstream command milestones without implementing them.",
+  "explicit_non_goals": [
+    "Do not implement downstream Rust commands.",
+    "Do not change parse or sort behavior.",
+    "Do not claim downstream compatibility."
+  ],
+  "allowed_paths": [
+    "docs/**",
+    "tests/README.md",
+    "tests/fixtures/README.md",
+    "tests/oracle/README.md",
+    "tests/golden/README.md",
+    "milestones/M100-downstream-command-planning.json"
+  ],
+  "forbidden_paths": [
+    "src/**",
+    "Cargo.toml",
+    "pixi.toml"
+  ],
+  "allowed_commands": [
+    "git diff --check"
+  ],
+  "forbidden_commands": [
+    "cargo check",
+    "pixi run cargo check"
+  ],
+  "allowed_pairtools_commands": [
+    "pairtools merge --help",
+    "pairtools dedup --help",
+    "pairtools select --help",
+    "pairtools split --help",
+    "pairtools stats --help"
+  ],
+  "forbidden_pairtools_commands": [
+    "pairtools merge",
+    "pairtools dedup",
+    "pairtools select",
+    "pairtools split",
+    "pairtools stats"
+  ],
+  "oracle_commands": [
+    "pixi run pairtools <downstream-command> --help"
+  ],
+  "candidate_commands": [
+    "Not applicable; planning-only milestone."
+  ],
+  "required_tests": [
+    "git diff --check"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "Planning docs identify fixtures, oracle commands, non-goals, and acceptance criteria for downstream commands.",
+    "No Rust downstream behavior is implemented."
+  ],
+  "known_risks": [
+    "Planning can over-scope future milestones unless split carefully."
+  ],
+  "next_milestone_candidates": [
+    "M010",
+    "M020"
+  ]
+}

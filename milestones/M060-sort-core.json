@@ -1,0 +1,81 @@
+{
+  "id": "M060",
+  "name": "Sort core",
+  "status": "planned",
+  "summary": "Pairtools-compatible key sorting, headers, and deterministic stable output.",
+  "goal": "Match pairtools-compatible key order, header updates, and deterministic stable output.",
+  "explicit_non_goals": [
+    "Do not implement parse behavior.",
+    "Do not implement compression/tempfile performance behavior beyond core sort needs.",
+    "Do not implement downstream commands."
+  ],
+  "allowed_paths": [
+    "src/cli.rs",
+    "src/main.rs",
+    "src/sort.rs",
+    "tests/**",
+    "docs/**",
+    "milestones/M060-sort-core.json"
+  ],
+  "forbidden_paths": [
+    "src/parse.rs"
+  ],
+  "allowed_commands": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "forbidden_commands": [],
+  "allowed_pairtools_commands": [
+    "pairtools sort"
+  ],
+  "forbidden_pairtools_commands": [
+    "pairtools merge",
+    "pairtools dedup",
+    "pairtools select",
+    "pairtools split",
+    "pairtools stats"
+  ],
+  "oracle_commands": [
+    "pixi run pairtools sort tests/fixtures/M060_sort_core.pairs"
+  ],
+  "candidate_commands": [
+    "pixi run cargo run -- sort tests/fixtures/M060_sort_core.pairs"
+  ],
+  "required_tests": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "Sorted rows match scoped pairtools oracle fixtures.",
+    "Equal-key output is deterministic.",
+    "Headers are updated only as documented."
+  ],
+  "known_risks": [
+    "Core sort parity does not prove compression behavior."
+  ],
+  "next_milestone_candidates": [
+    "M070"
+  ]
+}

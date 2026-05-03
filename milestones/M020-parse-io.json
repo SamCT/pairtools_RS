@@ -1,0 +1,81 @@
+{
+  "id": "M020",
+  "name": "Parse IO",
+  "status": "planned",
+  "summary": "Parse input/output plumbing through rust-htslib and explicit writer behavior.",
+  "goal": "Support SAM/BAM/CRAM input through rust-htslib, output writers, and compression boundaries without expanding biological/Hi-C semantics.",
+  "explicit_non_goals": [
+    "Do not expand pair formation semantics.",
+    "Do not implement sort or downstream commands.",
+    "Do not call samtools from Rust runtime."
+  ],
+  "allowed_paths": [
+    "src/cli.rs",
+    "src/main.rs",
+    "src/parse.rs",
+    "tests/**",
+    "docs/**",
+    "milestones/M020-parse-io.json"
+  ],
+  "forbidden_paths": [
+    "src/sort.rs"
+  ],
+  "allowed_commands": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "forbidden_commands": [],
+  "allowed_pairtools_commands": [
+    "pairtools parse"
+  ],
+  "forbidden_pairtools_commands": [
+    "pairtools sort",
+    "pairtools merge",
+    "pairtools dedup",
+    "pairtools select",
+    "pairtools split",
+    "pairtools stats"
+  ],
+  "oracle_commands": [
+    "pixi run pairtools parse -c tests/fixtures/<case>.chrom.sizes tests/fixtures/<case>.sam"
+  ],
+  "candidate_commands": [
+    "pixi run cargo run -- parse -c tests/fixtures/<case>.chrom.sizes tests/fixtures/<case>.sam"
+  ],
+  "required_tests": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "Rust runtime uses rust-htslib for SAM/BAM/CRAM input.",
+    "Unsupported IO/compression modes fail loudly."
+  ],
+  "known_risks": [
+    "Compression support may need separate milestone boundaries."
+  ],
+  "next_milestone_candidates": [
+    "M030"
+  ]
+}

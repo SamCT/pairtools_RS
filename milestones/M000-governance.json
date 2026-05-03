@@ -1,0 +1,132 @@
+{
+  "id": "M000",
+  "name": "Governance automation",
+  "status": "active",
+  "summary": "Repository-enforced milestone automation and anti-drift infrastructure.",
+  "goal": "Build the milestone operating system that controls future Codex work without changing pairtools runtime behavior.",
+  "explicit_non_goals": [
+    "Do not add parse features.",
+    "Do not add sort features.",
+    "Do not add merge, dedup, select, split, stats, parse2, header, restrict, phase, sample, scaling, or filterbycov behavior.",
+    "Do not add performance claims.",
+    "Do not run benchmarks.",
+    "Do not delete .pixi.",
+    "Do not delete CARGO_TARGET_DIR."
+  ],
+  "allowed_paths": [
+    "AGENTS.md",
+    "README.md",
+    "Makefile",
+    ".gitignore",
+    ".github/**",
+    "docs/**",
+    "milestones/**",
+    "scripts/**",
+    "tests/README.md",
+    "tests/fixtures/README.md",
+    "tests/oracle/README.md",
+    "tests/golden/README.md",
+    "tests/scripts/README.md"
+  ],
+  "forbidden_paths": [
+    "src/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "allowed_commands": [
+    "git status --short --branch",
+    "python3 -m py_compile",
+    "bash -n scripts/cargo_guard.sh",
+    "python3 scripts/check_milestone_schema.py",
+    "python3 scripts/milestone_gate.py pre --milestone M000",
+    "python3 scripts/milestone_gate.py post --milestone M000",
+    "python3 scripts/codex_report.py --milestone M000",
+    "git diff --check"
+  ],
+  "forbidden_commands": [
+    "cargo check",
+    "cargo test",
+    "cargo build",
+    "pixi run cargo check",
+    "pixi run cargo test",
+    "pixi run cargo build"
+  ],
+  "allowed_pairtools_commands": [],
+  "forbidden_pairtools_commands": [
+    "pairtools merge",
+    "pairtools dedup",
+    "pairtools select",
+    "pairtools split",
+    "pairtools stats",
+    "pairtools parse2"
+  ],
+  "oracle_commands": [
+    "Not applicable for M000; no pairtools behavior is changed."
+  ],
+  "candidate_commands": [
+    "python3 scripts/milestone_gate.py pre --milestone M000",
+    "python3 scripts/milestone_gate.py post --milestone M000",
+    "python3 scripts/codex_report.py --milestone M000"
+  ],
+  "required_tests": [
+    "git status --short --branch",
+    "python3 -m py_compile scripts/milestone_gate.py scripts/codex_report.py scripts/check_no_runtime_pairtools.py scripts/check_no_noop_flags.py scripts/check_docs_sync.py scripts/check_parse_lite_drift.py scripts/check_changed_paths.py scripts/check_milestone_schema.py scripts/check_cargo_needed.py scripts/record_test_result.py scripts/list_milestones.py",
+    "bash -n scripts/cargo_guard.sh",
+    "python3 scripts/check_milestone_schema.py",
+    "python3 scripts/milestone_gate.py pre --milestone M000",
+    "python3 scripts/check_no_runtime_pairtools.py --milestone M000",
+    "python3 scripts/check_no_noop_flags.py --milestone M000",
+    "python3 scripts/check_parse_lite_drift.py --milestone M000",
+    "python3 scripts/check_cargo_needed.py --milestone M000",
+    "python3 scripts/milestone_gate.py post --milestone M000",
+    "python3 scripts/codex_report.py --milestone M000",
+    "git diff --check"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "benches/**",
+    "examples/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Current branch",
+    "Current commit",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Validation not performed and why",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "Milestone schema and registry exist and validate.",
+    "Preflight records branch, commit, status, timestamp, scope, docs, and process state.",
+    "Postflight enforces path boundaries, docs updates, runtime external-tool policy, compatibility-ignore text policy, and legacy parser framing policy.",
+    "Cargo wrapper prevents duplicate build jobs and captures logs.",
+    "Final report helper prints required fields without fabricating results.",
+    "AGENTS.md requires the milestone gate workflow.",
+    "GitHub Actions run governance checks."
+  ],
+  "known_risks": [
+    "The Python gates use heuristic text scans and are not a substitute for review.",
+    "Changed-path detection includes untracked directories before staging and exact files after staging.",
+    "Cargo need detection treats documentation-only files as docs even when they live under tests/."
+  ],
+  "next_milestone_candidates": [
+    "M010"
+  ]
+}

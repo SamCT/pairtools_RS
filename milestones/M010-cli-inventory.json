@@ -1,0 +1,82 @@
+{
+  "id": "M010",
+  "name": "CLI inventory",
+  "status": "planned",
+  "summary": "Inventory pairtools CLI commands and options and ensure unsupported flags fail loudly.",
+  "goal": "Ensure all pairtools commands/options are inventoried and unsupported options fail loudly without implementing command behavior.",
+  "explicit_non_goals": [
+    "Do not implement command behavior.",
+    "Do not add parse, sort, or downstream runtime behavior.",
+    "Do not accept unsupported flags as compatibility placeholders."
+  ],
+  "allowed_paths": [
+    "src/cli.rs",
+    "src/main.rs",
+    "tests/**",
+    "docs/**",
+    "milestones/**"
+  ],
+  "forbidden_paths": [
+    "src/parse.rs",
+    "src/sort.rs"
+  ],
+  "allowed_commands": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "forbidden_commands": [],
+  "allowed_pairtools_commands": [
+    "pairtools --help",
+    "pairtools <command> --help"
+  ],
+  "forbidden_pairtools_commands": [
+    "pairtools merge",
+    "pairtools dedup",
+    "pairtools select",
+    "pairtools split",
+    "pairtools stats"
+  ],
+  "oracle_commands": [
+    "pixi run pairtools --help",
+    "pixi run pairtools parse --help"
+  ],
+  "candidate_commands": [
+    "pixi run cargo run -- --help"
+  ],
+  "required_tests": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "Unsupported options fail loudly with not implemented.",
+    "Compatibility docs do not claim implemented command behavior."
+  ],
+  "known_risks": [
+    "CLI inventory can drift when pairtools adds options."
+  ],
+  "next_milestone_candidates": [
+    "M020"
+  ]
+}

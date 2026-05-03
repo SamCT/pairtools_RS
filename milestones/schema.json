@@ -1,0 +1,59 @@
+{
+  "required_fields": [
+    "id",
+    "name",
+    "status",
+    "summary",
+    "goal",
+    "explicit_non_goals",
+    "allowed_paths",
+    "forbidden_paths",
+    "allowed_commands",
+    "forbidden_commands",
+    "allowed_pairtools_commands",
+    "forbidden_pairtools_commands",
+    "oracle_commands",
+    "candidate_commands",
+    "required_tests",
+    "optional_tests",
+    "required_benchmarks",
+    "cargo_required_if_paths_changed",
+    "docs_required",
+    "status_fields_required",
+    "acceptance_criteria",
+    "known_risks",
+    "next_milestone_candidates"
+  ],
+  "string_fields": [
+    "id",
+    "name",
+    "status",
+    "summary",
+    "goal"
+  ],
+  "list_fields": [
+    "explicit_non_goals",
+    "allowed_paths",
+    "forbidden_paths",
+    "allowed_commands",
+    "forbidden_commands",
+    "allowed_pairtools_commands",
+    "forbidden_pairtools_commands",
+    "oracle_commands",
+    "candidate_commands",
+    "required_tests",
+    "optional_tests",
+    "required_benchmarks",
+    "cargo_required_if_paths_changed",
+    "docs_required",
+    "status_fields_required",
+    "acceptance_criteria",
+    "known_risks",
+    "next_milestone_candidates"
+  ],
+  "status_values": [
+    "active",
+    "planned",
+    "complete"
+  ]
+}

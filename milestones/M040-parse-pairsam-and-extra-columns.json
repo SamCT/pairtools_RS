@@ -1,0 +1,81 @@
+{
+  "id": "M040",
+  "name": "Parse pairsam and extra columns",
+  "status": "planned",
+  "summary": "Pairsam SAM columns, supported add-columns, and parse stats.",
+  "goal": "Match pairtools for scoped pairsam output, supported add-columns, and parse stats.",
+  "explicit_non_goals": [
+    "Do not implement unsupported add-columns.",
+    "Do not implement full walks/chimeric parse behavior.",
+    "Do not implement sort or downstream commands."
+  ],
+  "allowed_paths": [
+    "src/cli.rs",
+    "src/main.rs",
+    "src/parse.rs",
+    "tests/**",
+    "docs/**",
+    "milestones/M040-parse-pairsam-and-extra-columns.json"
+  ],
+  "forbidden_paths": [
+    "src/sort.rs"
+  ],
+  "allowed_commands": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "forbidden_commands": [],
+  "allowed_pairtools_commands": [
+    "pairtools parse"
+  ],
+  "forbidden_pairtools_commands": [
+    "pairtools sort",
+    "pairtools merge",
+    "pairtools dedup",
+    "pairtools select",
+    "pairtools split",
+    "pairtools stats"
+  ],
+  "oracle_commands": [
+    "pixi run pairtools parse -c tests/fixtures/M040_pairsam.chrom.sizes --add-columns mapq,pos5,pos3,cigar,read_len tests/fixtures/M040_pairsam.sam"
+  ],
+  "candidate_commands": [
+    "pixi run cargo run -- parse -c tests/fixtures/M040_pairsam.chrom.sizes --add-columns mapq,pos5,pos3,cigar,read_len tests/fixtures/M040_pairsam.sam"
+  ],
+  "required_tests": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "Pairsam rows and headers match scoped pairtools oracle fixtures.",
+    "Unsupported add-columns fail loudly."
+  ],
+  "known_risks": [
+    "SAM serialization details may vary with htslib versions."
+  ],
+  "next_milestone_candidates": [
+    "M050"
+  ]
+}

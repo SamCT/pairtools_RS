@@ -2,9 +2,26 @@
 
 This repository now targets a **full Rust rewrite** of pairtools with command-line and output compatibility as the primary goal.
 
-- No parse-lite framing: this codebase tracks strict pairtools CLI/output parity as the rewrite target.
+- Legacy parse-lite framing is not current: this codebase tracks strict pairtools CLI/output parity as the rewrite target.
 - Oracle for behavior is pairtools CLI behavior and deterministic fixture outputs.
 - Performance work is explicitly secondary to compatibility parity.
+
+## Development milestone workflow
+
+Codex and contributors must work through the active milestone in `milestones/ACTIVE_MILESTONE`. Start each task with:
+
+```bash
+python3 scripts/milestone_gate.py pre --milestone M000
+```
+
+Finish with the required milestone tests, then:
+
+```bash
+python3 scripts/milestone_gate.py post --milestone M000
+python3 scripts/codex_report.py --milestone M000
+```
+
+See `milestones/README.md` for the registry, scope rules, and how future milestones move from planning to implementation.
 
 ## Hybrid pairs-rs/pairtools Hi-C pipeline
 
