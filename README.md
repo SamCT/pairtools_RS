@@ -6,6 +6,39 @@ This repository now targets a **full Rust rewrite** of pairtools with command-li
 - Oracle for behavior is pairtools CLI behavior and deterministic fixture outputs.
 - Performance work is explicitly secondary to compatibility parity.
 
+## Hybrid pairs-rs/pairtools Hi-C pipeline
+
+The script `scripts/run_hic_hybrid_pairs_rs_pipeline.sh` is a production bridge for the current milestone. It uses `pairs-rs` only for the accelerated front half of the pipeline, `parse` and `sort`, then hands off to `pairtools` for downstream commands that are not implemented in Rust yet: `merge`, `dedup`, `select`, `split`, and `stats`.
+
+Single-lane example:
+
+```bash
+THREADS=32 \
+SORT_THREADS=16 \
+MAPQ=10 \
+REF=/path/to/ref.fa \
+BWA_INDEX=/path/to/bwa-mem2/index/prefix \
+CHROMS=/path/to/Hop282H1.chrom.sizes \
+ASM=Hop282H1 \
+PREFIX=/work/sample1/sample1 \
+TMPDIR=/scratch/sample1.tmp \
+R1=/data/sample1_R1.fastq.gz \
+R2=/data/sample1_R2.fastq.gz \
+PAIRS_RS=/path/to/pairs-rs \
+PAIRTOOLS="pixi run pairtools" \
+scripts/run_hic_hybrid_pairs_rs_pipeline.sh
+```
+
+For multiple lanes, provide comma-separated `R1` and `R2` lists with matching lane order:
+
+```bash
+R1=/data/lane1_R1.fastq.gz,/data/lane2_R1.fastq.gz \
+R2=/data/lane1_R2.fastq.gz,/data/lane2_R2.fastq.gz \
+scripts/run_hic_hybrid_pairs_rs_pipeline.sh
+```
+
+Use `DRY_RUN=1` or `--dry-run` to print the planned commands after validating required inputs. The script writes per-lane sorted `.pairsam.gz` files from `pairs-rs sort`, validates gzip/BGZF outputs with `bgzip -t`, writes merged outputs as `merged.*` beside `PREFIX`, and validates the final BAM with `samtools quickcheck`.
+
 # pairtools
 
 [![Documentation Status](https://readthedocs.org/projects/pairtools/badge/?version=latest)](http://pairtools.readthedocs.org/en/latest/)
