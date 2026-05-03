@@ -2,7 +2,7 @@
 
 This repository now targets a **full Rust rewrite** of pairtools with command-line and output compatibility as the primary goal.
 
-- No parse-lite framing: partial/fast-path behavior is transitional and tracked as compatibility gaps.
+- No parse-lite framing: this codebase tracks strict pairtools CLI/output parity as the rewrite target.
 - Oracle for behavior is pairtools CLI behavior and deterministic fixture outputs.
 - Performance work is explicitly secondary to compatibility parity.
 
