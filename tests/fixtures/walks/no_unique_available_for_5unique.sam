@@ -1,0 +1,8 @@
+@HD	VN:1.6	SO:queryname
+@SQ	SN:chr1	LN:10000
+@SQ	SN:chr2	LN:10000
+@SQ	SN:chr3	LN:10000
+no_unique_available_for_5unique	65	chr1	100	0	50M50S	*	0	0	*	*
+no_unique_available_for_5unique	2113	chr2	300	0	50S50M	*	0	0	*	*
+no_unique_available_for_5unique	129	chr1	500	60	50M50S	*	0	0	*	*
+no_unique_available_for_5unique	2177	chr2	700	60	50S50M	*	0	0	*	*

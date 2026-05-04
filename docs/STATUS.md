@@ -4,9 +4,9 @@ Last reconciled: 2026-05-04
 
 ## Active milestone
 
-M100: downstream command planning.
+M056: parse `--walks-policy all`.
 
-M020, M030, M040, M050, M060, M070, and M090 are marked complete. M090 was closed after validating the benchmark harness syntax and documenting that performance claims remain gated by parity plus an explicit benchmark run.
+M055 is complete. It added oracle-driven walk-resolution parity for the non-`all` `pairtools parse --walks-policy` values and split the broader `all` behavior into M056.
 
 ## Current branch
 
@@ -14,7 +14,7 @@ M020, M030, M040, M050, M060, M070, and M090 are marked complete. M090 was close
 
 ## Current commit
 
-`uncommitted` during M090 closure. The final task response must report the committed SHA.
+`uncommitted` during M055 closure. The final task response must report the committed SHA.
 
 ## Implemented behavior
 
@@ -36,51 +36,58 @@ Completed parse milestones are covered by the guarded oracle suite:
 - M050 Walks and chimeric limits:
   - Scoped secondary and supplementary fixtures are covered.
   - BWA-MEM2-style leading soft-clipped split behavior is covered for `--max-inter-align-gap`.
-  - Unsupported walk policies fail loudly.
+- M055 Walk-resolution parity:
+  - `--walks-policy mask`, `5any`, `5unique`, `3any`, and `3unique` are accepted and compared to pairtools oracle fixtures.
+  - Alignment choice is ordered by 5' distance along the read, independent of input order.
+  - `--max-inter-align-gap` inserts null alignments for long read-span gaps and is tested at small and large thresholds.
+  - Single-ligation rescue and unrescuable walk policy selection are covered for deterministic SAM fixtures.
+  - `--max-molecule-size` is accepted for parse rescue decisions.
+  - Pairsam rows, pair-type counts, and parse stats are compared against pairtools-generated walk oracles.
 - M060 Sort core:
   - Pairtools-compatible default sort order is covered by oracle tests.
   - Parse-generated `.pairsam` with `sam1`, `sam2`, and supported extra columns is covered.
   - Equal-key order is deterministic across spilled chunks and identical for `--nproc 1` and `--nproc 8`.
-  - Header update behavior is covered, including an existing `#samheader` `@PG` chain.
-  - Unsupported sort options fail loudly.
 - M070 Sort compression and tempfiles:
   - `.gz` sort output is written through HTSlib BGZF and validates with `gzip -dc` and `bgzip -t` in tests.
   - Decompressed `.gz` output is identical for `--nproc 1` and `--nproc 8`.
   - `--tmpdir` is covered by a test that fails if the requested spill directory is ignored.
 - M090 Benchmarking:
   - `scripts/benchmark_sort_threads.sh` records wall time, CPU utilization, max RSS, temp disk usage, compressed and uncompressed output sizes, and compression throughput when run.
-  - The harness includes a compression-dominates mode and optional gates for speedup and CPU utilization.
   - M090 did not run a benchmark and does not add a performance claim.
 
 ## Intentionally unsupported behavior
 
+- `pairtools parse --walks-policy all` remains explicitly not implemented and is split into M056.
 - Full pairtools `parse2` behavior is not implemented.
-- Full complex-walk parity is not claimed beyond the scoped M050 fixtures.
 - Non-adjacent repeated read names remain unsupported and fail loudly.
 - Rust downstream commands remain unimplemented.
-- M090 does not claim measured speedup or CPU utilization.
-- No downstream Rust behavior is implemented.
+- Compressed parse output and compressed parse stats output are not implemented.
+- No benchmark or speedup is claimed by M055.
 
 ## Validation performed
 
-Validation commands for M090 closure:
+Validation commands for M055:
 
 ```bash
 git status --short --branch
-python3 scripts/milestone_gate.py pre --milestone M090
-bash -n scripts/benchmark_sort_threads.sh
-bash -n scripts/real_bam_compare.sh
-python3 scripts/check_cargo_needed.py --milestone M090
+cat milestones/ACTIVE_MILESTONE
+python3 scripts/milestone_gate.py pre --milestone M055
+python3 scripts/check_cargo_needed.py --milestone M055
+bash tests/scripts/generate_walk_oracles.sh
+scripts/cargo_guard.sh check
+scripts/cargo_guard.sh test
 ```
+
+`scripts/cargo_guard.sh test` passed 23 Rust integration tests after adding the walk oracle suite. `bash tests/scripts/generate_walk_oracles.sh` generated 130 pairtools oracle files for 13 case/threshold combinations across five non-`all` policies.
 
 ## Validation not performed and why
 
-- Benchmarks were not run in this task. M090 validated the harness and parity gate, but no input dataset or benchmark run was requested for a performance report.
-- Cargo was not run because M090 changed only docs and milestone state.
+- `--walks-policy all` oracle parity was not implemented or claimed in M055. It is the active M056 follow-up.
+- Benchmarks were not run because M055 is a correctness milestone.
 
 ## Cargo required
 
-No. `python3 scripts/check_cargo_needed.py --milestone M090` reported `cargo_required=false`.
+Yes. M055 changed Rust source and tests. `scripts/cargo_guard.sh check` and `scripts/cargo_guard.sh test` both passed through Pixi/WSL with `CARGO_TARGET_DIR=$HOME/pairtools_RS_target_codex`.
 
 ## External real-data oracle status
 
@@ -88,4 +95,4 @@ External real-data oracle discovery for M080 remains documented in `docs/REAL_DA
 
 ## Next recommended milestone
 
-M100: downstream command planning.
+M056: implement and oracle-test `pairtools parse --walks-policy all`.

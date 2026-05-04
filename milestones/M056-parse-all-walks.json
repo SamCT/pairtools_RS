@@ -1,0 +1,83 @@
+{
+  "id": "M056",
+  "name": "Parse all-walks policy",
+  "status": "active",
+  "summary": "Implement pairtools parse --walks-policy all after M055 non-all parity.",
+  "goal": "Match pairtools parse --walks-policy all for sequential walk-pair emission, pair indexes, and complex overlap/readthrough cases.",
+  "explicit_non_goals": [
+    "Do not implement downstream commands.",
+    "Do not change sort behavior.",
+    "Do not claim all-policy support before oracle parity passes."
+  ],
+  "allowed_paths": [
+    "src/cli.rs",
+    "src/main.rs",
+    "src/parse.rs",
+    "tests/**",
+    "docs/**",
+    "milestones/ACTIVE_MILESTONE",
+    "milestones/M056-parse-all-walks.json"
+  ],
+  "forbidden_paths": [
+    "src/sort.rs"
+  ],
+  "allowed_commands": [
+    "bash tests/scripts/generate_walk_oracles.sh",
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "forbidden_commands": [],
+  "allowed_pairtools_commands": [
+    "pairtools parse"
+  ],
+  "forbidden_pairtools_commands": [
+    "pairtools parse2",
+    "pairtools merge",
+    "pairtools dedup",
+    "pairtools select",
+    "pairtools split",
+    "pairtools stats"
+  ],
+  "oracle_commands": [
+    "pixi run pairtools parse --walks-policy all tests/fixtures/walks/all_policy_simple_three_alignments.sam"
+  ],
+  "candidate_commands": [
+    "target/debug/pairs-rs parse --walks-policy all tests/fixtures/walks/all_policy_simple_three_alignments.sam"
+  ],
+  "required_tests": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "--walks-policy all emits oracle-matching rows for simple and complex walk fixtures.",
+    "Pair indexes and complex walk de-duplication match pairtools."
+  ],
+  "known_risks": [
+    "All-policy pair emission is broader than single-pair walk selection."
+  ],
+  "next_milestone_candidates": [
+    "M100"
+  ]
+}

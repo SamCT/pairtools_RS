@@ -33,6 +33,29 @@ impl ReportEnd {
     }
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum WalksPolicy {
+    Mask,
+    FiveAny,
+    FiveUnique,
+    ThreeAny,
+    ThreeUnique,
+}
+
+impl WalksPolicy {
+    fn parse(value: &str) -> Result<Self, Box<dyn std::error::Error>> {
+        match value {
+            "mask" => Ok(Self::Mask),
+            "5any" => Ok(Self::FiveAny),
+            "5unique" => Ok(Self::FiveUnique),
+            "3any" => Ok(Self::ThreeAny),
+            "3unique" => Ok(Self::ThreeUnique),
+            "all" => Err("not implemented: pairtools parse --walks-policy all".into()),
+            other => Err(format!("not implemented: pairtools parse --walks-policy {other}").into()),
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 struct Aln {
     chrom: String,
@@ -94,6 +117,18 @@ impl Aln {
             "read_len" => self.read_len.to_string(),
             _ => String::new(),
         }
+    }
+
+    fn masked(&self) -> Self {
+        let mut masked = self.clone();
+        masked.chrom = UNMAPPED_CHROM.to_string();
+        masked.pos5 = UNMAPPED_POS;
+        masked.pos3 = UNMAPPED_POS;
+        masked.strand = UNMAPPED_STRAND;
+        masked.is_mapped = false;
+        masked.is_unique = false;
+        masked.kind = 'W';
+        masked
     }
 }
 
@@ -157,13 +192,13 @@ struct EmitConfig<'a> {
     add_columns: &'a [String],
     min_mapq: u8,
     max_inter_align_gap: u64,
+    max_molecule_size: i64,
+    walks_policy: WalksPolicy,
 }
 
 pub fn cmd_parse(args: ParseArgs) -> Result<(), Box<dyn std::error::Error>> {
     reject_unsupported_parse_options(&args)?;
-    if args.walks_policy != "5unique" {
-        return Err("not implemented: only --walks-policy 5unique is supported".into());
-    }
+    let walks_policy = WalksPolicy::parse(&args.walks_policy)?;
     let report_end = ReportEnd::parse(&args.report_alignment_end)?;
     let add_columns = parse_add_columns(args.add_columns.as_deref())?;
     reject_compressed_output(args.output.as_deref(), "compressed parse output")?;
@@ -198,6 +233,11 @@ pub fn cmd_parse(args: ParseArgs) -> Result<(), Box<dyn std::error::Error>> {
     let max_inter_align_gap = args
         .max_inter_align_gap
         .unwrap_or(DEFAULT_MAX_INTER_ALIGN_GAP);
+    let max_molecule_size = args
+        .max_molecule_size
+        .unwrap_or(DEFAULT_MAX_MOLECULE_SIZE as u64)
+        .try_into()
+        .map_err(|_| "pairtools parse --max-molecule-size is too large")?;
     let config = EmitConfig {
         header: &header,
         order: &order,
@@ -206,6 +246,8 @@ pub fn cmd_parse(args: ParseArgs) -> Result<(), Box<dyn std::error::Error>> {
         add_columns: &add_columns,
         min_mapq: args.min_mapq,
         max_inter_align_gap,
+        max_molecule_size,
+        walks_policy,
     };
     let mut stats = StatsCounter::new();
     let mut current: Option<Template> = None;
@@ -261,9 +303,6 @@ pub fn cmd_parse(args: ParseArgs) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn reject_unsupported_parse_options(args: &ParseArgs) -> Result<(), Box<dyn std::error::Error>> {
-    if args.max_molecule_size.is_some() {
-        return Err("not implemented: pairtools parse --max-molecule-size".into());
-    }
     if args.drop_readid {
         return Err("not implemented: pairtools parse --drop-readid".into());
     }
@@ -279,7 +318,6 @@ fn reject_unsupported_parse_options(args: &ParseArgs) -> Result<(), Box<dyn std:
     if args.readid_transform.is_some() {
         return Err("not implemented: pairtools parse --readid-transform".into());
     }
-    let _explicit_flip = args.flip;
     if args.no_flip {
         return Err("not implemented: pairtools parse --no-flip".into());
     }
@@ -385,7 +423,7 @@ fn emit_template(
         config.min_mapq,
         config.max_inter_align_gap,
     )?;
-    let pair = select_pair(&parsed);
+    let pair = select_pair(&parsed, config.walks_policy, config.max_molecule_size);
     emit_pair(out, &parsed.read_id, pair, config, stats)?;
     Ok(())
 }
@@ -577,7 +615,7 @@ fn normalize_alignment_list(alns: &mut Vec<Aln>, max_inter_align_gap: u64) {
     *alns = normalized;
 }
 
-fn select_pair(parsed: &ParsedTemplate) -> Pair {
+fn select_pair(parsed: &ParsedTemplate, policy: WalksPolicy, max_molecule_size: i64) -> Pair {
     let mut alns1 = parsed.alns1.clone();
     let mut alns2 = parsed.alns2.clone();
 
@@ -585,13 +623,12 @@ fn select_pair(parsed: &ParsedTemplate) -> Pair {
     let mut right = alns2[0].clone();
 
     if alns1.len() > 1 || alns2.len() > 1 {
-        let rescued_linear_side = rescue_walk(&mut alns1, &mut alns2);
+        let rescued_linear_side = rescue_walk(&mut alns1, &mut alns2, max_molecule_size);
         if rescued_linear_side.is_some() {
             left = alns1[0].clone();
             right = alns2[0].clone();
         } else {
-            left = select_5unique(&alns1);
-            right = select_5unique(&alns2);
+            (left, right) = apply_walks_policy(&alns1, &alns2, policy);
         }
     }
 
@@ -603,6 +640,20 @@ fn select_pair(parsed: &ParsedTemplate) -> Pair {
     }
 }
 
+fn apply_walks_policy(alns1: &[Aln], alns2: &[Aln], policy: WalksPolicy) -> (Aln, Aln) {
+    match policy {
+        WalksPolicy::Mask => (select_5any(alns1).masked(), select_5any(alns2).masked()),
+        WalksPolicy::FiveAny => (select_5any(alns1), select_5any(alns2)),
+        WalksPolicy::FiveUnique => (select_5unique(alns1), select_5unique(alns2)),
+        WalksPolicy::ThreeAny => (select_3any(alns1), select_3any(alns2)),
+        WalksPolicy::ThreeUnique => (select_3unique(alns1), select_3unique(alns2)),
+    }
+}
+
+fn select_5any(alns: &[Aln]) -> Aln {
+    alns[0].clone()
+}
+
 fn select_5unique(alns: &[Aln]) -> Aln {
     alns.iter()
         .find(|aln| aln.is_mapped && aln.is_unique)
@@ -610,7 +661,19 @@ fn select_5unique(alns: &[Aln]) -> Aln {
         .clone()
 }
 
-fn rescue_walk(alns1: &mut [Aln], alns2: &mut [Aln]) -> Option<u8> {
+fn select_3any(alns: &[Aln]) -> Aln {
+    alns.last().unwrap_or(&alns[0]).clone()
+}
+
+fn select_3unique(alns: &[Aln]) -> Aln {
+    alns.iter()
+        .rev()
+        .find(|aln| aln.is_mapped && aln.is_unique)
+        .unwrap_or_else(|| alns.last().unwrap_or(&alns[0]))
+        .clone()
+}
+
+fn rescue_walk(alns1: &mut [Aln], alns2: &mut [Aln], max_molecule_size: i64) -> Option<u8> {
     let n_algns1 = alns1.len();
     let n_algns2 = alns2.len();
     if n_algns1 <= 1 && n_algns2 <= 1 {
@@ -650,7 +713,7 @@ fn rescue_walk(alns1: &mut [Aln], alns2: &mut [Aln]) -> Option<u8> {
                 + i64::from(chim3_algn.dist_to_5)
                 + i64::from(linear_algn.dist_to_5)
         };
-        can_rescue &= molecule_size <= DEFAULT_MAX_MOLECULE_SIZE;
+        can_rescue &= molecule_size <= max_molecule_size;
     }
 
     if can_rescue {

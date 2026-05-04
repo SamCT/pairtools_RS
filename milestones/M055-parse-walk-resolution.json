@@ -1,0 +1,89 @@
+{
+  "id": "M055",
+  "name": "Parse walk-resolution parity",
+  "status": "complete",
+  "summary": "Oracle-driven pairtools parse walk-policy resolution for supported non-all policies.",
+  "goal": "Match pairtools parse walk-resolution behavior for mask, 5any, 5unique, 3any, and 3unique on deterministic SAM fixtures.",
+  "explicit_non_goals": [
+    "Do not implement downstream commands.",
+    "Do not implement benchmarking.",
+    "Do not change sort behavior.",
+    "Do not claim --walks-policy all unless oracle tests pass."
+  ],
+  "allowed_paths": [
+    "src/cli.rs",
+    "src/main.rs",
+    "src/parse.rs",
+    "tests/**",
+    "docs/**",
+    "milestones/ACTIVE_MILESTONE",
+    "milestones/M055-parse-walk-resolution.json",
+    "milestones/M056-parse-all-walks.json",
+    "milestones/M100-downstream-command-planning.json"
+  ],
+  "forbidden_paths": [
+    "src/sort.rs"
+  ],
+  "allowed_commands": [
+    "bash tests/scripts/generate_walk_oracles.sh",
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "forbidden_commands": [],
+  "allowed_pairtools_commands": [
+    "pairtools parse"
+  ],
+  "forbidden_pairtools_commands": [
+    "pairtools parse2",
+    "pairtools merge",
+    "pairtools dedup",
+    "pairtools select",
+    "pairtools split",
+    "pairtools stats"
+  ],
+  "oracle_commands": [
+    "pixi run pairtools parse --chroms-path tests/fixtures/walks/walks.chrom.sizes --assembly walks_test --min-mapq 10 --walks-policy 5unique --max-inter-align-gap 30 --max-molecule-size 750 --report-alignment-end 5 --add-columns mapq,pos5,pos3,cigar,read_len tests/fixtures/walks/simple_non_walk.sam"
+  ],
+  "candidate_commands": [
+    "target/debug/pairs-rs parse --chroms-path tests/fixtures/walks/walks.chrom.sizes --assembly walks_test --min-mapq 10 --walks-policy 5unique --max-inter-align-gap 30 --max-molecule-size 750 --report-alignment-end 5 --add-columns mapq,pos5,pos3,cigar,read_len tests/fixtures/walks/simple_non_walk.sam"
+  ],
+  "required_tests": [
+    "bash tests/scripts/generate_walk_oracles.sh",
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "Walk-policy output matches pairtools oracle fixtures for mask, 5any, 5unique, 3any, and 3unique.",
+    "--walks-policy all fails loudly or is split into M056.",
+    "Parse output writing remains separate from walk policy selection."
+  ],
+  "known_risks": [
+    "Full pairtools complex-walk behavior may need M056 for --walks-policy all."
+  ],
+  "next_milestone_candidates": [
+    "M056",
+    "M100"
+  ]
+}

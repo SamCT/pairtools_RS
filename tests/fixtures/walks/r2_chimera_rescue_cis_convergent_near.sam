@@ -1,0 +1,7 @@
+@HD	VN:1.6	SO:queryname
+@SQ	SN:chr1	LN:10000
+@SQ	SN:chr2	LN:10000
+@SQ	SN:chr3	LN:10000
+r2_chimera_rescue_cis_convergent_near	81	chr1	250	60	100M	*	0	0	*	*
+r2_chimera_rescue_cis_convergent_near	129	chr1	100	60	50M50S	*	0	0	*	*
+r2_chimera_rescue_cis_convergent_near	2177	chr1	300	60	50S50M	*	0	0	*	*

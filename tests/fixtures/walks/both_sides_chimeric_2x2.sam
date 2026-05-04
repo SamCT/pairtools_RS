@@ -1,0 +1,8 @@
+@HD	VN:1.6	SO:queryname
+@SQ	SN:chr1	LN:10000
+@SQ	SN:chr2	LN:10000
+@SQ	SN:chr3	LN:10000
+both_sides_chimeric_2x2	65	chr1	100	60	50M50S	*	0	0	*	*
+both_sides_chimeric_2x2	2113	chr2	300	60	50S50M	*	0	0	*	*
+both_sides_chimeric_2x2	129	chr1	500	60	50M50S	*	0	0	*	*
+both_sides_chimeric_2x2	2177	chr2	700	60	50S50M	*	0	0	*	*
