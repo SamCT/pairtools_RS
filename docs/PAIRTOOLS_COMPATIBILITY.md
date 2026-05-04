@@ -38,6 +38,16 @@ M020 adds tests for parse input and writer plumbing without changing pair format
 
 CRAM-specific reference handling is not claimed by M020 tests. The runtime input path remains rust-htslib/HTSlib rather than shelling out to samtools.
 
+## M030-M050 Parse Milestone Status
+
+M030, M040, and M050 are marked complete based on the existing guarded oracle suite.
+
+M030 core-pair coverage includes simple UU, unmapped, low-MAPQ, reverse-strand 5'/3' coordinate reporting, interchromosomal flipping, and same-chromosome position flipping.
+
+M040 pairsam coverage includes scoped pairsam SAM columns, supported `--add-columns mapq,pos5,pos3,cigar,read_len`, parse stats output, and loud rejection of unsupported add-columns.
+
+M050 walks/chimeric-limit coverage includes secondary and supplementary alignment fixtures, BWA-MEM2-style leading soft-clipped split behavior under `--max-inter-align-gap`, and loud rejection of unsupported walk policies. Full complex-walk or `parse2` parity is not claimed.
+
 ## Supported Hybrid Pipeline Contract
 
 M080 supports an exact shell-orchestrated hybrid pipeline in `scripts/run_hic_exact_pairs_rs_pipeline.sh`. The supported contract is:

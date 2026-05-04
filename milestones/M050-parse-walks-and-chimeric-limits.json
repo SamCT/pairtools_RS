@@ -1,7 +1,7 @@
 {
   "id": "M050",
   "name": "Parse walks and chimeric limits",
-  "status": "planned",
+  "status": "complete",
   "summary": "Bounded pairtools parse behavior for walks/chimeric/supplementary cases.",
   "goal": "Clearly bound pairtools parse behavior for walks, chimeric reads, and supplementary alignments with loud failures for unsupported walks.",
   "explicit_non_goals": [
@@ -15,6 +15,11 @@
     "src/parse.rs",
     "tests/**",
     "docs/**",
+    "milestones/ACTIVE_MILESTONE",
+    "milestones/M020-parse-io.json",
+    "milestones/M030-parse-core-pairs.json",
+    "milestones/M040-parse-pairsam-and-extra-columns.json",
+    "milestones/M060-sort-core.json",
     "milestones/M050-parse-walks-and-chimeric-limits.json"
   ],
   "forbidden_paths": [

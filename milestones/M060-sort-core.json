@@ -1,7 +1,7 @@
 {
   "id": "M060",
   "name": "Sort core",
-  "status": "planned",
+  "status": "active",
   "summary": "Pairtools-compatible key sorting, headers, and deterministic stable output.",
   "goal": "Match pairtools-compatible key order, header updates, and deterministic stable output.",
   "explicit_non_goals": [

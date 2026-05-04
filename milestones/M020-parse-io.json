@@ -1,7 +1,7 @@
 {
   "id": "M020",
   "name": "Parse IO",
-  "status": "active",
+  "status": "complete",
   "summary": "Parse input/output plumbing through rust-htslib and explicit writer behavior.",
   "goal": "Support SAM/BAM/CRAM input through rust-htslib, output writers, and compression boundaries without expanding biological/Hi-C semantics.",
   "explicit_non_goals": [

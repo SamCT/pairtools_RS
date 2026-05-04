@@ -1,7 +1,7 @@
 {
   "id": "M040",
   "name": "Parse pairsam and extra columns",
-  "status": "planned",
+  "status": "complete",
   "summary": "Pairsam SAM columns, supported add-columns, and parse stats.",
   "goal": "Match pairtools for scoped pairsam output, supported add-columns, and parse stats.",
   "explicit_non_goals": [
@@ -15,6 +15,11 @@
     "src/parse.rs",
     "tests/**",
     "docs/**",
+    "milestones/ACTIVE_MILESTONE",
+    "milestones/M020-parse-io.json",
+    "milestones/M030-parse-core-pairs.json",
+    "milestones/M050-parse-walks-and-chimeric-limits.json",
+    "milestones/M060-sort-core.json",
     "milestones/M040-parse-pairsam-and-extra-columns.json"
   ],
   "forbidden_paths": [
