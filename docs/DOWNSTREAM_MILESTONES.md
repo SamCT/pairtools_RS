@@ -13,14 +13,16 @@ M100 is the planning boundary for replacing pairtools downstream shell steps wit
    - Merge already sorted pairs/pairsam inputs.
    - Preserve compatible headers.
    - Use deterministic stable merge behavior.
-3. M130 `stats` core:
+3. M150 `dedup` core:
+   - Route nodups, duplicates, and unmapped pairs from sorted pairs/pairsam input.
+   - Support the real pipeline output streams and simple stats.
+   - Mark duplicate pair records with `DD`.
+4. M130 `stats` core:
    - Implement stable counts needed by the hybrid pipeline.
    - Compare to pairtools oracle on small deterministic fixtures.
-4. M140 `split` core:
+5. M140 `split` core:
    - Split pairsam into pairs output and SAM stream.
    - Preserve SAM columns and validate BAM handoff in shell tests.
-5. M150 `dedup` planning and core:
-   - Dedup requires a separate design pass because correctness depends on duplicate keys, parent IDs, duplicate marking, unmapped/dups output streams, and stats parity.
 
 ## Fixtures
 

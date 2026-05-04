@@ -38,6 +38,10 @@ M110 implements a scoped `select` command for exact `pair_type == "VALUE"` predi
 
 M120 implements a scoped `merge` command for small already sorted `.pairs` and `.pairsam` inputs. The oracle tests cover `pairs-rs merge` on committed sorted fixtures, compatible header handling for a small pairsam fixture, `-o/--output`, BGZF `.gz` output, and loud failures for unsupported merge options. M120 does not implement pairtools merge parallelism, temporary intermediate merging, concatenation mode, custom compression commands, or broad header edge cases.
 
+## M150 Dedup Note
+
+M150 implements a scoped `dedup` command for sorted `.pairs` and `.pairsam` inputs. The oracle tests compare read routing for nodups, duplicates, and unmapped records against installed Python pairtools on a committed fixture. M150 also tests `.gz` duplicate/unmapped output, `pair_type` `DD` marking, feasible pairsam SAM duplicate flag/Yt tag updates, simple stats output, and loud failures for unsupported dedup options. Full pairtools dedup stats, backend behavior, parent ID handling, extra-column duplicate matching, by-tile stats, filtering, YAML output, and custom input/output shell commands are not claimed.
+
 ## M020 Parse I/O Note
 
 M020 adds tests for parse input and writer plumbing without changing pair formation semantics. The tested parse I/O baseline is:
@@ -75,7 +79,7 @@ M080 supports an exact shell-orchestrated hybrid pipeline in `scripts/run_hic_ex
 - For multiple lanes, `pairtools merge` creates `merged.sorted.pairsam.gz`.
 - Downstream `pairtools dedup`, `pairtools select`, `pairtools split`, `samtools view/sort/index`, and `pairtools stats` produce the requested `merged.*` outputs.
 
-This is not an all-Rust pipeline. Downstream pairtools commands remain shell dependencies because merge, dedup, select, split, and stats are not implemented in Rust.
+This is not an all-Rust pipeline. The M080 script still intentionally calls pairtools for downstream shell steps. Later scoped Rust milestones have added `select`, `merge`, and `dedup`, but the exact M080 production script has not been rewritten to use those Rust downstream commands.
 
 ## External Real-Data Oracle Status
 
@@ -104,7 +108,7 @@ If an exact pairtools `.sorted.pairsam.gz` oracle and downstream `merged.*` outp
 |---|---|
 | `parse` | partial, oracle-gated subset |
 | `sort` | partial, oracle-gated multithreaded default sort |
-| `dedup` | explicitly not implemented |
+| `dedup` | partial, oracle-gated sorted input routing |
 | `filterbycov` | explicitly not implemented |
 | `flip` | explicitly not implemented |
 | `header` | explicitly not implemented |
@@ -183,13 +187,48 @@ M070 reran the guarded suite with BGZF-compatible `.gz` output checks using `gzi
 
 M090 validates the benchmark harness shape only. `scripts/benchmark_sort_threads.sh` reports wall time, CPU utilization, max RSS, temp disk usage, compressed and uncompressed output sizes, and compression throughput when run, and includes a compression-dominates mode for compression-heavy output. No benchmark was run in M090, so this document makes no speedup claim.
 
+## `dedup`
+
+Arguments: optional `PAIRS_PATH`.
+
+| Option | Rust status |
+|---|---|
+| `-o`, `--output` | implemented for nodup output to stdout, plain files, and `.gz` BGZF output |
+| `--output-dups` | implemented for duplicate output to plain files and `.gz` BGZF output |
+| `--output-unmapped` | implemented for unmapped output to plain files and `.gz` BGZF output |
+| `--output-stats` | implemented as simple append-only TSV counts: total, mapped, unmapped, duplicates, nodups, and fraction duplicates |
+| `--output-bytile-stats` | explicitly not implemented |
+| `--max-mismatch` | implemented for non-negative integer mismatch thresholds |
+| `--method` | implemented for `max` and `sum`; other values fail loudly |
+| `--backend` | explicitly not implemented |
+| `--chunksize` | explicitly not implemented |
+| `--carryover` | explicitly not implemented |
+| `-p`, `--n-proc` | explicitly not implemented |
+| `--mark-dups` | implemented; duplicates written to `--output-dups` are marked `DD` |
+| `--no-mark-dups` | implemented |
+| `--keep-parent-id` | explicitly not implemented |
+| `--extra-col-pair` | explicitly not implemented |
+| `--sep` | tab separator implemented; non-tab and multi-character separators fail loudly |
+| `--send-header-to` | implemented for `dups`, `dedup`, `both`, and `none` |
+| `--c1`, `--c2`, `--p1`, `--p2` | implemented for column names or numeric indices |
+| `--s1`, `--s2` | explicitly not implemented |
+| `--unmapped-chrom` | implemented |
+| `--yaml`, `--no-yaml` | explicitly not implemented |
+| `--filter`, `--engine`, `--chrom-subset`, `--startup-code`, `-t`/`--type-cast` | explicitly not implemented |
+| `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` | explicitly not implemented |
+
+Known correctness limitations:
+- Input must already be sorted by pairtools sort semantics.
+- Duplicate clusters keep the first retained mapped record as the parent.
+- Duplicate detection is based on `chrom1`, `chrom2`, `pos1`, and `pos2`; extra-column duplicate matching is not implemented.
+- Stats are intentionally simple and are not full pairtools stats parity.
+
 ## Other Command Inventories
 
-These commands are present so they fail loudly instead of looking absent. Their pairtools 1.1.3 options are inventoried here, but the Rust implementation currently rejects the command as explicitly not implemented.
+These commands are present so they fail loudly instead of looking absent. Their pairtools 1.1.3 options are inventoried here. Rows for scoped partial implementations say so explicitly; otherwise the Rust implementation rejects the command as not implemented.
 
 | Command | Arguments | Options |
 |---|---|---|
-| `dedup` | optional `PAIRS_PATH` | `-o`/`--output`, `--output-dups`, `--output-unmapped`, `--output-stats`, `--output-bytile-stats`, `--max-mismatch`, `--method`, `--backend`, `--chunksize`, `--carryover`, `-p`/`--n-proc`, `--mark-dups`/`--no-mark-dups`, `--keep-parent-id`, `--extra-col-pair`, `--sep`, `--send-header-to`, `--c1`, `--c2`, `--p1`, `--p2`, `--s1`, `--s2`, `--unmapped-chrom`, `--yaml`/`--no-yaml`, `--filter`, `--engine`, `--chrom-subset`, `--startup-code`, `-t`/`--type-cast`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
 | `filterbycov` | optional `PAIRS_PATH` | `-o`/`--output`, `--output-highcov`, `--output-unmapped`, `--output-stats`, `--max-cov`, `--max-dist`, `--method`, `--sep`, `--comment-char`, `--send-header-to`, `--c1`, `--c2`, `--p1`, `--p2`, `--s1`, `--s2`, `--unmapped-chrom`, `--mark-multi`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
 | `flip` | optional `PAIRS_PATH` | `-c`/`--chroms-path`, `-o`/`--output`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
 | `markasdup` | optional `PAIRSAM_PATH` | `-o`/`--output`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |

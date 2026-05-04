@@ -1,0 +1,14 @@
+## pairs format v1.0.0
+#sorted: chr1-chr2-pos1-pos2
+#shape: upper triangle
+#genome_assembly: dedup_test
+#chromosomes: chr1 chr2
+#chromsize: chr1 1000
+#chromsize: chr2 1000
+#columns: readID chrom1 pos1 chrom2 pos2 strand1 strand2 pair_type sam1 sam2 mapq1 mapq2
+r_unmapped	!	0	chr1	50	-	+	NU	.	.	0	60
+r_parent	chr1	100	chr1	200	+	-	UU	.	.	60	60
+r_far	chr1	100	chr1	210	+	-	UU	.	.	60	60
+r_dup1	chr1	101	chr1	202	+	-	UU	.	.	60	60
+r_dup2	chr1	103	chr1	203	+	-	UU	.	.	60	60
+r_unique	chr1	200	chr2	10	+	+	UU	.	.	60	60

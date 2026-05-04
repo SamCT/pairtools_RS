@@ -1,0 +1,94 @@
+{
+  "id": "M150",
+  "name": "Dedup core",
+  "status": "complete",
+  "summary": "Implement enough pairtools-compatible dedup behavior to run the real sorted pairsam pipeline.",
+  "goal": "Implement streaming `pairs-rs dedup` for sorted `.pairs` and `.pairsam` input, routing nodups, duplicates, unmapped records, and simple stats.",
+  "explicit_non_goals": [
+    "Do not implement select, split, stats, restrict, phase, sample, scaling, filterbycov, or parse2 behavior.",
+    "Do not optimize dedup before routing correctness tests pass.",
+    "Do not claim full pairtools dedup stats or SAM flag parity unless tests prove it.",
+    "Do not change parse, sort, select, or merge behavior."
+  ],
+  "allowed_paths": [
+    "src/cli.rs",
+    "src/main.rs",
+    "src/dedup.rs",
+    "tests/**",
+    "docs/**",
+    "milestones/ACTIVE_MILESTONE",
+    "milestones/M130-stats-core.json",
+    "milestones/M150-dedup-core.json"
+  ],
+  "forbidden_paths": [
+    "src/parse.rs",
+    "src/sort.rs",
+    "src/select.rs",
+    "src/merge.rs"
+  ],
+  "allowed_commands": [
+    "pixi run pairtools dedup --mark-dups tests/fixtures/dedup_core/input.pairsam",
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "forbidden_commands": [
+    "cargo check",
+    "cargo test",
+    "pixi run cargo check",
+    "pixi run cargo test"
+  ],
+  "allowed_pairtools_commands": [
+    "pairtools dedup"
+  ],
+  "forbidden_pairtools_commands": [
+    "pairtools merge",
+    "pairtools select",
+    "pairtools split",
+    "pairtools stats"
+  ],
+  "oracle_commands": [
+    "pixi run pairtools dedup --mark-dups --output-stats <stats> --output-dups <dups> --output-unmapped <unmapped> -o <nodups> tests/fixtures/dedup_core/input.pairsam"
+  ],
+  "candidate_commands": [
+    "target/debug/pairs-rs dedup --mark-dups --output-stats <stats> --output-dups <dups> --output-unmapped <unmapped> -o <nodups> tests/fixtures/dedup_core/input.pairsam"
+  ],
+  "required_tests": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "`pairs-rs dedup` routes nodups, duplicates, and unmapped records correctly on committed fixtures.",
+    "Duplicate records are marked with pair_type DD when `--mark-dups` is active.",
+    "`--output-stats` writes total, mapped, unmapped, duplicate, nodup, and fraction duplicate counts.",
+    "Unsupported dedup options fail loudly with `not implemented`."
+  ],
+  "known_risks": [
+    "Full pairtools dedup includes richer stats, parent IDs, SAM duplicate flag parity, and backend options that are outside M150."
+  ],
+  "next_milestone_candidates": [
+    "M130",
+    "M140"
+  ]
+}

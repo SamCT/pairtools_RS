@@ -22,8 +22,8 @@ pub enum Commands {
     Sort(SortArgs),
     Select(SelectArgs),
     Merge(MergeArgs),
+    Dedup(DedupArgs),
     Parse2(UnsupportedArgs),
-    Dedup(UnsupportedArgs),
     Flip(UnsupportedArgs),
     Split(UnsupportedArgs),
     Stats(UnsupportedArgs),
@@ -184,4 +184,79 @@ pub struct MergeArgs {
     #[arg(long = "no-concatenate", action = ArgAction::SetTrue)]
     pub no_concatenate: bool,
     pub inputs: Vec<PathBuf>,
+}
+
+#[derive(clap::Args, Clone)]
+pub struct DedupArgs {
+    #[arg(short = 'o', long)]
+    pub output: Option<PathBuf>,
+    #[arg(long = "output-stats")]
+    pub output_stats: Option<PathBuf>,
+    #[arg(long = "output-dups")]
+    pub output_dups: Option<PathBuf>,
+    #[arg(long = "output-unmapped")]
+    pub output_unmapped: Option<PathBuf>,
+    #[arg(long = "output-bytile-stats")]
+    pub output_bytile_stats: Option<PathBuf>,
+    #[arg(long = "mark-dups", action = ArgAction::SetTrue)]
+    pub mark_dups: bool,
+    #[arg(long = "no-mark-dups", action = ArgAction::SetTrue)]
+    pub no_mark_dups: bool,
+    #[arg(long = "max-mismatch", default_value_t = 3)]
+    pub max_mismatch: i64,
+    #[arg(long = "method", default_value = "max")]
+    pub method: String,
+    #[arg(long = "backend")]
+    pub backend: Option<String>,
+    #[arg(long = "chunksize")]
+    pub chunksize: Option<usize>,
+    #[arg(long = "carryover")]
+    pub carryover: Option<usize>,
+    #[arg(short = 'p', long = "n-proc")]
+    pub n_proc: Option<usize>,
+    #[arg(long = "keep-parent-id", action = ArgAction::SetTrue)]
+    pub keep_parent_id: bool,
+    #[arg(long = "extra-col-pair", num_args = 2)]
+    pub extra_col_pair: Vec<String>,
+    #[arg(long = "sep", default_value = "\t")]
+    pub sep: String,
+    #[arg(long = "send-header-to", default_value = "both")]
+    pub send_header_to: String,
+    #[arg(long = "c1")]
+    pub c1: Option<String>,
+    #[arg(long = "c2")]
+    pub c2: Option<String>,
+    #[arg(long = "p1")]
+    pub p1: Option<String>,
+    #[arg(long = "p2")]
+    pub p2: Option<String>,
+    #[arg(long = "s1")]
+    pub s1: Option<String>,
+    #[arg(long = "s2")]
+    pub s2: Option<String>,
+    #[arg(long = "unmapped-chrom", default_value = "!")]
+    pub unmapped_chrom: String,
+    #[arg(long = "yaml", action = ArgAction::SetTrue)]
+    pub yaml: bool,
+    #[arg(long = "no-yaml", action = ArgAction::SetTrue)]
+    pub no_yaml: bool,
+    #[arg(long = "filter")]
+    pub filter: Vec<String>,
+    #[arg(long = "engine")]
+    pub engine: Option<String>,
+    #[arg(long = "chrom-subset")]
+    pub chrom_subset: Option<String>,
+    #[arg(long = "startup-code")]
+    pub startup_code: Option<String>,
+    #[arg(short = 't', long = "type-cast", num_args = 2)]
+    pub type_cast: Vec<String>,
+    #[arg(long = "nproc-in")]
+    pub nproc_in: Option<usize>,
+    #[arg(long = "nproc-out")]
+    pub nproc_out: Option<usize>,
+    #[arg(long = "cmd-in")]
+    pub cmd_in: Option<String>,
+    #[arg(long = "cmd-out")]
+    pub cmd_out: Option<String>,
+    pub input: Option<PathBuf>,
 }

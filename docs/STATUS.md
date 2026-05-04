@@ -6,7 +6,7 @@ Last reconciled: 2026-05-04
 
 M130: stats core.
 
-M120 is complete. It added `pairs-rs merge` for small sorted pairs/pairsam inputs and activated M130 for stats core work.
+M150 is complete. It added the scoped `pairs-rs dedup` implementation needed by the real sorted pairsam pipeline and reactivated M130 for stats core work.
 
 ## Current branch
 
@@ -14,7 +14,7 @@ M120 is complete. It added `pairs-rs merge` for small sorted pairs/pairsam input
 
 ## Current commit
 
-`uncommitted` during M120 closure. The final task response must report the committed SHA.
+`uncommitted` during M150 implementation. The final task response must report the committed SHA.
 
 ## Implemented behavior
 
@@ -69,6 +69,13 @@ Completed parse milestones are covered by the guarded oracle suite:
   - Scoped sorted `.pairsam` merge coverage compares body output and compatible header structure after normalizing volatile merge `@PG` command text.
   - `-o/--output` writes merged output to plain files and `.gz` BGZF output.
   - Unsupported merge options fail loudly with `not implemented`.
+- M150 Dedup core:
+  - `pairs-rs dedup` streams sorted `.pairs`/`.pairsam` input and routes parent/nodup, duplicate, and unmapped records.
+  - `-o/--output`, `--output-dups`, `--output-unmapped`, and `--output-stats` are implemented for the scoped pipeline contract.
+  - Plain and `.gz` input/output are supported through HTSlib BGZF helpers.
+  - Duplicate detection supports `--method max` and `--method sum` with `--max-mismatch`.
+  - `--mark-dups` marks duplicate pair records as `pair_type` `DD`; pairsam `sam1`/`sam2` fields have duplicate flag `0x400` set and `Yt:Z:DD` updated where feasible.
+  - A committed fixture compares read routing against installed Python pairtools.
 
 ## Intentionally unsupported behavior
 
@@ -76,33 +83,37 @@ Completed parse milestones are covered by the guarded oracle suite:
 - Non-adjacent repeated read names remain unsupported and fail loudly.
 - `select` supports only exact `pair_type == "VALUE"` predicates. The broader pairtools expression language is not implemented.
 - `merge` supports small sorted inputs only. Broad pairtools merge options such as `--nproc`, `--tmpdir`, `--memory`, `--compress-program`, `--keep-first-header`, and `--concatenate` remain explicitly unsupported.
-- Rust dedup, split, stats, and other downstream commands remain unimplemented until their command-specific milestones land.
+- `dedup` does not yet implement full pairtools stats, by-tile stats, alternate backends, parent IDs, extra-column duplicate matching, filtering, YAML output, chrom subsets, type casts, or custom input/output shell commands.
+- Rust split, stats, and other downstream commands remain unimplemented until their command-specific milestones land.
 - Compressed parse output and compressed parse stats output are not implemented.
 - No benchmark or speedup is claimed by M056.
 
 ## Validation performed
 
-Validation commands for M120:
+Validation commands for M150:
 
 ```bash
 git status --short --branch
-python3 scripts/milestone_gate.py pre --milestone M120
+python3 scripts/milestone_gate.py pre --milestone M150
+python3 scripts/check_milestone_schema.py
 scripts/cargo_guard.sh check
 scripts/cargo_guard.sh test
-python3 scripts/milestone_gate.py post --milestone M120 --allow-nonactive
-python3 scripts/codex_report.py --milestone M120
+python3 scripts/check_cargo_needed.py --milestone M150
+python3 scripts/milestone_gate.py post --milestone M150 --allow-nonactive
+python3 scripts/codex_report.py --milestone M150
 git diff --check
 ```
 
-`scripts/cargo_guard.sh test` passed 28 compatibility tests and the walk oracle test after adding merge coverage.
+`scripts/cargo_guard.sh test` passed 32 compatibility tests and the walk oracle test after adding dedup coverage.
 
 ## Validation not performed and why
 
-- Benchmarks were not run because M120 is a correctness milestone.
+- Benchmarks were not run because M150 is a correctness milestone.
+- The user's real `H1_ALL_parse_RS_1.sorted_2.pairsam` integration command was not run locally because that input file was not found under `/mnt/d` during this task.
 
 ## Cargo required
 
-Yes. M120 changed Rust source and tests. `scripts/cargo_guard.sh check` and `scripts/cargo_guard.sh test` both passed through Pixi/WSL with `CARGO_TARGET_DIR=$HOME/pairtools_RS_target_codex`.
+Yes. M150 changed Rust source and tests. `scripts/cargo_guard.sh check` and `scripts/cargo_guard.sh test` both passed through Pixi/WSL with `CARGO_TARGET_DIR=$HOME/pairtools_RS_target_codex`.
 
 ## External real-data oracle status
 
@@ -110,4 +121,4 @@ External real-data oracle discovery for M080 remains documented in `docs/REAL_DA
 
 ## Next recommended milestone
 
-M130: implement and oracle-test scoped `pairs-rs stats` output for stable small-fixture counts.
+M130: implement and oracle-test scoped `pairs-rs stats` output for stable small-fixture counts, or M140 split core if BAM handoff becomes the next pipeline blocker.

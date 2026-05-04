@@ -189,6 +189,23 @@ fn normalize_merge_output(text: &str) -> String {
         + "\n"
 }
 
+fn body_read_ids(text: &str) -> Vec<String> {
+    text.lines()
+        .filter(|line| !line.starts_with('#') && !line.is_empty())
+        .filter_map(|line| line.split('\t').next().map(str::to_string))
+        .collect()
+}
+
+fn pair_types_by_read_id(text: &str) -> Vec<(String, String)> {
+    text.lines()
+        .filter(|line| !line.starts_with('#') && !line.is_empty())
+        .map(|line| {
+            let fields: Vec<&str> = line.split('\t').collect();
+            (fields[0].to_string(), fields[7].to_string())
+        })
+        .collect()
+}
+
 fn assert_bgzip_compatible(path: &Path) {
     let path_s = path.to_string_lossy();
     let output = Command::new("pixi")
@@ -594,6 +611,170 @@ fn merge_rejects_unsupported_features_loudly() {
 }
 
 #[test]
+fn dedup_routes_marks_and_writes_simple_stats() {
+    let input = "tests/fixtures/dedup_core/input.pairsam";
+    let tmp = TempDir::new().unwrap();
+    let nodups = tmp.path().join("nodups.pairsam");
+    let dups = tmp.path().join("dups.pairsam.gz");
+    let unmapped = tmp.path().join("unmapped.pairsam.gz");
+    let stats = tmp.path().join("dedup.stats.txt");
+    let nodups_s = nodups.to_string_lossy();
+    let dups_s = dups.to_string_lossy();
+    let unmapped_s = unmapped.to_string_lossy();
+    let stats_s = stats.to_string_lossy();
+
+    run_pairs_rs_to_path(&[
+        "dedup",
+        "--mark-dups",
+        "--output-stats",
+        stats_s.as_ref(),
+        "--output-dups",
+        dups_s.as_ref(),
+        "--output-unmapped",
+        unmapped_s.as_ref(),
+        "-o",
+        nodups_s.as_ref(),
+        input,
+    ]);
+
+    assert_bgzip_compatible(&dups);
+    assert_bgzip_compatible(&unmapped);
+    assert_eq!(
+        body_read_ids(&fs::read_to_string(&nodups).unwrap()),
+        ["r_parent", "r_far", "r_unique"]
+    );
+    let dups_text = String::from_utf8(read_gzip_with_gzip(&dups)).unwrap();
+    assert_eq!(body_read_ids(&dups_text), ["r_dup1", "r_dup2"]);
+    assert_eq!(
+        pair_types_by_read_id(&dups_text),
+        [
+            ("r_dup1".to_string(), "DD".to_string()),
+            ("r_dup2".to_string(), "DD".to_string())
+        ]
+    );
+    assert_eq!(
+        body_read_ids(&String::from_utf8(read_gzip_with_gzip(&unmapped)).unwrap()),
+        ["r_unmapped"]
+    );
+    assert_eq!(
+        fs::read_to_string(&stats).unwrap(),
+        "total\t6\ntotal_mapped\t5\ntotal_unmapped\t1\ntotal_dups\t2\ntotal_nodups\t3\nfraction_dups\t0.4\n"
+    );
+}
+
+#[test]
+fn dedup_routing_matches_pairtools_read_id_classes() {
+    let input = "tests/fixtures/dedup_core/input.pairsam";
+    let tmp = TempDir::new().unwrap();
+    let rs_nodups = tmp.path().join("rs.nodups.pairsam");
+    let rs_dups = tmp.path().join("rs.dups.pairsam");
+    let rs_unmapped = tmp.path().join("rs.unmapped.pairsam");
+    let pt_nodups = tmp.path().join("pt.nodups.pairsam");
+    let pt_dups = tmp.path().join("pt.dups.pairsam");
+    let pt_unmapped = tmp.path().join("pt.unmapped.pairsam");
+
+    let rs_nodups_s = rs_nodups.to_string_lossy();
+    let rs_dups_s = rs_dups.to_string_lossy();
+    let rs_unmapped_s = rs_unmapped.to_string_lossy();
+    run_pairs_rs_to_path(&[
+        "dedup",
+        "--mark-dups",
+        "--output-dups",
+        rs_dups_s.as_ref(),
+        "--output-unmapped",
+        rs_unmapped_s.as_ref(),
+        "-o",
+        rs_nodups_s.as_ref(),
+        input,
+    ]);
+
+    let pt_nodups_s = pt_nodups.to_string_lossy();
+    let pt_dups_s = pt_dups.to_string_lossy();
+    let pt_unmapped_s = pt_unmapped.to_string_lossy();
+    run_pairtools(&[
+        "dedup",
+        "--mark-dups",
+        "--output-dups",
+        pt_dups_s.as_ref(),
+        "--output-unmapped",
+        pt_unmapped_s.as_ref(),
+        "-o",
+        pt_nodups_s.as_ref(),
+        input,
+    ]);
+
+    assert_eq!(
+        body_read_ids(&fs::read_to_string(&rs_nodups).unwrap()),
+        body_read_ids(&fs::read_to_string(&pt_nodups).unwrap())
+    );
+    assert_eq!(
+        body_read_ids(&fs::read_to_string(&rs_dups).unwrap()),
+        body_read_ids(&fs::read_to_string(&pt_dups).unwrap())
+    );
+    assert_eq!(
+        body_read_ids(&fs::read_to_string(&rs_unmapped).unwrap()),
+        body_read_ids(&fs::read_to_string(&pt_unmapped).unwrap())
+    );
+}
+
+#[test]
+fn dedup_marks_pairsam_sam_duplicate_flags_where_present() {
+    let sep = '\x19';
+    let input = format!(
+        "\
+## pairs format v1.0.0
+#sorted: chr1-chr2-pos1-pos2
+#columns: readID chrom1 pos1 chrom2 pos2 strand1 strand2 pair_type sam1 sam2
+parent\tchr1\t100\tchr1\t200\t+\t-\tUU\tparent{sep}65{sep}chr1{sep}100{sep}60{sep}10M{sep}*{sep}0{sep}0{sep}AAAAAAAAAA{sep}IIIIIIIIII{sep}Yt:Z:UU\tparent{sep}129{sep}chr1{sep}200{sep}60{sep}10M{sep}*{sep}0{sep}0{sep}TTTTTTTTTT{sep}IIIIIIIIII{sep}Yt:Z:UU
+dup\tchr1\t101\tchr1\t202\t+\t-\tUU\tdup{sep}65{sep}chr1{sep}101{sep}60{sep}10M{sep}*{sep}0{sep}0{sep}AAAAAAAAAA{sep}IIIIIIIIII{sep}Yt:Z:UU\tdup{sep}129{sep}chr1{sep}202{sep}60{sep}10M{sep}*{sep}0{sep}0{sep}TTTTTTTTTT{sep}IIIIIIIIII{sep}Yt:Z:UU
+"
+    );
+    let tmp = TempDir::new().unwrap();
+    let input_path = tmp.path().join("input.pairsam");
+    let nodups = tmp.path().join("nodups.pairsam");
+    let dups = tmp.path().join("dups.pairsam");
+    fs::write(&input_path, input).unwrap();
+
+    let input_s = input_path.to_string_lossy();
+    let nodups_s = nodups.to_string_lossy();
+    let dups_s = dups.to_string_lossy();
+    run_pairs_rs_to_path(&[
+        "dedup",
+        "--mark-dups",
+        "--output-dups",
+        dups_s.as_ref(),
+        "-o",
+        nodups_s.as_ref(),
+        input_s.as_ref(),
+    ]);
+    let dups_text = fs::read_to_string(&dups).unwrap();
+    let row = dups_text.lines().find(|line| !line.starts_with('#')).unwrap();
+    let fields: Vec<&str> = row.split('\t').collect();
+    assert_eq!(fields[7], "DD");
+    assert!(fields[8].contains(&format!("{sep}1089{sep}")));
+    assert!(fields[9].contains(&format!("{sep}1153{sep}")));
+    assert!(fields[8].contains("Yt:Z:DD"));
+    assert!(fields[9].contains("Yt:Z:DD"));
+}
+
+#[test]
+fn dedup_rejects_unsupported_features_loudly() {
+    let input = "tests/fixtures/dedup_core/input.pairsam";
+    assert_pairs_rs_failure(
+        &["dedup", "--backend", "scipy", input],
+        "not implemented: pairtools dedup --backend",
+    );
+    assert_pairs_rs_failure(
+        &["dedup", "--nproc-in", "2", input],
+        "not implemented: pairtools dedup --nproc-in",
+    );
+    assert_pairs_rs_failure(
+        &["dedup", "--send-header-to", "elsewhere", input],
+        "not implemented: pairtools dedup --send-header-to elsewhere",
+    );
+}
+
+#[test]
 fn sort_parse_generated_pairsam_matches_pairtools_1_1_3_oracle() {
     let tmp = TempDir::new().unwrap();
     let input = tmp.path().join("parse-generated.pairsam");
@@ -865,6 +1046,31 @@ fn cli_inventory_lists_current_pairtools_command_surface() {
     ] {
         assert!(merge_help.contains(option), "merge help missing {option}");
     }
+
+    let dedup_help = run_pairs_rs(&["dedup", "--help"]);
+    for option in [
+        "--output",
+        "--output-stats",
+        "--output-dups",
+        "--output-unmapped",
+        "--mark-dups",
+        "--no-mark-dups",
+        "--max-mismatch",
+        "--method",
+        "--sep",
+        "--send-header-to",
+        "--c1",
+        "--c2",
+        "--p1",
+        "--p2",
+        "--unmapped-chrom",
+        "--nproc-in",
+        "--nproc-out",
+        "--cmd-in",
+        "--cmd-out",
+    ] {
+        assert!(dedup_help.contains(option), "dedup help missing {option}");
+    }
 }
 
 #[test]
@@ -989,7 +1195,6 @@ fn sort_rejects_accepted_but_unimplemented_pairtools_options_loudly() {
 fn missing_pairtools_commands_exist_but_fail_loudly() {
     for (command, args) in [
         ("parse2", vec!["--single-end", "input.sam"]),
-        ("dedup", vec!["--output", "out.pairs", "input.pairs"]),
         ("flip", vec!["--chroms-path", "chrom.sizes", "input.pairs"]),
         ("split", vec!["--output-pairs", "out.pairs", "input.pairsam"]),
         ("stats", vec!["--with-chromsizes", "chrom.sizes", "input.pairs"]),
