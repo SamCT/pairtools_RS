@@ -1,7 +1,7 @@
 {
   "id": "M000",
   "name": "Governance automation",
-  "status": "active",
+  "status": "complete",
   "summary": "Repository-enforced milestone automation and anti-drift infrastructure.",
   "goal": "Build the milestone operating system that controls future Codex work without changing pairtools runtime behavior.",
   "explicit_non_goals": [

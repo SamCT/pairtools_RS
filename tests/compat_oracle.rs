@@ -18,12 +18,13 @@ fn run_pairs_rs(args: &[&str]) -> String {
 }
 
 fn run_pairtools(args: &[&str]) -> String {
-    let _guard = ORACLE_LOCK.lock().unwrap();
+    let oracle_lock_guard = ORACLE_LOCK.lock().unwrap();
     let output = Command::new("pixi")
         .args(["run", "pairtools"])
         .args(args)
         .output()
         .unwrap();
+    drop(oracle_lock_guard);
     assert!(
         output.status.success(),
         "pairtools oracle failed:\n{}",
@@ -432,6 +433,94 @@ fn assert_pairs_rs_failure(args: &[&str], expected_stderr: &str) {
 }
 
 #[test]
+fn cli_inventory_lists_current_pairtools_command_surface() {
+    let help = run_pairs_rs(&["--help"]);
+    for command in [
+        "parse",
+        "sort",
+        "parse2",
+        "dedup",
+        "flip",
+        "merge",
+        "split",
+        "select",
+        "stats",
+        "restrict",
+        "filterbycov",
+        "phase",
+        "markasdup",
+        "sample",
+        "header",
+        "scaling",
+    ] {
+        assert!(help.contains(command), "top-level help missing {command}");
+    }
+
+    let parse_help = run_pairs_rs(&["parse", "--help"]);
+    for option in [
+        "--chroms-path",
+        "--output",
+        "--assembly",
+        "--min-mapq",
+        "--max-molecule-size",
+        "--drop-readid",
+        "--drop-seq",
+        "--drop-sam",
+        "--add-pair-index",
+        "--add-columns",
+        "--output-parsed-alignments",
+        "--output-stats",
+        "--report-alignment-end",
+        "--max-inter-align-gap",
+        "--walks-policy",
+        "--readid-transform",
+        "--flip",
+        "--no-flip",
+        "--nproc-in",
+        "--nproc-out",
+        "--cmd-in",
+        "--cmd-out",
+    ] {
+        assert!(parse_help.contains(option), "parse help missing {option}");
+    }
+
+    let sort_help = run_pairs_rs(&["sort", "--help"]);
+    for option in [
+        "--output",
+        "--tmpdir",
+        "--memory",
+        "--c1",
+        "--c2",
+        "--p1",
+        "--p2",
+        "--pt",
+        "--extra-col",
+        "--nproc",
+        "--compress-program",
+        "--nproc-in",
+        "--nproc-out",
+        "--cmd-in",
+        "--cmd-out",
+    ] {
+        assert!(sort_help.contains(option), "sort help missing {option}");
+    }
+}
+
+#[test]
+fn unsupported_top_level_options_fail_loudly() {
+    assert_pairs_rs_failure(
+        &["--post-mortem", "stats"],
+        "not implemented: top-level --post-mortem",
+    );
+    assert_pairs_rs_failure(
+        &["--output-profile", "profile.txt", "stats"],
+        "not implemented: top-level --output-profile",
+    );
+    assert_pairs_rs_failure(&["--verbose", "stats"], "not implemented: top-level --verbose");
+    assert_pairs_rs_failure(&["--debug", "stats"], "not implemented: top-level --debug");
+}
+
+#[test]
 fn parse_rejects_unsupported_pairtools_options_loudly() {
     assert_pairs_rs_failure(
         &[
@@ -538,26 +627,27 @@ fn sort_rejects_accepted_but_unimplemented_pairtools_options_loudly() {
 
 #[test]
 fn missing_pairtools_commands_exist_but_fail_loudly() {
-    assert_pairs_rs_failure(
-        &[
-            "sample",
-            "--seed",
-            "1",
-            "0.5",
-            "tests/fixtures/sort_simple/input.pairs",
-        ],
-        "not implemented: pairtools sample compatibility",
-    );
-    assert_pairs_rs_failure(
-        &[
-            "header",
-            "generate",
-            "tests/fixtures/sort_simple/input.pairs",
-        ],
-        "not implemented: pairtools header compatibility",
-    );
-    assert_pairs_rs_failure(
-        &["scaling", "tests/fixtures/sort_simple/input.pairs"],
-        "not implemented: pairtools scaling compatibility",
-    );
+    for (command, args) in [
+        ("parse2", vec!["--single-end", "input.sam"]),
+        ("dedup", vec!["--output", "out.pairs", "input.pairs"]),
+        ("flip", vec!["--chroms-path", "chrom.sizes", "input.pairs"]),
+        ("merge", vec!["--nproc", "2", "a.pairs", "b.pairs"]),
+        ("split", vec!["--output-pairs", "out.pairs", "input.pairsam"]),
+        ("select", vec!["pair_type == \"UU\"", "input.pairs"]),
+        ("stats", vec!["--with-chromsizes", "chrom.sizes", "input.pairs"]),
+        ("restrict", vec!["--frags", "frags.bed", "input.pairs"]),
+        ("filterbycov", vec!["--max-cov", "3", "input.pairs"]),
+        ("phase", vec!["--phase-suffixes", "PAT,MAT", "input.pairs"]),
+        ("markasdup", vec!["input.pairsam"]),
+        ("sample", vec!["--seed", "1", "0.5", "input.pairs"]),
+        ("header", vec!["generate", "input.pairs"]),
+        ("scaling", vec!["input.pairs"]),
+    ] {
+        let mut all_args = vec![command];
+        all_args.extend(args);
+        assert_pairs_rs_failure(
+            &all_args,
+            &format!("not implemented: pairtools {command} compatibility"),
+        );
+    }
 }

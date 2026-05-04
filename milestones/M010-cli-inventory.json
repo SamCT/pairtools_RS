@@ -1,7 +1,7 @@
 {
   "id": "M010",
   "name": "CLI inventory",
-  "status": "planned",
+  "status": "active",
   "summary": "Inventory pairtools CLI commands and options and ensure unsupported flags fail loudly.",
   "goal": "Ensure all pairtools commands/options are inventoried and unsupported options fail loudly without implementing command behavior.",
   "explicit_non_goals": [

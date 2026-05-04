@@ -10,7 +10,7 @@ pixi run pairtools <command> --help
 
 Policy: pairtools is permitted only as a test oracle. The Rust binary must not call pairtools at runtime. Every accepted option must either match pairtools 1.1.3 semantics or fail loudly with `not implemented`.
 
-Compatibility claims in this file are controlled by milestone-gated oracle tests. M000 adds governance automation only; it does not expand parse/sort compatibility and does not rerun oracle parity. Any stale or uncertain claim must be reconciled in a future milestone before it can support performance claims.
+Compatibility claims in this file are controlled by milestone-gated oracle tests. M000 added governance automation only. M010 adds CLI inventory and loud-failure tests only; it does not expand parse/sort behavior. Any stale or uncertain claim must be reconciled in a future milestone before it can support performance claims.
 
 ## Current Binary Classification
 
@@ -21,6 +21,10 @@ Runtime code uses `rust-htslib`/HTSlib for SAM/BAM/CRAM input and BGZF output. T
 ## M000 Governance Note
 
 M000 adds repository-enforced milestone automation only. It does not change Rust parse, sort, or downstream pairtools behavior. Parse/sort oracle parity was not rerun in M000, so this file records the previously reconciled compatibility baseline rather than new behavioral evidence from this milestone.
+
+## M010 CLI Inventory Note
+
+M010 verifies that the Rust CLI exposes the current command inventory in help text, that `parse --help` and `sort --help` expose the inventoried options, and that unsupported global options and unsupported commands fail loudly with `not implemented`. M010 does not implement downstream command behavior and does not modify parse or sort runtime semantics.
 
 ## Top-Level Options
 
