@@ -1,7 +1,7 @@
 {
   "id": "M100",
   "name": "Downstream command planning",
-  "status": "active",
+  "status": "complete",
   "summary": "Design documents and fixture inventory only for downstream commands.",
   "goal": "Plan merge, dedup, select, split, stats, and related downstream command milestones without implementing them.",
   "explicit_non_goals": [
@@ -15,7 +15,9 @@
     "tests/fixtures/README.md",
     "tests/oracle/README.md",
     "tests/golden/README.md",
-    "milestones/M100-downstream-command-planning.json"
+    "milestones/ACTIVE_MILESTONE",
+    "milestones/M100-downstream-command-planning.json",
+    "milestones/M110-select-core.json"
   ],
   "forbidden_paths": [
     "src/**",
@@ -82,7 +84,6 @@
     "Planning can over-scope future milestones unless split carefully."
   ],
   "next_milestone_candidates": [
-    "M010",
-    "M020"
+    "M110"
   ]
 }

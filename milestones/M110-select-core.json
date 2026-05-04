@@ -1,0 +1,90 @@
+{
+  "id": "M110",
+  "name": "Select core",
+  "status": "active",
+  "summary": "Implement the first downstream Rust command: pairtools-compatible select for exact pair_type predicates.",
+  "goal": "Implement oracle-tested `pairs-rs select '(pair_type == \"UU\")'` with normal header/body streaming and loud failures for unsupported select features.",
+  "explicit_non_goals": [
+    "Do not implement merge, dedup, split, stats, restrict, phase, sample, scaling, or filterbycov behavior.",
+    "Do not implement a general Python expression engine.",
+    "Do not change parse or sort behavior.",
+    "Do not benchmark or claim speedup."
+  ],
+  "allowed_paths": [
+    "src/cli.rs",
+    "src/main.rs",
+    "src/select.rs",
+    "tests/**",
+    "docs/**",
+    "milestones/ACTIVE_MILESTONE",
+    "milestones/M110-select-core.json",
+    "milestones/M120-merge-core.json"
+  ],
+  "forbidden_paths": [
+    "src/parse.rs",
+    "src/sort.rs"
+  ],
+  "allowed_commands": [
+    "pixi run pairtools select '(pair_type == \"UU\")' tests/data/mock.4stats.pairs",
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "forbidden_commands": [
+    "cargo check",
+    "cargo test",
+    "pixi run cargo check",
+    "pixi run cargo test"
+  ],
+  "allowed_pairtools_commands": [
+    "pairtools select"
+  ],
+  "forbidden_pairtools_commands": [
+    "pairtools merge",
+    "pairtools dedup",
+    "pairtools split",
+    "pairtools stats"
+  ],
+  "oracle_commands": [
+    "pixi run pairtools select '(pair_type == \"UU\")' tests/data/mock.4stats.pairs"
+  ],
+  "candidate_commands": [
+    "target/debug/pairs-rs select '(pair_type == \"UU\")' tests/data/mock.4stats.pairs"
+  ],
+  "required_tests": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "`pairs-rs select '(pair_type == \"UU\")'` matches pairtools oracle output on committed small pairs and pairsam fixtures.",
+    "`-o/--output` writes selected rows to a file and stdout is used when output is omitted.",
+    "Unsupported select predicates and unsupported select options fail loudly with `not implemented`."
+  ],
+  "known_risks": [
+    "Pairtools select supports a broad expression language; M110 intentionally starts with exact pair_type equality only."
+  ],
+  "next_milestone_candidates": [
+    "M120"
+  ]
+}

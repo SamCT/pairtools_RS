@@ -4,9 +4,9 @@ Last reconciled: 2026-05-04
 
 ## Active milestone
 
-M100: downstream command planning.
+M110: select core.
 
-M056 is complete. It added oracle-driven `pairtools parse --walks-policy all` parity for committed deterministic walk fixtures and moved the active milestone to planning-only downstream command work. No downstream Rust command behavior was implemented by M056.
+M100 is complete. It added the downstream command roadmap in `docs/DOWNSTREAM_MILESTONES.md` and activated M110 as the first bounded downstream Rust implementation milestone. No downstream Rust command behavior was implemented by M100.
 
 ## Current branch
 
@@ -14,7 +14,7 @@ M056 is complete. It added oracle-driven `pairtools parse --walks-policy all` pa
 
 ## Current commit
 
-`uncommitted` during M056 closure. The final task response must report the committed SHA.
+`uncommitted` during M100/M110 transition. The final task response must report the committed SHA.
 
 ## Implemented behavior
 
@@ -58,38 +58,40 @@ Completed parse milestones are covered by the guarded oracle suite:
 - M090 Benchmarking:
   - `scripts/benchmark_sort_threads.sh` records wall time, CPU utilization, max RSS, temp disk usage, compressed and uncompressed output sizes, and compression throughput when run.
   - M090 did not run a benchmark and does not add a performance claim.
+- M100 Downstream command planning:
+  - `docs/DOWNSTREAM_MILESTONES.md` defines the staged downstream command sequence.
+  - M110 `select` core is active as the next implementation milestone.
 
 ## Intentionally unsupported behavior
 
 - Full pairtools `parse2` behavior is not implemented.
 - Non-adjacent repeated read names remain unsupported and fail loudly.
-- Rust downstream commands remain unimplemented.
+- Rust downstream commands remain unimplemented until M110 and later command-specific milestones land.
 - Compressed parse output and compressed parse stats output are not implemented.
 - No benchmark or speedup is claimed by M056.
 
 ## Validation performed
 
-Validation commands for M056:
+Validation commands for M100:
 
 ```bash
 git status --short --branch
-cat milestones/ACTIVE_MILESTONE
-python3 scripts/milestone_gate.py pre --milestone M056
-python3 scripts/check_cargo_needed.py --milestone M056
-bash tests/scripts/generate_walk_oracles.sh
-scripts/cargo_guard.sh check
-scripts/cargo_guard.sh test
+python3 scripts/milestone_gate.py pre --milestone M100
+python3 scripts/milestone_gate.py post --milestone M100 --allow-nonactive
+python3 scripts/codex_report.py --milestone M100
+git diff --check
 ```
 
-`scripts/cargo_guard.sh test` passed 22 Rust integration tests after enabling the all-policy walk oracle suite. `bash tests/scripts/generate_walk_oracles.sh` generated 168 pairtools oracle files for 14 case/threshold combinations across six walk policies.
+M100 changed only docs and milestone registry files, so Cargo was not required.
 
 ## Validation not performed and why
 
-- Benchmarks were not run because M056 is a correctness milestone.
+- Cargo was not run because M100 changed only docs and milestone registry files.
+- Benchmarks were not run because M100 is a planning milestone.
 
 ## Cargo required
 
-Yes. M056 changed Rust source and tests. `scripts/cargo_guard.sh check` and `scripts/cargo_guard.sh test` both passed through Pixi/WSL with `CARGO_TARGET_DIR=$HOME/pairtools_RS_target_codex`.
+No for M100. M110 will require Cargo once Rust source/tests change.
 
 ## External real-data oracle status
 
@@ -97,4 +99,4 @@ External real-data oracle discovery for M080 remains documented in `docs/REAL_DA
 
 ## Next recommended milestone
 
-M100: plan downstream command milestones for merge, dedup, select, split, stats, and related commands. M100 must remain planning-only unless the active milestone is explicitly changed.
+M110: implement and oracle-test `pairs-rs select '(pair_type == "UU")'` as the first downstream Rust command.

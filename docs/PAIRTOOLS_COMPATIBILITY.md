@@ -26,6 +26,10 @@ M000 adds repository-enforced milestone automation only. It does not change Rust
 
 M010 verifies that the Rust CLI exposes the current command inventory in help text, that `parse --help` and `sort --help` expose the inventoried options, and that unsupported global options and unsupported commands fail loudly with `not implemented`. M010 does not implement downstream command behavior and does not modify parse or sort runtime semantics.
 
+## M100 Downstream Planning Note
+
+M100 defines the downstream command roadmap in `docs/DOWNSTREAM_MILESTONES.md` and activates M110 for a scoped `select` implementation. M100 does not implement merge, dedup, select, split, stats, or any other downstream Rust command behavior.
+
 ## M020 Parse I/O Note
 
 M020 adds tests for parse input and writer plumbing without changing pair formation semantics. The tested parse I/O baseline is:
