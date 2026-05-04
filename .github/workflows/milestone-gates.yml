@@ -1,0 +1,60 @@
+name: Milestone gates
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  governance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile governance scripts
+        run: python3 -m py_compile scripts/*.py
+      - name: Check cargo guard syntax
+        run: bash -n scripts/cargo_guard.sh
+      - name: Validate milestone registry
+        run: python3 scripts/check_milestone_schema.py
+      - name: Show milestone status
+        run: python3 scripts/milestone_gate.py status --milestone M000 --allow-nonactive
+      - name: Runtime external tool policy
+        run: python3 scripts/check_no_runtime_pairtools.py --milestone M000
+      - name: Compatibility placeholder policy
+        run: python3 scripts/check_no_noop_flags.py --milestone M000
+      - name: Legacy parser framing policy
+        run: python3 scripts/check_parse_lite_drift.py --milestone M000
+
+  rust-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Compute changed files
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            git fetch origin "${{ github.base_ref }}" --depth=1
+            git diff --name-only "origin/${{ github.base_ref }}...HEAD" > /tmp/changed-files.txt
+          else
+            git diff --name-only HEAD~1...HEAD > /tmp/changed-files.txt || git diff --name-only HEAD > /tmp/changed-files.txt
+          fi
+          cat /tmp/changed-files.txt
+      - name: Decide whether Cargo is required
+        id: cargo-needed
+        run: |
+          python3 scripts/check_cargo_needed.py --milestone M000 --from-file /tmp/changed-files.txt | tee /tmp/cargo-needed.txt
+          if grep -q 'cargo_required=true' /tmp/cargo-needed.txt; then
+            echo "required=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "required=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Install Pixi
+        if: steps.cargo-needed.outputs.required == 'true'
+        run: |
+          curl -fsSL https://pixi.sh/install.sh | bash
+          echo "$HOME/.pixi/bin" >> "$GITHUB_PATH"
+      - name: Cargo check
+        if: steps.cargo-needed.outputs.required == 'true'
+        run: |
+          export CARGO_TARGET_DIR="$HOME/pairtools_RS_target_ci"
+          pixi run cargo check
