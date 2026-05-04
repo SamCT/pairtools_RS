@@ -1,3 +1,9 @@
+## This is a repo intended for educational and research purposes
+
+Using codex, the aim of this pairtools revision is to assess the capacity of codex to do a python -> Rust swap of a complex code set that is currently limited in computational throughput and thus broader application.
+This is a pure vibe code. It is not intended for production until thoroughly tested.
+
+
 # pairtools-rs rewrite scope
 
 This repository now targets a **full Rust rewrite** of pairtools with command-line and output compatibility as the primary goal.
