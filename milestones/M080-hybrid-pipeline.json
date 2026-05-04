@@ -1,7 +1,7 @@
 {
   "id": "M080",
   "name": "Hybrid pipeline",
-  "status": "active",
+  "status": "complete",
   "summary": "Exact production bridge script using pairs-rs parse+sort and pairtools only for downstream shell steps.",
   "goal": "Reproduce the known pairtools Hi-C pipeline with pairs-rs replacing parse+sort only.",
   "explicit_non_goals": [

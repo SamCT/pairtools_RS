@@ -26,6 +26,18 @@ M000 adds repository-enforced milestone automation only. It does not change Rust
 
 M010 verifies that the Rust CLI exposes the current command inventory in help text, that `parse --help` and `sort --help` expose the inventoried options, and that unsupported global options and unsupported commands fail loudly with `not implemented`. M010 does not implement downstream command behavior and does not modify parse or sort runtime semantics.
 
+## M020 Parse I/O Note
+
+M020 adds tests for parse input and writer plumbing without changing pair formation semantics. The tested parse I/O baseline is:
+
+- SAM input from a path and the same SAM bytes from stdin produce identical output.
+- A BAM file generated from the SAM fixture through rust-htslib produces identical output to the SAM path.
+- `-o` writes pairs output to a file and leaves stdout empty.
+- `--output-stats` writes parse stats to a file.
+- Compressed parse output and compressed parse stats output fail loudly with `not implemented`.
+
+CRAM-specific reference handling is not claimed by M020 tests. The runtime input path remains rust-htslib/HTSlib rather than shelling out to samtools.
+
 ## Supported Hybrid Pipeline Contract
 
 M080 supports an exact shell-orchestrated hybrid pipeline in `scripts/run_hic_exact_pairs_rs_pipeline.sh`. The supported contract is:

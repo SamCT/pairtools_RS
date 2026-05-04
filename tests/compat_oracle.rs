@@ -1,6 +1,7 @@
 use std::fs;
+use std::io::Write;
 use std::path::Path;
-use std::process::Command;
+use std::process::{Command, Stdio};
 use std::sync::Mutex;
 use tempfile::TempDir;
 
@@ -9,6 +10,25 @@ static ORACLE_LOCK: Mutex<()> = Mutex::new(());
 fn run_pairs_rs(args: &[&str]) -> String {
     let bin = env!("CARGO_BIN_EXE_pairs-rs");
     let output = Command::new(bin).args(args).output().unwrap();
+    assert!(
+        output.status.success(),
+        "pairs-rs failed:\n{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    String::from_utf8(output.stdout).unwrap()
+}
+
+fn run_pairs_rs_with_stdin(args: &[&str], stdin: &[u8]) -> String {
+    let bin = env!("CARGO_BIN_EXE_pairs-rs");
+    let mut child = Command::new(bin)
+        .args(args)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    child.stdin.as_mut().unwrap().write_all(stdin).unwrap();
+    let output = child.wait_with_output().unwrap();
     assert!(
         output.status.success(),
         "pairs-rs failed:\n{}",
@@ -45,6 +65,17 @@ fn assert_pairs_rs_success(args: &[&str]) {
 
 fn run_pairs_rs_to_path(args: &[&str]) {
     assert_pairs_rs_success(args);
+}
+
+fn write_bam_from_sam(sam_path: &str, bam_path: &Path) {
+    use rust_htslib::bam::{Format, Header, Read, Reader, Writer};
+
+    let mut reader = Reader::from_path(sam_path).unwrap();
+    let header = Header::from_template(reader.header());
+    let mut writer = Writer::from_path(bam_path, &header, Format::Bam).unwrap();
+    for record in reader.records() {
+        writer.write(&record.unwrap()).unwrap();
+    }
 }
 
 fn parsed_pairsam_fixture(name: &str, extra_args: &[&str]) -> String {
@@ -280,6 +311,99 @@ fn parse_output_stats_matches_pairtools_1_1_3_oracle() {
             "{name}"
         );
     }
+}
+
+#[test]
+fn parse_io_reads_stdin_sam_and_bam_path_like_sam_path() {
+    let chroms = "tests/fixtures/parse_milestone1/simple_uu/chrom.sizes";
+    let sam = "tests/fixtures/parse_milestone1/simple_uu/input.sam";
+    let sam_args = ["parse", "-c", chroms, "--drop-sam", sam];
+    let expected = run_pairs_rs(&sam_args);
+
+    let stdin_args = ["parse", "-c", chroms, "--drop-sam"];
+    let sam_bytes = fs::read(sam).unwrap();
+    assert_eq!(run_pairs_rs_with_stdin(&stdin_args, &sam_bytes), expected);
+
+    let tmp = TempDir::new().unwrap();
+    let bam = tmp.path().join("input.bam");
+    write_bam_from_sam(sam, &bam);
+    let bam_s = bam.to_string_lossy();
+    let bam_args = ["parse", "-c", chroms, "--drop-sam", bam_s.as_ref()];
+    assert_eq!(run_pairs_rs(&bam_args), expected);
+}
+
+#[test]
+fn parse_io_writes_pairs_and_stats_to_explicit_files() {
+    let chroms = "tests/fixtures/parse_milestone1/simple_uu/chrom.sizes";
+    let input = "tests/fixtures/parse_milestone1/simple_uu/input.sam";
+    let tmp = TempDir::new().unwrap();
+    let pairs_out = tmp.path().join("out.pairs");
+    let stats_out = tmp.path().join("out.stats.txt");
+    let pairs_out_s = pairs_out.to_string_lossy();
+    let stats_out_s = stats_out.to_string_lossy();
+    let bin = env!("CARGO_BIN_EXE_pairs-rs");
+    let output = Command::new(bin)
+        .args([
+            "parse",
+            "-c",
+            chroms,
+            "--drop-sam",
+            "-o",
+            pairs_out_s.as_ref(),
+            "--output-stats",
+            stats_out_s.as_ref(),
+            input,
+        ])
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "pairs-rs failed:\n{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(output.stdout.is_empty(), "stdout should be empty when -o is used");
+
+    let pairs = fs::read_to_string(&pairs_out).unwrap();
+    let stats = fs::read_to_string(&stats_out).unwrap();
+    assert!(pairs.contains("#columns: readID chrom1 pos1 chrom2 pos2 strand1 strand2 pair_type"));
+    assert!(pairs.lines().any(|line| !line.starts_with('#')));
+    assert!(stats.lines().any(|line| line.starts_with("total\t")));
+}
+
+#[test]
+fn parse_io_rejects_compressed_output_boundaries_loudly() {
+    let chroms = "tests/fixtures/parse_milestone1/simple_uu/chrom.sizes";
+    let input = "tests/fixtures/parse_milestone1/simple_uu/input.sam";
+    let tmp = TempDir::new().unwrap();
+    let pairs_gz = tmp.path().join("out.pairs.gz");
+    let stats_gz = tmp.path().join("out.stats.txt.gz");
+    let pairs_gz_s = pairs_gz.to_string_lossy();
+    let stats_gz_s = stats_gz.to_string_lossy();
+
+    assert_pairs_rs_failure(
+        &[
+            "parse",
+            "-c",
+            chroms,
+            "--drop-sam",
+            "-o",
+            pairs_gz_s.as_ref(),
+            input,
+        ],
+        "not implemented: compressed parse output",
+    );
+    assert_pairs_rs_failure(
+        &[
+            "parse",
+            "-c",
+            chroms,
+            "--drop-sam",
+            "--output-stats",
+            stats_gz_s.as_ref(),
+            input,
+        ],
+        "not implemented: compressed parse stats output",
+    );
 }
 
 #[test]
