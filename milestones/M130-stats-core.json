@@ -1,0 +1,92 @@
+{
+  "id": "M130",
+  "name": "Stats core",
+  "status": "active",
+  "summary": "Implement the next downstream command: pairtools-compatible stats for stable small-fixture counts.",
+  "goal": "Implement oracle-tested `pairs-rs stats` for small pairs inputs with stable pair count and pair_type count parity.",
+  "explicit_non_goals": [
+    "Do not implement dedup, split, restrict, phase, sample, scaling, filterbycov, or parse2 behavior.",
+    "Do not implement every pairtools stats report field in one milestone.",
+    "Do not change parse, sort, select, or merge behavior.",
+    "Do not benchmark or claim speedup."
+  ],
+  "allowed_paths": [
+    "src/cli.rs",
+    "src/main.rs",
+    "src/stats.rs",
+    "tests/**",
+    "docs/**",
+    "milestones/ACTIVE_MILESTONE",
+    "milestones/M130-stats-core.json",
+    "milestones/M140-split-core.json"
+  ],
+  "forbidden_paths": [
+    "src/parse.rs",
+    "src/sort.rs",
+    "src/select.rs",
+    "src/merge.rs"
+  ],
+  "allowed_commands": [
+    "pixi run pairtools stats tests/data/mock.4stats.pairs",
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "forbidden_commands": [
+    "cargo check",
+    "cargo test",
+    "pixi run cargo check",
+    "pixi run cargo test"
+  ],
+  "allowed_pairtools_commands": [
+    "pairtools stats"
+  ],
+  "forbidden_pairtools_commands": [
+    "pairtools merge",
+    "pairtools dedup",
+    "pairtools select",
+    "pairtools split"
+  ],
+  "oracle_commands": [
+    "pixi run pairtools stats tests/data/mock.4stats.pairs"
+  ],
+  "candidate_commands": [
+    "target/debug/pairs-rs stats tests/data/mock.4stats.pairs"
+  ],
+  "required_tests": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "`pairs-rs stats` matches selected stable pairtools stats fields on committed small pairs fixtures.",
+    "`-o/--output` writes stats to a file and stdout is used when output is omitted.",
+    "Unsupported stats options fail loudly with `not implemented`."
+  ],
+  "known_risks": [
+    "Pairtools stats emits many derived sections; M130 must scope exact fields before implementation."
+  ],
+  "next_milestone_candidates": [
+    "M140"
+  ]
+}

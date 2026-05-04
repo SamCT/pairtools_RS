@@ -1,7 +1,7 @@
 {
   "id": "M120",
   "name": "Merge core",
-  "status": "active",
+  "status": "complete",
   "summary": "Implement pairtools-compatible merge for already sorted pairs/pairsam inputs.",
   "goal": "Implement oracle-tested `pairs-rs merge` for small sorted pairs/pairsam inputs, preserving stable sorted output and compatible headers.",
   "explicit_non_goals": [

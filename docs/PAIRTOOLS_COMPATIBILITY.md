@@ -34,6 +34,10 @@ M100 defines the downstream command roadmap in `docs/DOWNSTREAM_MILESTONES.md` a
 
 M110 implements a scoped `select` command for exact `pair_type == "VALUE"` predicates. The oracle tests cover `pairs-rs select '(pair_type == "UU")'` on small `.pairs` and `.pairsam` fixtures, `-o/--output`, BGZF `.gz` output, and loud failures for unsupported predicates/options. M110 does not implement the full pairtools expression engine.
 
+## M120 Merge Note
+
+M120 implements a scoped `merge` command for small already sorted `.pairs` and `.pairsam` inputs. The oracle tests cover `pairs-rs merge` on committed sorted fixtures, compatible header handling for a small pairsam fixture, `-o/--output`, BGZF `.gz` output, and loud failures for unsupported merge options. M120 does not implement pairtools merge parallelism, temporary intermediate merging, concatenation mode, custom compression commands, or broad header edge cases.
+
 ## M020 Parse I/O Note
 
 M020 adds tests for parse input and writer plumbing without changing pair formation semantics. The tested parse I/O baseline is:
@@ -105,7 +109,7 @@ If an exact pairtools `.sorted.pairsam.gz` oracle and downstream `merged.*` outp
 | `flip` | explicitly not implemented |
 | `header` | explicitly not implemented |
 | `markasdup` | explicitly not implemented |
-| `merge` | explicitly not implemented |
+| `merge` | partial, oracle-gated small sorted input merge |
 | `parse2` | explicitly not implemented |
 | `phase` | explicitly not implemented |
 | `restrict` | explicitly not implemented |
@@ -189,7 +193,7 @@ These commands are present so they fail loudly instead of looking absent. Their 
 | `filterbycov` | optional `PAIRS_PATH` | `-o`/`--output`, `--output-highcov`, `--output-unmapped`, `--output-stats`, `--max-cov`, `--max-dist`, `--method`, `--sep`, `--comment-char`, `--send-header-to`, `--c1`, `--c2`, `--p1`, `--p2`, `--s1`, `--s2`, `--unmapped-chrom`, `--mark-multi`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
 | `flip` | optional `PAIRS_PATH` | `-c`/`--chroms-path`, `-o`/`--output`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
 | `markasdup` | optional `PAIRSAM_PATH` | `-o`/`--output`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
-| `merge` | zero or more `PAIRS_PATH` values | `-o`/`--output`, `--max-nmerge`, `--tmpdir`, `--memory`, `--compress-program`, `--nproc`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out`, `--keep-first-header`/`--no-keep-first-header`, `--concatenate`/`--no-concatenate` |
+| `merge` | zero or more `PAIRS_PATH` values | `-o`/`--output` implemented for small sorted `.pairs`/`.pairsam` inputs; `--max-nmerge`, `--tmpdir`, `--memory`, `--compress-program`, `--nproc`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out`, `--keep-first-header`/`--no-keep-first-header`, and `--concatenate`/`--no-concatenate` explicitly not implemented |
 | `parse2` | optional `SAM_PATH` | `-c`/`--chroms-path`, `-o`/`--output`, `--report-position`, `--report-orientation`, `--assembly`, `--min-mapq`, `--max-inter-align-gap`, `--max-insert-size`, `--dedup-max-mismatch`, `--single-end`, `--expand`/`--no-expand`, `--max-expansion-depth`, `--add-pair-index`, `--flip`/`--no-flip`, `--add-columns`, `--drop-readid`/`--keep-readid`, `--readid-transform`, `--drop-seq`/`--keep-seq`, `--drop-sam`/`--keep-sam`, `--output-parsed-alignments`, `--output-stats`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
 | `phase` | optional `PAIRS_PATH` | `-o`/`--output`, `--phase-suffixes`, `--clean-output`, `--tag-mode`, `--report-scores`/`--no-report-scores`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
 | `restrict` | optional `PAIRS_PATH` | `-f`/`--frags`, `-o`/`--output`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |

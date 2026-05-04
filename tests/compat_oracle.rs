@@ -171,6 +171,24 @@ fn normalize_select_output(text: &str) -> String {
         + "\n"
 }
 
+fn normalize_merge_output(text: &str) -> String {
+    text.lines()
+        .filter(|line| !line.starts_with("#samheader: @PG\tID:pairtools_merge"))
+        .map(|line| {
+            if line.starts_with("#samheader: @PG\tID:bwa-") {
+                line.split("\tCL:")
+                    .next()
+                    .unwrap_or(line)
+                    .to_string()
+            } else {
+                line.to_string()
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+        + "\n"
+}
+
 fn assert_bgzip_compatible(path: &Path) {
     let path_s = path.to_string_lossy();
     let output = Command::new("pixi")
@@ -497,6 +515,85 @@ fn select_rejects_unsupported_features_loudly() {
 }
 
 #[test]
+fn merge_simple_sorted_pairs_matches_pairtools_1_1_3_oracle() {
+    let input = "tests/oracle/sort_simple.expected.pairs";
+    let args = ["merge", input, input];
+    assert_eq!(run_pairs_rs(&args), run_pairtools(&args));
+}
+
+#[test]
+fn merge_sorted_pairsam_matches_pairtools_1_1_3_oracle() {
+    let tmp = TempDir::new().unwrap();
+    let input = tmp.path().join("input.pairsam");
+    fs::write(
+        &input,
+        "\
+## pairs format v1.0.0
+#sorted: chr1-chr2-pos1-pos2
+#chromosomes: chr1 chr2
+#chromsize: chr1 100
+#chromsize: chr2 100
+#samheader: @SQ\tSN:chr1\tLN:100
+#samheader: @SQ\tSN:chr2\tLN:100
+#samheader: @PG\tID:bwa\tPN:bwa\tVN:0.7.17\tCL:bwa mem ref r1 r2
+#columns: readID chrom1 pos1 chrom2 pos2 strand1 strand2 pair_type sam1 sam2
+r1\tchr1\t1\tchr1\t2\t+\t-\tUU\t.\t.
+r2\tchr1\t3\tchr2\t5\t+\t+\tUU\t.\t.
+",
+    )
+    .unwrap();
+    let input_s = input.to_string_lossy();
+    let args = ["merge", input_s.as_ref(), input_s.as_ref()];
+    assert_eq!(
+        normalize_merge_output(&run_pairs_rs(&args)),
+        normalize_merge_output(&run_pairtools(&args))
+    );
+}
+
+#[test]
+fn merge_writes_output_and_gz_output() {
+    let input = "tests/oracle/sort_simple.expected.pairs";
+    let expected = run_pairs_rs(&["merge", input, input]);
+    let tmp = TempDir::new().unwrap();
+    let plain = tmp.path().join("merged.pairs");
+    let gz = tmp.path().join("merged.pairs.gz");
+    let plain_s = plain.to_string_lossy();
+    let gz_s = gz.to_string_lossy();
+
+    run_pairs_rs_to_path(&["merge", "-o", plain_s.as_ref(), input, input]);
+    assert_eq!(fs::read_to_string(&plain).unwrap(), expected);
+
+    run_pairs_rs_to_path(&["merge", "-o", gz_s.as_ref(), input, input]);
+    assert_bgzip_compatible(&gz);
+    assert_eq!(read_gzip_with_gzip(&gz), expected.into_bytes());
+}
+
+#[test]
+fn merge_rejects_unsupported_features_loudly() {
+    assert_pairs_rs_failure(
+        &["merge", "--nproc", "2", "tests/oracle/sort_simple.expected.pairs"],
+        "not implemented: pairtools merge --nproc",
+    );
+    assert_pairs_rs_failure(
+        &[
+            "merge",
+            "--tmpdir",
+            "tmp",
+            "tests/oracle/sort_simple.expected.pairs",
+        ],
+        "not implemented: pairtools merge --tmpdir",
+    );
+    assert_pairs_rs_failure(
+        &[
+            "merge",
+            "--concatenate",
+            "tests/oracle/sort_simple.expected.pairs",
+        ],
+        "not implemented: pairtools merge --concatenate",
+    );
+}
+
+#[test]
 fn sort_parse_generated_pairsam_matches_pairtools_1_1_3_oracle() {
     let tmp = TempDir::new().unwrap();
     let input = tmp.path().join("parse-generated.pairsam");
@@ -748,6 +845,26 @@ fn cli_inventory_lists_current_pairtools_command_surface() {
     ] {
         assert!(select_help.contains(option), "select help missing {option}");
     }
+
+    let merge_help = run_pairs_rs(&["merge", "--help"]);
+    for option in [
+        "--output",
+        "--max-nmerge",
+        "--tmpdir",
+        "--memory",
+        "--compress-program",
+        "--nproc",
+        "--nproc-in",
+        "--nproc-out",
+        "--cmd-in",
+        "--cmd-out",
+        "--keep-first-header",
+        "--no-keep-first-header",
+        "--concatenate",
+        "--no-concatenate",
+    ] {
+        assert!(merge_help.contains(option), "merge help missing {option}");
+    }
 }
 
 #[test]
@@ -874,7 +991,6 @@ fn missing_pairtools_commands_exist_but_fail_loudly() {
         ("parse2", vec!["--single-end", "input.sam"]),
         ("dedup", vec!["--output", "out.pairs", "input.pairs"]),
         ("flip", vec!["--chroms-path", "chrom.sizes", "input.pairs"]),
-        ("merge", vec!["--nproc", "2", "a.pairs", "b.pairs"]),
         ("split", vec!["--output-pairs", "out.pairs", "input.pairsam"]),
         ("stats", vec!["--with-chromsizes", "chrom.sizes", "input.pairs"]),
         ("restrict", vec!["--frags", "frags.bed", "input.pairs"]),

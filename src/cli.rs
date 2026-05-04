@@ -21,10 +21,10 @@ pub enum Commands {
     Parse(ParseArgs),
     Sort(SortArgs),
     Select(SelectArgs),
+    Merge(MergeArgs),
     Parse2(UnsupportedArgs),
     Dedup(UnsupportedArgs),
     Flip(UnsupportedArgs),
-    Merge(UnsupportedArgs),
     Split(UnsupportedArgs),
     Stats(UnsupportedArgs),
     Restrict(UnsupportedArgs),
@@ -151,4 +151,37 @@ pub struct SelectArgs {
     #[arg(long = "cmd-out")]
     pub cmd_out: Option<String>,
     pub input: Option<PathBuf>,
+}
+
+#[derive(clap::Args, Clone)]
+pub struct MergeArgs {
+    #[arg(short = 'o', long)]
+    pub output: Option<PathBuf>,
+    #[arg(long = "max-nmerge")]
+    pub max_nmerge: Option<usize>,
+    #[arg(long = "tmpdir")]
+    pub tmpdir: Option<PathBuf>,
+    #[arg(long = "memory")]
+    pub memory: Option<String>,
+    #[arg(long = "compress-program")]
+    pub compress_program: Option<String>,
+    #[arg(long = "nproc")]
+    pub nproc: Option<usize>,
+    #[arg(long = "nproc-in")]
+    pub nproc_in: Option<usize>,
+    #[arg(long = "nproc-out")]
+    pub nproc_out: Option<usize>,
+    #[arg(long = "cmd-in")]
+    pub cmd_in: Option<String>,
+    #[arg(long = "cmd-out")]
+    pub cmd_out: Option<String>,
+    #[arg(long = "keep-first-header", action = ArgAction::SetTrue)]
+    pub keep_first_header: bool,
+    #[arg(long = "no-keep-first-header", action = ArgAction::SetTrue)]
+    pub no_keep_first_header: bool,
+    #[arg(long = "concatenate", action = ArgAction::SetTrue)]
+    pub concatenate: bool,
+    #[arg(long = "no-concatenate", action = ArgAction::SetTrue)]
+    pub no_concatenate: bool,
+    pub inputs: Vec<PathBuf>,
 }

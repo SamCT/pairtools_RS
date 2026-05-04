@@ -4,9 +4,9 @@ Last reconciled: 2026-05-04
 
 ## Active milestone
 
-M120: merge core.
+M130: stats core.
 
-M110 is complete. It added the first downstream Rust command, `pairs-rs select`, for exact `pair_type` equality predicates and activated M120 for merge core work.
+M120 is complete. It added `pairs-rs merge` for small sorted pairs/pairsam inputs and activated M130 for stats core work.
 
 ## Current branch
 
@@ -14,7 +14,7 @@ M110 is complete. It added the first downstream Rust command, `pairs-rs select`,
 
 ## Current commit
 
-`uncommitted` during M110 closure. The final task response must report the committed SHA.
+`uncommitted` during M120 closure. The final task response must report the committed SHA.
 
 ## Implemented behavior
 
@@ -64,39 +64,45 @@ Completed parse milestones are covered by the guarded oracle suite:
   - `pairs-rs select '(pair_type == "UU")'` matches pairtools oracle output on small `.pairs` and `.pairsam` fixtures after normalizing volatile select `@PG` command text.
   - `-o/--output` writes selected output to plain files and `.gz` BGZF output.
   - Unsupported predicates and unsupported select options fail loudly with `not implemented`.
+- M120 Merge core:
+  - `pairs-rs merge` matches pairtools oracle output on a small sorted `.pairs` fixture.
+  - Scoped sorted `.pairsam` merge coverage compares body output and compatible header structure after normalizing volatile merge `@PG` command text.
+  - `-o/--output` writes merged output to plain files and `.gz` BGZF output.
+  - Unsupported merge options fail loudly with `not implemented`.
 
 ## Intentionally unsupported behavior
 
 - Full pairtools `parse2` behavior is not implemented.
 - Non-adjacent repeated read names remain unsupported and fail loudly.
 - `select` supports only exact `pair_type == "VALUE"` predicates. The broader pairtools expression language is not implemented.
-- Rust merge, dedup, split, stats, and other downstream commands remain unimplemented until their command-specific milestones land.
+- `merge` supports small sorted inputs only. Broad pairtools merge options such as `--nproc`, `--tmpdir`, `--memory`, `--compress-program`, `--keep-first-header`, and `--concatenate` remain explicitly unsupported.
+- Rust dedup, split, stats, and other downstream commands remain unimplemented until their command-specific milestones land.
 - Compressed parse output and compressed parse stats output are not implemented.
 - No benchmark or speedup is claimed by M056.
 
 ## Validation performed
 
-Validation commands for M110:
+Validation commands for M120:
 
 ```bash
 git status --short --branch
-python3 scripts/milestone_gate.py pre --milestone M110
+python3 scripts/milestone_gate.py pre --milestone M120
 scripts/cargo_guard.sh check
 scripts/cargo_guard.sh test
-python3 scripts/milestone_gate.py post --milestone M110 --allow-nonactive
-python3 scripts/codex_report.py --milestone M110
+python3 scripts/milestone_gate.py post --milestone M120 --allow-nonactive
+python3 scripts/codex_report.py --milestone M120
 git diff --check
 ```
 
-`scripts/cargo_guard.sh test` passed 24 compatibility tests and the walk oracle test after adding select coverage.
+`scripts/cargo_guard.sh test` passed 28 compatibility tests and the walk oracle test after adding merge coverage.
 
 ## Validation not performed and why
 
-- Benchmarks were not run because M110 is a correctness milestone.
+- Benchmarks were not run because M120 is a correctness milestone.
 
 ## Cargo required
 
-Yes. M110 changed Rust source and tests. `scripts/cargo_guard.sh check` and `scripts/cargo_guard.sh test` both passed through Pixi/WSL with `CARGO_TARGET_DIR=$HOME/pairtools_RS_target_codex`.
+Yes. M120 changed Rust source and tests. `scripts/cargo_guard.sh check` and `scripts/cargo_guard.sh test` both passed through Pixi/WSL with `CARGO_TARGET_DIR=$HOME/pairtools_RS_target_codex`.
 
 ## External real-data oracle status
 
@@ -104,4 +110,4 @@ External real-data oracle discovery for M080 remains documented in `docs/REAL_DA
 
 ## Next recommended milestone
 
-M120: implement and oracle-test `pairs-rs merge` for small sorted pairs/pairsam fixtures.
+M130: implement and oracle-test scoped `pairs-rs stats` output for stable small-fixture counts.

@@ -1,4 +1,5 @@
 mod cli;
+mod merge;
 mod parse;
 mod select;
 mod sort;
@@ -13,10 +14,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::Parse(a) => parse::cmd_parse(a),
         Commands::Sort(a) => sort::cmd_sort(a),
         Commands::Select(a) => select::cmd_select(a),
+        Commands::Merge(a) => merge::cmd_merge(a),
         Commands::Parse2(_) => unsupported_command("parse2"),
         Commands::Dedup(_) => unsupported_command("dedup"),
         Commands::Flip(_) => unsupported_command("flip"),
-        Commands::Merge(_) => unsupported_command("merge"),
         Commands::Split(_) => unsupported_command("split"),
         Commands::Stats(_) => unsupported_command("stats"),
         Commands::Restrict(_) => unsupported_command("restrict"),
