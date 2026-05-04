@@ -1,6 +1,7 @@
 ## This is a repo intended for educational and research purposes
 
-Using codex, the aim of this pairtools revision is to assess the capacity of codex GPT-5.5xhigh to do a python -> Rust swap of a complex code set that is currently limited in computational throughput and thus broader application.
+Using codex, the aim of this pairtools revision is to assess and evaluate the capacity of codex GPT-5.5xhigh to complete a python -> Rust swap of a complex code set which is currently limited in computational throughput and thus broader application via the samtools htslib.
+
 This is a pure vibe code. It is not intended for production until thoroughly tested.
 
 
