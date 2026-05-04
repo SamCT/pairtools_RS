@@ -1,7 +1,7 @@
 {
   "id": "M090",
   "name": "Benchmarking",
-  "status": "active",
+  "status": "complete",
   "summary": "Benchmark only after parity tests pass.",
   "goal": "Maintain benchmark harnesses and report performance only after normalized oracle parity passes.",
   "explicit_non_goals": [
@@ -13,6 +13,8 @@
     "scripts/benchmark_sort_threads.sh",
     "scripts/real_bam_compare.sh",
     "docs/**",
+    "milestones/ACTIVE_MILESTONE",
+    "milestones/M100-downstream-command-planning.json",
     "milestones/M090-benchmarking.json"
   ],
   "forbidden_paths": [

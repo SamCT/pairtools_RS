@@ -1,7 +1,7 @@
 {
   "id": "M100",
   "name": "Downstream command planning",
-  "status": "planned",
+  "status": "active",
   "summary": "Design documents and fixture inventory only for downstream commands.",
   "goal": "Plan merge, dedup, select, split, stats, and related downstream command milestones without implementing them.",
   "explicit_non_goals": [

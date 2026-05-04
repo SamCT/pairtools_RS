@@ -4,9 +4,9 @@ Last reconciled: 2026-05-04
 
 ## Active milestone
 
-M090: benchmarking.
+M100: downstream command planning.
 
-M020, M030, M040, M050, M060, and M070 are marked complete. M070 was closed after the guarded test suite passed with compression, `nproc`, and tempfile coverage.
+M020, M030, M040, M050, M060, M070, and M090 are marked complete. M090 was closed after validating the benchmark harness syntax and documenting that performance claims remain gated by parity plus an explicit benchmark run.
 
 ## Current branch
 
@@ -14,7 +14,7 @@ M020, M030, M040, M050, M060, and M070 are marked complete. M070 was closed afte
 
 ## Current commit
 
-`uncommitted` during M070 closure. The final task response must report the committed SHA.
+`uncommitted` during M090 closure. The final task response must report the committed SHA.
 
 ## Implemented behavior
 
@@ -47,6 +47,10 @@ Completed parse milestones are covered by the guarded oracle suite:
   - `.gz` sort output is written through HTSlib BGZF and validates with `gzip -dc` and `bgzip -t` in tests.
   - Decompressed `.gz` output is identical for `--nproc 1` and `--nproc 8`.
   - `--tmpdir` is covered by a test that fails if the requested spill directory is ignored.
+- M090 Benchmarking:
+  - `scripts/benchmark_sort_threads.sh` records wall time, CPU utilization, max RSS, temp disk usage, compressed and uncompressed output sizes, and compression throughput when run.
+  - The harness includes a compression-dominates mode and optional gates for speedup and CPU utilization.
+  - M090 did not run a benchmark and does not add a performance claim.
 
 ## Intentionally unsupported behavior
 
@@ -54,30 +58,29 @@ Completed parse milestones are covered by the guarded oracle suite:
 - Full complex-walk parity is not claimed beyond the scoped M050 fixtures.
 - Non-adjacent repeated read names remain unsupported and fail loudly.
 - Rust downstream commands remain unimplemented.
-- M070 does not claim measured compression speedup or CPU utilization; performance reporting is M090.
-- No benchmarks or speedups are claimed.
+- M090 does not claim measured speedup or CPU utilization.
+- No downstream Rust behavior is implemented.
 
 ## Validation performed
 
-Validation commands for M070 closure:
+Validation commands for M090 closure:
 
 ```bash
 git status --short --branch
-python3 scripts/milestone_gate.py pre --milestone M070
-scripts/cargo_guard.sh check
-scripts/cargo_guard.sh test
+python3 scripts/milestone_gate.py pre --milestone M090
+bash -n scripts/benchmark_sort_threads.sh
+bash -n scripts/real_bam_compare.sh
+python3 scripts/check_cargo_needed.py --milestone M090
 ```
-
-`scripts/cargo_guard.sh test` passed 21 integration tests, including the M070 gzip, BGZF, `--nproc`, unsupported compression option, and tmpdir checks.
 
 ## Validation not performed and why
 
-- Benchmarks were not run because M070 validates behavior only. M090 is the active benchmark milestone.
-- CPU-utilization proof was not added in M070; the current claim is functional BGZF/thread-count wiring and decompressed output parity, not measured speedup.
+- Benchmarks were not run in this task. M090 validated the harness and parity gate, but no input dataset or benchmark run was requested for a performance report.
+- Cargo was not run because M090 changed only docs and milestone state.
 
 ## Cargo required
 
-Yes. M070 changed tests and requires `scripts/cargo_guard.sh check` plus `scripts/cargo_guard.sh test`; both passed.
+No. `python3 scripts/check_cargo_needed.py --milestone M090` reported `cargo_required=false`.
 
 ## External real-data oracle status
 
@@ -85,4 +88,4 @@ External real-data oracle discovery for M080 remains documented in `docs/REAL_DA
 
 ## Next recommended milestone
 
-M090: benchmarking, with parity as the prerequisite for any performance claims.
+M100: downstream command planning.

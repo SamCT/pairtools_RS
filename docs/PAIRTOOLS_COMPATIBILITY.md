@@ -167,6 +167,8 @@ M060 reran the guarded oracle suite and closed sort core coverage for default co
 
 M070 reran the guarded suite with BGZF-compatible `.gz` output checks using `gzip -dc` and `bgzip -t`, equivalent decompressed `.gz` output for `--nproc 1` and `--nproc 8`, and a direct `--tmpdir` tripwire test that fails if sort spill files ignore the requested temporary directory. The runtime uses HTSlib `bgzf_mt` when `--nproc > 1` for `.gz` output. M070 does not claim measured compression throughput or CPU utilization; `scripts/benchmark_sort_threads.sh` is a harness for active milestone M090.
 
+M090 validates the benchmark harness shape only. `scripts/benchmark_sort_threads.sh` reports wall time, CPU utilization, max RSS, temp disk usage, compressed and uncompressed output sizes, and compression throughput when run, and includes a compression-dominates mode for compression-heavy output. No benchmark was run in M090, so this document makes no speedup claim.
+
 ## Other Command Inventories
 
 These commands are present so they fail loudly instead of looking absent. Their pairtools 1.1.3 options are inventoried here, but the Rust implementation currently rejects the command as explicitly not implemented.
