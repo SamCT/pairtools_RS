@@ -163,7 +163,9 @@ Arguments: optional `PAIRS_PATH`.
 | `--cmd-in` | explicitly not implemented |
 | `--cmd-out` | explicitly not implemented |
 
-Previously recorded sort oracle coverage includes default column sorting, parse-generated `.pairsam` with `sam1`, `sam2`, and supported parse extra columns, header preservation with `#sorted: chr1-chr2-pos1-pos2` insertion, stable ordering of equal keys across spilled chunks, identical `--nproc 1` and `--nproc 8` output, BGZF-compatible `.gz` output validated by `gzip -dc` and `bgzip -t`, and equivalent decompressed `.gz` output for `--nproc 1` and `--nproc 8`. These checks were not rerun in M000. `scripts/benchmark_sort_threads.sh` is a previously added harness; M000 does not run benchmarks or add performance evidence.
+M060 reran the guarded oracle suite and closed sort core coverage for default column sorting, parse-generated `.pairsam` with `sam1`, `sam2`, and supported parse extra columns, header preservation with `#sorted: chr1-chr2-pos1-pos2` insertion, stable ordering of equal keys across spilled chunks, identical `--nproc 1` and `--nproc 8` output, and loud rejection of unsupported sort options.
+
+Existing tests also exercise BGZF-compatible `.gz` output with `gzip -dc` and `bgzip -t`, and equivalent decompressed `.gz` output for `--nproc 1` and `--nproc 8`. Those checks are carried forward into active milestone M070, where compression, temp-file, and `nproc` behavior are tracked without making benchmark or speedup claims. `scripts/benchmark_sort_threads.sh` is a harness only until M090 benchmarking is explicitly active.
 
 ## Other Command Inventories
 

@@ -1,7 +1,7 @@
 {
   "id": "M070",
   "name": "Sort compression and tempfiles",
-  "status": "planned",
+  "status": "active",
   "summary": "Sort BGZF/gzip behavior, tempdir behavior, and nproc behavior.",
   "goal": "Validate BGZF/gzip output, temporary file placement, and nproc behavior for sort.",
   "explicit_non_goals": [
