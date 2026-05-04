@@ -165,7 +165,7 @@ Arguments: optional `PAIRS_PATH`.
 
 M060 reran the guarded oracle suite and closed sort core coverage for default column sorting, parse-generated `.pairsam` with `sam1`, `sam2`, and supported parse extra columns, header preservation with `#sorted: chr1-chr2-pos1-pos2` insertion, stable ordering of equal keys across spilled chunks, identical `--nproc 1` and `--nproc 8` output, and loud rejection of unsupported sort options.
 
-Existing tests also exercise BGZF-compatible `.gz` output with `gzip -dc` and `bgzip -t`, and equivalent decompressed `.gz` output for `--nproc 1` and `--nproc 8`. Those checks are carried forward into active milestone M070, where compression, temp-file, and `nproc` behavior are tracked without making benchmark or speedup claims. `scripts/benchmark_sort_threads.sh` is a harness only until M090 benchmarking is explicitly active.
+M070 reran the guarded suite with BGZF-compatible `.gz` output checks using `gzip -dc` and `bgzip -t`, equivalent decompressed `.gz` output for `--nproc 1` and `--nproc 8`, and a direct `--tmpdir` tripwire test that fails if sort spill files ignore the requested temporary directory. The runtime uses HTSlib `bgzf_mt` when `--nproc > 1` for `.gz` output. M070 does not claim measured compression throughput or CPU utilization; `scripts/benchmark_sort_threads.sh` is a harness for active milestone M090.
 
 ## Other Command Inventories
 

@@ -1,7 +1,7 @@
 {
   "id": "M090",
   "name": "Benchmarking",
-  "status": "planned",
+  "status": "active",
   "summary": "Benchmark only after parity tests pass.",
   "goal": "Maintain benchmark harnesses and report performance only after normalized oracle parity passes.",
   "explicit_non_goals": [

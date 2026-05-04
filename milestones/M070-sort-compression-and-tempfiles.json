@@ -1,7 +1,7 @@
 {
   "id": "M070",
   "name": "Sort compression and tempfiles",
-  "status": "active",
+  "status": "complete",
   "summary": "Sort BGZF/gzip behavior, tempdir behavior, and nproc behavior.",
   "goal": "Validate BGZF/gzip output, temporary file placement, and nproc behavior for sort.",
   "explicit_non_goals": [
@@ -16,6 +16,8 @@
     "tests/**",
     "docs/**",
     "scripts/benchmark_sort_threads.sh",
+    "milestones/ACTIVE_MILESTONE",
+    "milestones/M090-benchmarking.json",
     "milestones/M070-sort-compression-and-tempfiles.json"
   ],
   "forbidden_paths": [
@@ -79,6 +81,6 @@
     "Compression throughput depends heavily on input and host environment."
   ],
   "next_milestone_candidates": [
-    "M080"
+    "M090"
   ]
 }

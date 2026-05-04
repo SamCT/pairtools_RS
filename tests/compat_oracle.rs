@@ -532,6 +532,26 @@ fn sort_gz_nproc_1_and_8_decompress_identically() {
 }
 
 #[test]
+fn sort_uses_tmpdir_for_spilled_chunks() {
+    let tmp = TempDir::new().unwrap();
+    let input = tmp.path().join("input.pairsam");
+    let missing_tmpdir = tmp.path().join("missing-sort-tmp");
+    fs::write(&input, parse_generated_pairsam_with_extra_columns()).unwrap();
+
+    let input_s = input.to_string_lossy();
+    let missing_tmpdir_s = missing_tmpdir.to_string_lossy();
+    assert_pairs_rs_failure(
+        &[
+            "sort",
+            "--tmpdir",
+            missing_tmpdir_s.as_ref(),
+            input_s.as_ref(),
+        ],
+        "No such file",
+    );
+}
+
+#[test]
 fn sort_updates_existing_samheader_pg_chain() {
     let input = "## pairs format v1.0.0\n#samheader: @HD\tVN:1.6\tSO:unsorted\n#samheader: @SQ\tSN:chr1\tLN:100\n#samheader: @PG\tID:bwa\tPN:bwa\tVN:0.7.17\n#columns: readID chrom1 pos1 chrom2 pos2 strand1 strand2 pair_type sam1 sam2\nr1\tchr1\t1\tchr1\t2\t+\t-\tUU\t.\t.\n";
     let tmp = TempDir::new().unwrap();
