@@ -1,33 +1,34 @@
 {
-  "id": "M130",
-  "name": "Stats core",
-  "status": "complete",
-  "summary": "Implement the next downstream command: pairtools-compatible stats for stable small-fixture counts.",
-  "goal": "Implement oracle-tested `pairs-rs stats` for small pairs inputs with stable pair count and pair_type count parity.",
+  "id": "M140",
+  "name": "Split core",
+  "status": "active",
+  "summary": "Implement the next downstream command: scoped pairtools-compatible split for pairsam output.",
+  "goal": "Implement oracle-tested `pairs-rs split` for small pairsam inputs, producing pairs output and SAM stream output.",
   "explicit_non_goals": [
-    "Do not implement dedup, split, restrict, phase, sample, scaling, filterbycov, or parse2 behavior.",
-    "Do not implement every pairtools stats report field in one milestone.",
-    "Do not change parse, sort, select, or merge behavior.",
+    "Do not implement restrict, phase, sample, scaling, filterbycov, parse2, or header behavior.",
+    "Do not broaden parse, sort, select, merge, dedup, or stats behavior.",
+    "Do not implement every pairtools split edge case in one milestone.",
     "Do not benchmark or claim speedup."
   ],
   "allowed_paths": [
     "src/cli.rs",
     "src/main.rs",
-    "src/stats.rs",
+    "src/split.rs",
     "tests/**",
     "docs/**",
     "milestones/ACTIVE_MILESTONE",
-    "milestones/M130-stats-core.json",
     "milestones/M140-split-core.json"
   ],
   "forbidden_paths": [
     "src/parse.rs",
     "src/sort.rs",
     "src/select.rs",
-    "src/merge.rs"
+    "src/merge.rs",
+    "src/dedup.rs",
+    "src/stats.rs"
   ],
   "allowed_commands": [
-    "pixi run pairtools stats tests/data/mock.4stats.pairs",
+    "pixi run pairtools split tests/data/mock.pairsam",
     "scripts/cargo_guard.sh check",
     "scripts/cargo_guard.sh test"
   ],
@@ -38,19 +39,19 @@
     "pixi run cargo test"
   ],
   "allowed_pairtools_commands": [
-    "pairtools stats"
+    "pairtools split"
   ],
   "forbidden_pairtools_commands": [
     "pairtools merge",
     "pairtools dedup",
     "pairtools select",
-    "pairtools split"
+    "pairtools stats"
   ],
   "oracle_commands": [
-    "pixi run pairtools stats tests/data/mock.4stats.pairs"
+    "pixi run pairtools split --output-pairs <pairs> --output-sam <sam> tests/data/mock.pairsam"
   ],
   "candidate_commands": [
-    "target/debug/pairs-rs stats tests/data/mock.4stats.pairs"
+    "target/debug/pairs-rs split --output-pairs <pairs> --output-sam <sam> tests/data/mock.pairsam"
   ],
   "required_tests": [
     "scripts/cargo_guard.sh check",
@@ -79,14 +80,14 @@
     "Next recommended milestone"
   ],
   "acceptance_criteria": [
-    "`pairs-rs stats` matches selected stable pairtools stats fields on committed small pairs fixtures.",
-    "`-o/--output` writes stats to a file and stdout is used when output is omitted.",
-    "Unsupported stats options fail loudly with `not implemented`."
+    "`pairs-rs split` produces pairs output and SAM stream output matching selected stable pairtools oracle content on committed small pairsam fixtures.",
+    "`--output-pairs` and `--output-sam` support file and stdout routing needed by the hybrid pipeline.",
+    "Unsupported split options fail loudly with `not implemented`."
   ],
   "known_risks": [
-    "Pairtools stats emits many derived sections; M130 must scope exact fields before implementation."
+    "Pairtools split has SAM header and record reconstruction details that need focused oracle fixtures."
   ],
   "next_milestone_candidates": [
-    "M140"
+    "M160"
   ]
 }

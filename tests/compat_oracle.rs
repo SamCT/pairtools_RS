@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
@@ -204,6 +205,28 @@ fn pair_types_by_read_id(text: &str) -> Vec<(String, String)> {
             (fields[0].to_string(), fields[7].to_string())
         })
         .collect()
+}
+
+fn stats_map(text: &str) -> HashMap<String, String> {
+    text.lines()
+        .filter(|line| !line.trim().is_empty())
+        .filter_map(|line| {
+            let (key, value) = line.split_once('\t')?;
+            Some((key.to_string(), value.to_string()))
+        })
+        .collect()
+}
+
+fn assert_stats_fields_match(pairs_rs: &str, pairtools: &str, keys: &[&str]) {
+    let pairs_rs = stats_map(pairs_rs);
+    let pairtools = stats_map(pairtools);
+    for key in keys {
+        assert_eq!(
+            pairs_rs.get(*key),
+            pairtools.get(*key),
+            "stats field {key} differed"
+        );
+    }
 }
 
 fn assert_bgzip_compatible(path: &Path) {
@@ -774,6 +797,99 @@ fn dedup_rejects_unsupported_features_loudly() {
     );
 }
 
+const STABLE_STATS_KEYS: &[&str] = &[
+    "total",
+    "total_unmapped",
+    "total_single_sided_mapped",
+    "total_mapped",
+    "total_dups",
+    "total_nodups",
+    "cis",
+    "trans",
+    "pair_types/UU",
+    "pair_types/DD",
+    "pair_types/UR",
+    "pair_types/NU",
+    "pair_types/MU",
+    "pair_types/WW",
+    "cis_1kb+",
+    "cis_2kb+",
+    "cis_4kb+",
+    "cis_10kb+",
+    "cis_20kb+",
+    "cis_40kb+",
+    "summary/frac_cis",
+    "summary/frac_cis_1kb+",
+    "summary/frac_cis_2kb+",
+    "summary/frac_cis_4kb+",
+    "summary/frac_cis_10kb+",
+    "summary/frac_cis_20kb+",
+    "summary/frac_cis_40kb+",
+    "summary/frac_dups",
+    "chrom_freq/chr1/chr1",
+    "chrom_freq/chr1/chr2",
+    "chrom_freq/chr2/chr3",
+];
+
+#[test]
+fn stats_stable_fields_match_pairtools_1_1_3_oracle() {
+    let input = "tests/data/mock.4stats.pairs";
+    let args = ["stats", input];
+    assert_stats_fields_match(&run_pairs_rs(&args), &run_pairtools(&args), STABLE_STATS_KEYS);
+}
+
+#[test]
+fn stats_with_chromsizes_matches_pairtools_1_1_3_oracle() {
+    let input = "tests/data/mock.4stats.pairs";
+    let args = ["stats", "--with-chromsizes", input];
+    let mut keys = STABLE_STATS_KEYS.to_vec();
+    keys.extend(["chromsizes/chr2", "chromsizes/chr3", "chromsizes/chr1"]);
+    assert_stats_fields_match(&run_pairs_rs(&args), &run_pairtools(&args), &keys);
+}
+
+#[test]
+fn stats_writes_output_and_gz_output() {
+    let input = "tests/data/mock.4stats.pairs";
+    let expected = run_pairs_rs(&["stats", "--with-chromsizes", input]);
+    let tmp = TempDir::new().unwrap();
+    let plain = tmp.path().join("stats.txt");
+    let gz = tmp.path().join("stats.txt.gz");
+    let plain_s = plain.to_string_lossy();
+    let gz_s = gz.to_string_lossy();
+
+    run_pairs_rs_to_path(&["stats", "--with-chromsizes", "-o", plain_s.as_ref(), input]);
+    assert_eq!(fs::read_to_string(&plain).unwrap(), expected);
+
+    run_pairs_rs_to_path(&["stats", "--with-chromsizes", "-o", gz_s.as_ref(), input]);
+    assert_bgzip_compatible(&gz);
+    assert_eq!(read_gzip_with_gzip(&gz), expected.into_bytes());
+}
+
+#[test]
+fn stats_rejects_unsupported_features_loudly() {
+    let input = "tests/data/mock.4stats.pairs";
+    assert_pairs_rs_failure(
+        &["stats", "--merge", input],
+        "not implemented: pairtools stats --merge",
+    );
+    assert_pairs_rs_failure(
+        &["stats", "--n-dist-bins-decade", "4", input],
+        "not implemented: pairtools stats --n-dist-bins-decade",
+    );
+    assert_pairs_rs_failure(
+        &["stats", "--yaml", input],
+        "not implemented: pairtools stats --yaml",
+    );
+    assert_pairs_rs_failure(
+        &["stats", "--filter", "unique:(pair_type==\"UU\")", input],
+        "not implemented: pairtools stats --filter",
+    );
+    assert_pairs_rs_failure(
+        &["stats", "--nproc-in", "2", input],
+        "not implemented: pairtools stats --nproc-in",
+    );
+}
+
 #[test]
 fn sort_parse_generated_pairsam_matches_pairtools_1_1_3_oracle() {
     let tmp = TempDir::new().unwrap();
@@ -1071,6 +1187,31 @@ fn cli_inventory_lists_current_pairtools_command_surface() {
     ] {
         assert!(dedup_help.contains(option), "dedup help missing {option}");
     }
+
+    let stats_help = run_pairs_rs(&["stats", "--help"]);
+    for option in [
+        "--output",
+        "--merge",
+        "--n-dist-bins-decade",
+        "--with-chromsizes",
+        "--no-chromsizes",
+        "--yaml",
+        "--no-yaml",
+        "--bytile-dups",
+        "--no-bytile-dups",
+        "--output-bytile-stats",
+        "--filter",
+        "--engine",
+        "--chrom-subset",
+        "--startup-code",
+        "--type-cast",
+        "--nproc-in",
+        "--nproc-out",
+        "--cmd-in",
+        "--cmd-out",
+    ] {
+        assert!(stats_help.contains(option), "stats help missing {option}");
+    }
 }
 
 #[test]
@@ -1197,7 +1338,6 @@ fn missing_pairtools_commands_exist_but_fail_loudly() {
         ("parse2", vec!["--single-end", "input.sam"]),
         ("flip", vec!["--chroms-path", "chrom.sizes", "input.pairs"]),
         ("split", vec!["--output-pairs", "out.pairs", "input.pairsam"]),
-        ("stats", vec!["--with-chromsizes", "chrom.sizes", "input.pairs"]),
         ("restrict", vec!["--frags", "frags.bed", "input.pairs"]),
         ("filterbycov", vec!["--max-cov", "3", "input.pairs"]),
         ("phase", vec!["--phase-suffixes", "PAT,MAT", "input.pairs"]),

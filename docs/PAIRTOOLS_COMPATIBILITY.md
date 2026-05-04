@@ -42,6 +42,10 @@ M120 implements a scoped `merge` command for small already sorted `.pairs` and `
 
 M150 implements a scoped `dedup` command for sorted `.pairs` and `.pairsam` inputs. The oracle tests compare read routing for nodups, duplicates, and unmapped records against installed Python pairtools on a committed fixture. M150 also tests `.gz` duplicate/unmapped output, `pair_type` `DD` marking, feasible pairsam SAM duplicate flag/Yt tag updates, simple stats output, and loud failures for unsupported dedup options. Full pairtools dedup stats, backend behavior, parent ID handling, extra-column duplicate matching, by-tile stats, filtering, YAML output, and custom input/output shell commands are not claimed.
 
+## M130 Stats Note
+
+M130 implements a scoped `stats` command for stable small-fixture counts. The oracle tests compare total, mapped/unmapped/single-sided, duplicate/nodup, cis/trans, pair-type, cis-threshold, fraction, chromosome-frequency, and `--with-chromsizes` fields against installed Python pairtools. M130 also tests `-o/--output`, BGZF `.gz` stats output, and loud failures for unsupported stats options. Full pairtools stats merge mode, distance-frequency sections, YAML output, filters, chrom subsets, by-tile duplicate statistics, type casts, custom input/output shell commands, and every derived summary field are not claimed.
+
 ## M020 Parse I/O Note
 
 M020 adds tests for parse input and writer plumbing without changing pair formation semantics. The tested parse I/O baseline is:
@@ -79,7 +83,7 @@ M080 supports an exact shell-orchestrated hybrid pipeline in `scripts/run_hic_ex
 - For multiple lanes, `pairtools merge` creates `merged.sorted.pairsam.gz`.
 - Downstream `pairtools dedup`, `pairtools select`, `pairtools split`, `samtools view/sort/index`, and `pairtools stats` produce the requested `merged.*` outputs.
 
-This is not an all-Rust pipeline. The M080 script still intentionally calls pairtools for downstream shell steps. Later scoped Rust milestones have added `select`, `merge`, and `dedup`, but the exact M080 production script has not been rewritten to use those Rust downstream commands.
+This is not an all-Rust pipeline. The M080 script still intentionally calls pairtools for downstream shell steps. Later scoped Rust milestones have added `select`, `merge`, `dedup`, and `stats`, but the exact M080 production script has not been rewritten to use those Rust downstream commands.
 
 ## External Real-Data Oracle Status
 
@@ -121,7 +125,7 @@ If an exact pairtools `.sorted.pairsam.gz` oracle and downstream `merged.*` outp
 | `scaling` | explicitly not implemented |
 | `select` | partial, oracle-gated exact `pair_type` equality |
 | `split` | explicitly not implemented |
-| `stats` | explicitly not implemented |
+| `stats` | partial, oracle-gated stable count fields |
 
 ## `parse`
 
@@ -223,6 +227,25 @@ Known correctness limitations:
 - Duplicate detection is based on `chrom1`, `chrom2`, `pos1`, and `pos2`; extra-column duplicate matching is not implemented.
 - Stats are intentionally simple and are not full pairtools stats parity.
 
+## `stats`
+
+Arguments: zero or more `INPUT_PATH` values.
+
+| Option | Rust status |
+|---|---|
+| `-o`, `--output` | implemented for stdout, plain files, and `.gz` BGZF output |
+| `--merge` | explicitly not implemented |
+| `--n-dist-bins-decade` | explicitly not implemented |
+| `--with-chromsizes` | implemented from `#chromsize:` header lines |
+| `--no-chromsizes` | implemented as the default no-chromsizes mode |
+| `--yaml`, `--no-yaml` | explicitly not implemented |
+| `--bytile-dups`, `--no-bytile-dups` | explicitly not implemented |
+| `--output-bytile-stats` | explicitly not implemented |
+| `--filter`, `--engine`, `--chrom-subset`, `--startup-code`, `-t`/`--type-cast` | explicitly not implemented |
+| `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` | explicitly not implemented |
+
+M130 output includes stable count fields tested against pairtools: total rows, unmapped and single-sided mapped rows, mapped rows, duplicates, nodups, cis/trans nodup counts, pair-type counts, cis-threshold counts, selected summary fractions, chromosome-frequency counts, and optional chromosome sizes. It does not emit the full pairtools distance-frequency report or all derived summary fields.
+
 ## Other Command Inventories
 
 These commands are present so they fail loudly instead of looking absent. Their pairtools 1.1.3 options are inventoried here. Rows for scoped partial implementations say so explicitly; otherwise the Rust implementation rejects the command as not implemented.
@@ -240,7 +263,6 @@ These commands are present so they fail loudly instead of looking absent. Their 
 | `scaling` | zero or more `INPUT_PATH` values | `-o`/`--output`, `--view`/`--regions`, `--chunksize`, `--dist-range`, `--n-dist-bins-decade`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
 | `select` | required `CONDITION`, optional `PAIRS_PATH` | `-o`/`--output` implemented for exact `pair_type == "VALUE"` predicates; `--output-rest`, `--chrom-subset`, `--startup-code`, `-t`/`--type-cast`, `-r`/`--remove-columns`, `--nproc-in`, `--nproc-out`, `--cmd-in`, and `--cmd-out` explicitly not implemented |
 | `split` | optional `PAIRSAM_PATH` | `--output-pairs`, `--output-sam`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
-| `stats` | zero or more `INPUT_PATH` values | `-o`/`--output`, `--merge`, `--n-dist-bins-decade`, `--with-chromsizes`/`--no-chromsizes`, `--yaml`/`--no-yaml`, `--bytile-dups`/`--no-bytile-dups`, `--output-bytile-stats`, `--filter`, `--engine`, `--chrom-subset`, `--startup-code`, `-t`/`--type-cast`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
 
 ## `header` Subcommands
 

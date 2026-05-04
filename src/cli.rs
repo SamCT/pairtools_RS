@@ -23,10 +23,10 @@ pub enum Commands {
     Select(SelectArgs),
     Merge(MergeArgs),
     Dedup(DedupArgs),
+    Stats(StatsArgs),
     Parse2(UnsupportedArgs),
     Flip(UnsupportedArgs),
     Split(UnsupportedArgs),
-    Stats(UnsupportedArgs),
     Restrict(UnsupportedArgs),
     Filterbycov(UnsupportedArgs),
     Phase(UnsupportedArgs),
@@ -259,4 +259,47 @@ pub struct DedupArgs {
     #[arg(long = "cmd-out")]
     pub cmd_out: Option<String>,
     pub input: Option<PathBuf>,
+}
+
+#[derive(clap::Args, Clone)]
+pub struct StatsArgs {
+    #[arg(short = 'o', long)]
+    pub output: Option<PathBuf>,
+    #[arg(long = "merge", action = ArgAction::SetTrue)]
+    pub merge: bool,
+    #[arg(long = "n-dist-bins-decade")]
+    pub n_dist_bins_decade: Option<usize>,
+    #[arg(long = "with-chromsizes", action = ArgAction::SetTrue)]
+    pub with_chromsizes: bool,
+    #[arg(long = "no-chromsizes", action = ArgAction::SetTrue)]
+    pub no_chromsizes: bool,
+    #[arg(long = "yaml", action = ArgAction::SetTrue)]
+    pub yaml: bool,
+    #[arg(long = "no-yaml", action = ArgAction::SetTrue)]
+    pub no_yaml: bool,
+    #[arg(long = "bytile-dups", action = ArgAction::SetTrue)]
+    pub bytile_dups: bool,
+    #[arg(long = "no-bytile-dups", action = ArgAction::SetTrue)]
+    pub no_bytile_dups: bool,
+    #[arg(long = "output-bytile-stats")]
+    pub output_bytile_stats: Option<PathBuf>,
+    #[arg(long = "filter")]
+    pub filter: Vec<String>,
+    #[arg(long = "engine")]
+    pub engine: Option<String>,
+    #[arg(long = "chrom-subset")]
+    pub chrom_subset: Option<String>,
+    #[arg(long = "startup-code")]
+    pub startup_code: Option<String>,
+    #[arg(short = 't', long = "type-cast", num_args = 2)]
+    pub type_cast: Vec<String>,
+    #[arg(long = "nproc-in")]
+    pub nproc_in: Option<usize>,
+    #[arg(long = "nproc-out")]
+    pub nproc_out: Option<usize>,
+    #[arg(long = "cmd-in")]
+    pub cmd_in: Option<String>,
+    #[arg(long = "cmd-out")]
+    pub cmd_out: Option<String>,
+    pub inputs: Vec<PathBuf>,
 }

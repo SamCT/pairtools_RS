@@ -4,6 +4,7 @@ mod merge;
 mod parse;
 mod select;
 mod sort;
+mod stats;
 
 use clap::Parser;
 use cli::{Cli, Commands};
@@ -17,10 +18,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::Select(a) => select::cmd_select(a),
         Commands::Merge(a) => merge::cmd_merge(a),
         Commands::Dedup(a) => dedup::cmd_dedup(a),
+        Commands::Stats(a) => stats::cmd_stats(a),
         Commands::Parse2(_) => unsupported_command("parse2"),
         Commands::Flip(_) => unsupported_command("flip"),
         Commands::Split(_) => unsupported_command("split"),
-        Commands::Stats(_) => unsupported_command("stats"),
         Commands::Restrict(_) => unsupported_command("restrict"),
         Commands::Filterbycov(_) => unsupported_command("filterbycov"),
         Commands::Phase(_) => unsupported_command("phase"),
