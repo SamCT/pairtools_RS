@@ -1,0 +1,8 @@
+@HD	VN:1.6	SO:queryname
+@SQ	SN:chr1	LN:10000
+@SQ	SN:chr2	LN:10000
+@SQ	SN:chr3	LN:10000
+all_policy_simple_three_alignments	65	chr1	100	60	40M80S	*	0	0	*	*
+all_policy_simple_three_alignments	2113	chr2	300	60	40S40M40S	*	0	0	*	*
+all_policy_simple_three_alignments	2113	chr3	500	60	80S40M	*	0	0	*	*
+all_policy_simple_three_alignments	145	chr1	800	60	120M	*	0	0	*	*

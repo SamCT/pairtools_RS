@@ -1,0 +1,12 @@
+## pairs format v1.0.0
+#shape: upper triangle
+#genome_assembly: walks_test
+#chromsize: chr1 10000
+#chromsize: chr2 10000
+#chromsize: chr3 10000
+#samheader: @HD	VN:1.6	SO:queryname
+#samheader: @SQ	SN:chr1	LN:10000
+#samheader: @SQ	SN:chr2	LN:10000
+#samheader: @SQ	SN:chr3	LN:10000
+#columns: readID chrom1 pos1 chrom2 pos2 strand1 strand2 pair_type sam1 sam2 mapq1 mapq2 pos51 pos52 pos31 pos32 cigar1 cigar2 read_len1 read_len2
+all_policy_simple_three_alignments	!	0	!	0	-	-	WW	all_policy_simple_three_alignments65chr11006040M80S*00**Yt:Z:WWNEXT_SAMall_policy_simple_three_alignments2113chr23006040S40M40S*00**Yt:Z:WWNEXT_SAMall_policy_simple_three_alignments2113chr35006080S40M*00**Yt:Z:WW	all_policy_simple_three_alignments145chr180060120M*00**Yt:Z:WW	60	60	0	0	0	0	40M80S	120M	120	120

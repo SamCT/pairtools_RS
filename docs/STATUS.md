@@ -4,9 +4,9 @@ Last reconciled: 2026-05-04
 
 ## Active milestone
 
-M056: parse `--walks-policy all`.
+M100: downstream command planning.
 
-M055 is complete. It added oracle-driven walk-resolution parity for the non-`all` `pairtools parse --walks-policy` values and split the broader `all` behavior into M056.
+M056 is complete. It added oracle-driven `pairtools parse --walks-policy all` parity for committed deterministic walk fixtures and moved the active milestone to planning-only downstream command work. No downstream Rust command behavior was implemented by M056.
 
 ## Current branch
 
@@ -14,7 +14,7 @@ M055 is complete. It added oracle-driven walk-resolution parity for the non-`all
 
 ## Current commit
 
-`uncommitted` during M055 closure. The final task response must report the committed SHA.
+`uncommitted` during M056 closure. The final task response must report the committed SHA.
 
 ## Implemented behavior
 
@@ -43,6 +43,10 @@ Completed parse milestones are covered by the guarded oracle suite:
   - Single-ligation rescue and unrescuable walk policy selection are covered for deterministic SAM fixtures.
   - `--max-molecule-size` is accepted for parse rescue decisions.
   - Pairsam rows, pair-type counts, and parse stats are compared against pairtools-generated walk oracles.
+- M056 Parse all-walks policy:
+  - `--walks-policy all` is accepted and compared to pairtools oracle fixtures.
+  - All-policy emission covers adjacent internal walk edges, the terminal R1/R2 bridge edge, 5'/3' endpoint reporting for internal edges, inserted null segments, multi-mapping segments, both-side 2x2 chimeric walks, and a three-alignment R1 walk fixture.
+  - Pairsam rows, pair-type counts, and parse stats match pairtools oracle outputs for 14 case/threshold combinations across all six supported walk policies.
 - M060 Sort core:
   - Pairtools-compatible default sort order is covered by oracle tests.
   - Parse-generated `.pairsam` with `sam1`, `sam2`, and supported extra columns is covered.
@@ -57,37 +61,35 @@ Completed parse milestones are covered by the guarded oracle suite:
 
 ## Intentionally unsupported behavior
 
-- `pairtools parse --walks-policy all` remains explicitly not implemented and is split into M056.
 - Full pairtools `parse2` behavior is not implemented.
 - Non-adjacent repeated read names remain unsupported and fail loudly.
 - Rust downstream commands remain unimplemented.
 - Compressed parse output and compressed parse stats output are not implemented.
-- No benchmark or speedup is claimed by M055.
+- No benchmark or speedup is claimed by M056.
 
 ## Validation performed
 
-Validation commands for M055:
+Validation commands for M056:
 
 ```bash
 git status --short --branch
 cat milestones/ACTIVE_MILESTONE
-python3 scripts/milestone_gate.py pre --milestone M055
-python3 scripts/check_cargo_needed.py --milestone M055
+python3 scripts/milestone_gate.py pre --milestone M056
+python3 scripts/check_cargo_needed.py --milestone M056
 bash tests/scripts/generate_walk_oracles.sh
 scripts/cargo_guard.sh check
 scripts/cargo_guard.sh test
 ```
 
-`scripts/cargo_guard.sh test` passed 23 Rust integration tests after adding the walk oracle suite. `bash tests/scripts/generate_walk_oracles.sh` generated 130 pairtools oracle files for 13 case/threshold combinations across five non-`all` policies.
+`scripts/cargo_guard.sh test` passed 22 Rust integration tests after enabling the all-policy walk oracle suite. `bash tests/scripts/generate_walk_oracles.sh` generated 168 pairtools oracle files for 14 case/threshold combinations across six walk policies.
 
 ## Validation not performed and why
 
-- `--walks-policy all` oracle parity was not implemented or claimed in M055. It is the active M056 follow-up.
-- Benchmarks were not run because M055 is a correctness milestone.
+- Benchmarks were not run because M056 is a correctness milestone.
 
 ## Cargo required
 
-Yes. M055 changed Rust source and tests. `scripts/cargo_guard.sh check` and `scripts/cargo_guard.sh test` both passed through Pixi/WSL with `CARGO_TARGET_DIR=$HOME/pairtools_RS_target_codex`.
+Yes. M056 changed Rust source and tests. `scripts/cargo_guard.sh check` and `scripts/cargo_guard.sh test` both passed through Pixi/WSL with `CARGO_TARGET_DIR=$HOME/pairtools_RS_target_codex`.
 
 ## External real-data oracle status
 
@@ -95,4 +97,4 @@ External real-data oracle discovery for M080 remains documented in `docs/REAL_DA
 
 ## Next recommended milestone
 
-M056: implement and oracle-test `pairtools parse --walks-policy all`.
+M100: plan downstream command milestones for merge, dedup, select, split, stats, and related commands. M100 must remain planning-only unless the active milestone is explicitly changed.

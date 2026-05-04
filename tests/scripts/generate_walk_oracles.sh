@@ -8,7 +8,7 @@ chroms="tests/fixtures/walks/walks.chrom.sizes"
 outdir="tests/oracle/walks"
 mkdir -p "$outdir"
 
-policies=(mask 5any 5unique 3any 3unique)
+policies=(mask 5any 5unique 3any 3unique all)
 cases=(
   simple_non_walk
   r1_chimera_rescue_cis_convergent_near
@@ -22,6 +22,7 @@ cases=(
   multi_alignment_with_long_gap
   no_unique_available_for_5unique
   no_unique_available_for_3unique
+  all_policy_simple_three_alignments
 )
 
 run_oracle() {

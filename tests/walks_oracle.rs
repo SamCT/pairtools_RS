@@ -5,7 +5,7 @@ use std::process::Command;
 use tempfile::TempDir;
 
 const CHROMS: &str = "tests/fixtures/walks/walks.chrom.sizes";
-const POLICIES: &[&str] = &["mask", "5any", "5unique", "3any", "3unique"];
+const POLICIES: &[&str] = &["mask", "5any", "5unique", "3any", "3unique", "all"];
 const CASES: &[(&str, u64)] = &[
     ("simple_non_walk", 30),
     ("r1_chimera_rescue_cis_convergent_near", 30),
@@ -20,6 +20,7 @@ const CASES: &[(&str, u64)] = &[
     ("multi_alignment_with_long_gap", 300),
     ("no_unique_available_for_5unique", 30),
     ("no_unique_available_for_3unique", 30),
+    ("all_policy_simple_three_alignments", 30),
 ];
 
 fn oracle_stem(case_name: &str, policy: &str, gap: u64) -> String {
@@ -127,26 +128,4 @@ fn parse_walk_policies_match_pairtools_oracles() {
             );
         }
     }
-}
-
-#[test]
-fn parse_all_walk_policy_fails_loudly_for_m056() {
-    let bin = env!("CARGO_BIN_EXE_pairs-rs");
-    let output = Command::new(bin)
-        .args([
-            "parse",
-            "--chroms-path",
-            CHROMS,
-            "--walks-policy",
-            "all",
-            "tests/fixtures/walks/simple_non_walk.sam",
-        ])
-        .output()
-        .unwrap();
-    assert!(!output.status.success(), "--walks-policy all unexpectedly succeeded");
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(
-        stderr.contains("not implemented: pairtools parse --walks-policy all"),
-        "stderr did not explain M056 all-policy gap:\n{stderr}"
-    );
 }

@@ -1,7 +1,7 @@
 {
   "id": "M056",
   "name": "Parse all-walks policy",
-  "status": "active",
+  "status": "complete",
   "summary": "Implement pairtools parse --walks-policy all after M055 non-all parity.",
   "goal": "Match pairtools parse --walks-policy all for sequential walk-pair emission, pair indexes, and complex overlap/readthrough cases.",
   "explicit_non_goals": [
@@ -16,7 +16,8 @@
     "tests/**",
     "docs/**",
     "milestones/ACTIVE_MILESTONE",
-    "milestones/M056-parse-all-walks.json"
+    "milestones/M056-parse-all-walks.json",
+    "milestones/M100-downstream-command-planning.json"
   ],
   "forbidden_paths": [
     "src/sort.rs"
@@ -71,8 +72,8 @@
     "Next recommended milestone"
   ],
   "acceptance_criteria": [
-    "--walks-policy all emits oracle-matching rows for simple and complex walk fixtures.",
-    "Pair indexes and complex walk de-duplication match pairtools."
+    "--walks-policy all emits oracle-matching rows for committed simple and complex walk fixtures.",
+    "All-policy pairsam rows, pair-type counts, and parse stats match pairtools for committed fixtures."
   ],
   "known_risks": [
     "All-policy pair emission is broader than single-pair walk selection."

@@ -48,7 +48,9 @@ M040 pairsam coverage includes scoped pairsam SAM columns, supported `--add-colu
 
 M050 walks/chimeric-limit coverage includes secondary and supplementary alignment fixtures, BWA-MEM2-style leading soft-clipped split behavior under `--max-inter-align-gap`, and loud rejection of unsupported walk policies. Full complex-walk or `parse2` parity is not claimed.
 
-M055 expands `pairtools parse --walks-policy` support for deterministic walk-resolution fixtures. The supported non-`all` policies are `mask`, `5any`, `5unique`, `3any`, and `3unique`. The oracle suite compares pairsam rows, pair-type counts, and parse stats against pairtools-generated outputs for simple non-walk pairs, single-side chimeras with and without rescue, both-side chimeric walks, long-gap null insertion, and no-unique fallback cases. `--walks-policy all` remains explicitly not implemented and is split into M056.
+M055 expands `pairtools parse --walks-policy` support for deterministic walk-resolution fixtures. The supported non-`all` policies are `mask`, `5any`, `5unique`, `3any`, and `3unique`. The oracle suite compares pairsam rows, pair-type counts, and parse stats against pairtools-generated outputs for simple non-walk pairs, single-side chimeras with and without rescue, both-side chimeric walks, long-gap null insertion, and no-unique fallback cases.
+
+M056 adds `--walks-policy all` support for the committed walk oracle fixtures. The suite now covers all six supported walk policies across 14 case/threshold combinations, including adjacent internal walk-edge emission, terminal R1/R2 bridge emission, a three-alignment R1 walk, inserted null segments, multi-mapping segments, and both-side 2x2 chimeric walks. This is oracle parity for the committed deterministic fixtures, not a claim that every possible pairtools complex-walk corner case has been exhausted.
 
 ## Supported Hybrid Pipeline Contract
 
@@ -125,7 +127,7 @@ Arguments: optional `SAM_PATH`.
 | `--output-stats` | tested oracle parity for parse-time PairCounter TSV output |
 | `--report-alignment-end` | tested oracle parity for `5` and `3` |
 | `--max-inter-align-gap` | tested oracle parity for supported parse walk fixtures |
-| `--walks-policy` | tested oracle parity for `mask`, `5any`, `5unique`, `3any`, and `3unique`; `all` explicitly not implemented |
+| `--walks-policy` | tested oracle parity for `mask`, `5any`, `5unique`, `3any`, `3unique`, and `all` on committed walk fixtures |
 | `--readid-transform` | explicitly not implemented |
 | `--flip` | implemented as default flipping behavior |
 | `--no-flip` | explicitly not implemented |
@@ -138,7 +140,6 @@ Previously recorded parse oracle fixtures cover small SAM inputs for UU pairs, u
 
 Known correctness limitations:
 - Input must be query-name grouped: all SAM/BAM/CRAM records for a read name must be adjacent. Non-adjacent repeated read names fail loudly with `not implemented`.
-- `--walks-policy all` is not implemented yet and fails loudly.
 - Compressed parse output and compressed parse stats output are not implemented.
 - Only `mapq,pos5,pos3,cigar,read_len` are accepted for `--add-columns`.
 

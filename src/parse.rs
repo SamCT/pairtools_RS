@@ -40,6 +40,7 @@ enum WalksPolicy {
     FiveUnique,
     ThreeAny,
     ThreeUnique,
+    All,
 }
 
 impl WalksPolicy {
@@ -50,7 +51,7 @@ impl WalksPolicy {
             "5unique" => Ok(Self::FiveUnique),
             "3any" => Ok(Self::ThreeAny),
             "3unique" => Ok(Self::ThreeUnique),
-            "all" => Err("not implemented: pairtools parse --walks-policy all".into()),
+            "all" => Ok(Self::All),
             other => Err(format!("not implemented: pairtools parse --walks-policy {other}").into()),
         }
     }
@@ -129,6 +130,17 @@ impl Aln {
         masked.is_unique = false;
         masked.kind = 'W';
         masked
+    }
+
+    fn opposite_walk_end(&self) -> Self {
+        let mut opposite = self.clone();
+        std::mem::swap(&mut opposite.pos5, &mut opposite.pos3);
+        opposite.strand = match opposite.strand {
+            '+' => '-',
+            '-' => '+',
+            other => other,
+        };
+        opposite
     }
 }
 
@@ -423,8 +435,14 @@ fn emit_template(
         config.min_mapq,
         config.max_inter_align_gap,
     )?;
-    let pair = select_pair(&parsed, config.walks_policy, config.max_molecule_size);
-    emit_pair(out, &parsed.read_id, pair, config, stats)?;
+    if config.walks_policy == WalksPolicy::All {
+        for pair in emit_all_walk_pairs(&parsed) {
+            emit_pair(out, &parsed.read_id, pair, config, stats)?;
+        }
+    } else {
+        let pair = select_pair(&parsed, config.walks_policy, config.max_molecule_size);
+        emit_pair(out, &parsed.read_id, pair, config, stats)?;
+    }
     Ok(())
 }
 
@@ -647,7 +665,57 @@ fn apply_walks_policy(alns1: &[Aln], alns2: &[Aln], policy: WalksPolicy) -> (Aln
         WalksPolicy::FiveUnique => (select_5unique(alns1), select_5unique(alns2)),
         WalksPolicy::ThreeAny => (select_3any(alns1), select_3any(alns2)),
         WalksPolicy::ThreeUnique => (select_3unique(alns1), select_3unique(alns2)),
+        WalksPolicy::All => unreachable!("all policy emits multiple walk pairs"),
     }
+}
+
+fn emit_all_walk_pairs(parsed: &ParsedTemplate) -> Vec<Pair> {
+    let mut pairs = Vec::new();
+
+    for window in parsed.alns1.windows(2) {
+        let (sams_left, sams_right) = if parsed.alns2.len() == 1 && window[0].kind != 'U' {
+            (parsed.sams2.clone(), parsed.sams1.clone())
+        } else {
+            (parsed.sams1.clone(), parsed.sams2.clone())
+        };
+        pairs.push(Pair {
+            left: window[0].clone(),
+            right: window[1].opposite_walk_end(),
+            sams_left,
+            sams_right,
+        });
+    }
+
+    if let (Some(left), Some(right)) = (parsed.alns1.last(), parsed.alns2.last()) {
+        let (sams_left, sams_right) =
+            if parsed.alns2.len() == 1 && parsed.alns1.iter().any(|aln| aln.kind != 'U') {
+                (parsed.sams2.clone(), parsed.sams1.clone())
+            } else {
+                (parsed.sams1.clone(), parsed.sams2.clone())
+            };
+        pairs.push(Pair {
+            left: left.clone(),
+            right: right.clone(),
+            sams_left,
+            sams_right,
+        });
+    }
+
+    for window in parsed.alns2.windows(2) {
+        let (sams_left, sams_right) = if parsed.alns1.len() == 1 {
+            (parsed.sams1.clone(), parsed.sams2.clone())
+        } else {
+            (parsed.sams2.clone(), parsed.sams1.clone())
+        };
+        pairs.push(Pair {
+            left: window[0].clone(),
+            right: window[1].opposite_walk_end(),
+            sams_left,
+            sams_right,
+        });
+    }
+
+    pairs
 }
 
 fn select_5any(alns: &[Aln]) -> Aln {

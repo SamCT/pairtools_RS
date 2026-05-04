@@ -672,11 +672,10 @@ fn parse_rejects_unsupported_pairtools_options_loudly() {
             "-c",
             "tests/fixtures/parse_milestone1/simple_uu/chrom.sizes",
             "--drop-sam",
-            "--walks-policy",
-            "all",
+            "--no-flip",
             "tests/fixtures/parse_milestone1/simple_uu/input.sam",
         ],
-        "not implemented: pairtools parse --walks-policy all",
+        "not implemented: pairtools parse --no-flip",
     );
     assert_pairs_rs_failure(
         &[
