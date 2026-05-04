@@ -163,6 +163,14 @@ fn read_gzip_with_gzip(path: &Path) -> Vec<u8> {
     output.stdout
 }
 
+fn normalize_select_output(text: &str) -> String {
+    text.lines()
+        .filter(|line| !line.starts_with("#samheader: @PG\tID:pairtools_select"))
+        .collect::<Vec<_>>()
+        .join("\n")
+        + "\n"
+}
+
 fn assert_bgzip_compatible(path: &Path) {
     let path_s = path.to_string_lossy();
     let output = Command::new("pixi")
@@ -413,6 +421,82 @@ fn sort_simple_matches_pairtools_1_1_3_oracle() {
 }
 
 #[test]
+fn select_pair_type_uu_matches_pairtools_1_1_3_oracle() {
+    for input in ["tests/data/mock.4stats.pairs", "tests/data/mock.pairsam"] {
+        let args = ["select", "(pair_type == \"UU\")", input];
+        assert_eq!(
+            normalize_select_output(&run_pairs_rs(&args)),
+            normalize_select_output(&run_pairtools(&args)),
+            "{input}"
+        );
+    }
+}
+
+#[test]
+fn select_writes_output_and_gz_output() {
+    let input = "tests/data/mock.4stats.pairs";
+    let expected = run_pairs_rs(&["select", "(pair_type == \"UU\")", input]);
+    let tmp = TempDir::new().unwrap();
+    let plain = tmp.path().join("selected.pairs");
+    let gz = tmp.path().join("selected.pairs.gz");
+    let plain_s = plain.to_string_lossy();
+    let gz_s = gz.to_string_lossy();
+
+    run_pairs_rs_to_path(&[
+        "select",
+        "(pair_type == \"UU\")",
+        "-o",
+        plain_s.as_ref(),
+        input,
+    ]);
+    assert_eq!(
+        normalize_select_output(&fs::read_to_string(&plain).unwrap()),
+        normalize_select_output(&expected)
+    );
+
+    run_pairs_rs_to_path(&[
+        "select",
+        "(pair_type == \"UU\")",
+        "-o",
+        gz_s.as_ref(),
+        input,
+    ]);
+    assert_bgzip_compatible(&gz);
+    assert_eq!(
+        normalize_select_output(&String::from_utf8(read_gzip_with_gzip(&gz)).unwrap()),
+        normalize_select_output(&expected)
+    );
+}
+
+#[test]
+fn select_rejects_unsupported_features_loudly() {
+    assert_pairs_rs_failure(
+        &["select", "chrom1 == \"chr1\"", "tests/data/mock.4stats.pairs"],
+        "not implemented: pairtools select condition",
+    );
+    assert_pairs_rs_failure(
+        &[
+            "select",
+            "(pair_type == \"UU\")",
+            "--output-rest",
+            "rest.pairs",
+            "tests/data/mock.4stats.pairs",
+        ],
+        "not implemented: pairtools select --output-rest",
+    );
+    assert_pairs_rs_failure(
+        &[
+            "select",
+            "(pair_type == \"UU\")",
+            "--nproc-in",
+            "2",
+            "tests/data/mock.4stats.pairs",
+        ],
+        "not implemented: pairtools select --nproc-in",
+    );
+}
+
+#[test]
 fn sort_parse_generated_pairsam_matches_pairtools_1_1_3_oracle() {
     let tmp = TempDir::new().unwrap();
     let input = tmp.path().join("parse-generated.pairsam");
@@ -648,6 +732,22 @@ fn cli_inventory_lists_current_pairtools_command_surface() {
     ] {
         assert!(sort_help.contains(option), "sort help missing {option}");
     }
+
+    let select_help = run_pairs_rs(&["select", "--help"]);
+    for option in [
+        "--output",
+        "--output-rest",
+        "--chrom-subset",
+        "--startup-code",
+        "--type-cast",
+        "--remove-columns",
+        "--nproc-in",
+        "--nproc-out",
+        "--cmd-in",
+        "--cmd-out",
+    ] {
+        assert!(select_help.contains(option), "select help missing {option}");
+    }
 }
 
 #[test]
@@ -776,7 +876,6 @@ fn missing_pairtools_commands_exist_but_fail_loudly() {
         ("flip", vec!["--chroms-path", "chrom.sizes", "input.pairs"]),
         ("merge", vec!["--nproc", "2", "a.pairs", "b.pairs"]),
         ("split", vec!["--output-pairs", "out.pairs", "input.pairsam"]),
-        ("select", vec!["pair_type == \"UU\"", "input.pairs"]),
         ("stats", vec!["--with-chromsizes", "chrom.sizes", "input.pairs"]),
         ("restrict", vec!["--frags", "frags.bed", "input.pairs"]),
         ("filterbycov", vec!["--max-cov", "3", "input.pairs"]),

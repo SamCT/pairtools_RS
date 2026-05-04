@@ -1,0 +1,91 @@
+{
+  "id": "M120",
+  "name": "Merge core",
+  "status": "active",
+  "summary": "Implement pairtools-compatible merge for already sorted pairs/pairsam inputs.",
+  "goal": "Implement oracle-tested `pairs-rs merge` for small sorted pairs/pairsam inputs, preserving stable sorted output and compatible headers.",
+  "explicit_non_goals": [
+    "Do not implement dedup, split, stats, restrict, phase, sample, scaling, filterbycov, or parse2 behavior.",
+    "Do not implement full external compression-program plumbing.",
+    "Do not change parse, sort, or select behavior.",
+    "Do not benchmark or claim speedup."
+  ],
+  "allowed_paths": [
+    "src/cli.rs",
+    "src/main.rs",
+    "src/merge.rs",
+    "tests/**",
+    "docs/**",
+    "milestones/ACTIVE_MILESTONE",
+    "milestones/M120-merge-core.json",
+    "milestones/M130-stats-core.json"
+  ],
+  "forbidden_paths": [
+    "src/parse.rs",
+    "src/sort.rs",
+    "src/select.rs"
+  ],
+  "allowed_commands": [
+    "pixi run pairtools merge tests/data/mock.4stats.pairs tests/data/mock.4stats.pairs",
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "forbidden_commands": [
+    "cargo check",
+    "cargo test",
+    "pixi run cargo check",
+    "pixi run cargo test"
+  ],
+  "allowed_pairtools_commands": [
+    "pairtools merge"
+  ],
+  "forbidden_pairtools_commands": [
+    "pairtools dedup",
+    "pairtools select",
+    "pairtools split",
+    "pairtools stats"
+  ],
+  "oracle_commands": [
+    "pixi run pairtools merge tests/data/mock.4stats.pairs tests/data/mock.4stats.pairs"
+  ],
+  "candidate_commands": [
+    "target/debug/pairs-rs merge tests/data/mock.4stats.pairs tests/data/mock.4stats.pairs"
+  ],
+  "required_tests": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "`pairs-rs merge` matches pairtools oracle output on committed small sorted fixtures after normalizing volatile command headers.",
+    "`-o/--output` writes merged rows to a file and stdout is used when output is omitted.",
+    "Unsupported merge options fail loudly with `not implemented`."
+  ],
+  "known_risks": [
+    "Pairtools merge has broad header and compression semantics; M120 starts with small sorted inputs."
+  ],
+  "next_milestone_candidates": [
+    "M130"
+  ]
+}

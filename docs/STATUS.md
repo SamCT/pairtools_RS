@@ -4,9 +4,9 @@ Last reconciled: 2026-05-04
 
 ## Active milestone
 
-M110: select core.
+M120: merge core.
 
-M100 is complete. It added the downstream command roadmap in `docs/DOWNSTREAM_MILESTONES.md` and activated M110 as the first bounded downstream Rust implementation milestone. No downstream Rust command behavior was implemented by M100.
+M110 is complete. It added the first downstream Rust command, `pairs-rs select`, for exact `pair_type` equality predicates and activated M120 for merge core work.
 
 ## Current branch
 
@@ -14,7 +14,7 @@ M100 is complete. It added the downstream command roadmap in `docs/DOWNSTREAM_MI
 
 ## Current commit
 
-`uncommitted` during M100/M110 transition. The final task response must report the committed SHA.
+`uncommitted` during M110 closure. The final task response must report the committed SHA.
 
 ## Implemented behavior
 
@@ -60,38 +60,43 @@ Completed parse milestones are covered by the guarded oracle suite:
   - M090 did not run a benchmark and does not add a performance claim.
 - M100 Downstream command planning:
   - `docs/DOWNSTREAM_MILESTONES.md` defines the staged downstream command sequence.
-  - M110 `select` core is active as the next implementation milestone.
+- M110 Select core:
+  - `pairs-rs select '(pair_type == "UU")'` matches pairtools oracle output on small `.pairs` and `.pairsam` fixtures after normalizing volatile select `@PG` command text.
+  - `-o/--output` writes selected output to plain files and `.gz` BGZF output.
+  - Unsupported predicates and unsupported select options fail loudly with `not implemented`.
 
 ## Intentionally unsupported behavior
 
 - Full pairtools `parse2` behavior is not implemented.
 - Non-adjacent repeated read names remain unsupported and fail loudly.
-- Rust downstream commands remain unimplemented until M110 and later command-specific milestones land.
+- `select` supports only exact `pair_type == "VALUE"` predicates. The broader pairtools expression language is not implemented.
+- Rust merge, dedup, split, stats, and other downstream commands remain unimplemented until their command-specific milestones land.
 - Compressed parse output and compressed parse stats output are not implemented.
 - No benchmark or speedup is claimed by M056.
 
 ## Validation performed
 
-Validation commands for M100:
+Validation commands for M110:
 
 ```bash
 git status --short --branch
-python3 scripts/milestone_gate.py pre --milestone M100
-python3 scripts/milestone_gate.py post --milestone M100 --allow-nonactive
-python3 scripts/codex_report.py --milestone M100
+python3 scripts/milestone_gate.py pre --milestone M110
+scripts/cargo_guard.sh check
+scripts/cargo_guard.sh test
+python3 scripts/milestone_gate.py post --milestone M110 --allow-nonactive
+python3 scripts/codex_report.py --milestone M110
 git diff --check
 ```
 
-M100 changed only docs and milestone registry files, so Cargo was not required.
+`scripts/cargo_guard.sh test` passed 24 compatibility tests and the walk oracle test after adding select coverage.
 
 ## Validation not performed and why
 
-- Cargo was not run because M100 changed only docs and milestone registry files.
-- Benchmarks were not run because M100 is a planning milestone.
+- Benchmarks were not run because M110 is a correctness milestone.
 
 ## Cargo required
 
-No for M100. M110 will require Cargo once Rust source/tests change.
+Yes. M110 changed Rust source and tests. `scripts/cargo_guard.sh check` and `scripts/cargo_guard.sh test` both passed through Pixi/WSL with `CARGO_TARGET_DIR=$HOME/pairtools_RS_target_codex`.
 
 ## External real-data oracle status
 
@@ -99,4 +104,4 @@ External real-data oracle discovery for M080 remains documented in `docs/REAL_DA
 
 ## Next recommended milestone
 
-M110: implement and oracle-test `pairs-rs select '(pair_type == "UU")'` as the first downstream Rust command.
+M120: implement and oracle-test `pairs-rs merge` for small sorted pairs/pairsam fixtures.

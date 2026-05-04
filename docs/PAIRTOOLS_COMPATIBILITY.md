@@ -30,6 +30,10 @@ M010 verifies that the Rust CLI exposes the current command inventory in help te
 
 M100 defines the downstream command roadmap in `docs/DOWNSTREAM_MILESTONES.md` and activates M110 for a scoped `select` implementation. M100 does not implement merge, dedup, select, split, stats, or any other downstream Rust command behavior.
 
+## M110 Select Note
+
+M110 implements a scoped `select` command for exact `pair_type == "VALUE"` predicates. The oracle tests cover `pairs-rs select '(pair_type == "UU")'` on small `.pairs` and `.pairsam` fixtures, `-o/--output`, BGZF `.gz` output, and loud failures for unsupported predicates/options. M110 does not implement the full pairtools expression engine.
+
 ## M020 Parse I/O Note
 
 M020 adds tests for parse input and writer plumbing without changing pair formation semantics. The tested parse I/O baseline is:
@@ -107,7 +111,7 @@ If an exact pairtools `.sorted.pairsam.gz` oracle and downstream `merged.*` outp
 | `restrict` | explicitly not implemented |
 | `sample` | explicitly not implemented |
 | `scaling` | explicitly not implemented |
-| `select` | explicitly not implemented |
+| `select` | partial, oracle-gated exact `pair_type` equality |
 | `split` | explicitly not implemented |
 | `stats` | explicitly not implemented |
 
@@ -191,7 +195,7 @@ These commands are present so they fail loudly instead of looking absent. Their 
 | `restrict` | optional `PAIRS_PATH` | `-f`/`--frags`, `-o`/`--output`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
 | `sample` | required `FRACTION`, optional `PAIRS_PATH` | `-o`/`--output`, `-s`/`--seed`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
 | `scaling` | zero or more `INPUT_PATH` values | `-o`/`--output`, `--view`/`--regions`, `--chunksize`, `--dist-range`, `--n-dist-bins-decade`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
-| `select` | required `CONDITION`, optional `PAIRS_PATH` | `-o`/`--output`, `--output-rest`, `--chrom-subset`, `--startup-code`, `-t`/`--type-cast`, `-r`/`--remove-columns`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
+| `select` | required `CONDITION`, optional `PAIRS_PATH` | `-o`/`--output` implemented for exact `pair_type == "VALUE"` predicates; `--output-rest`, `--chrom-subset`, `--startup-code`, `-t`/`--type-cast`, `-r`/`--remove-columns`, `--nproc-in`, `--nproc-out`, `--cmd-in`, and `--cmd-out` explicitly not implemented |
 | `split` | optional `PAIRSAM_PATH` | `--output-pairs`, `--output-sam`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
 | `stats` | zero or more `INPUT_PATH` values | `-o`/`--output`, `--merge`, `--n-dist-bins-decade`, `--with-chromsizes`/`--no-chromsizes`, `--yaml`/`--no-yaml`, `--bytile-dups`/`--no-bytile-dups`, `--output-bytile-stats`, `--filter`, `--engine`, `--chrom-subset`, `--startup-code`, `-t`/`--type-cast`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
 

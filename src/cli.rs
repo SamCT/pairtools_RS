@@ -20,12 +20,12 @@ pub struct Cli {
 pub enum Commands {
     Parse(ParseArgs),
     Sort(SortArgs),
+    Select(SelectArgs),
     Parse2(UnsupportedArgs),
     Dedup(UnsupportedArgs),
     Flip(UnsupportedArgs),
     Merge(UnsupportedArgs),
     Split(UnsupportedArgs),
-    Select(UnsupportedArgs),
     Stats(UnsupportedArgs),
     Restrict(UnsupportedArgs),
     Filterbycov(UnsupportedArgs),
@@ -116,6 +116,32 @@ pub struct SortArgs {
     pub nproc: Option<usize>,
     #[arg(long = "compress-program")]
     pub compress_program: Option<String>,
+    #[arg(long = "nproc-in")]
+    pub nproc_in: Option<usize>,
+    #[arg(long = "nproc-out")]
+    pub nproc_out: Option<usize>,
+    #[arg(long = "cmd-in")]
+    pub cmd_in: Option<String>,
+    #[arg(long = "cmd-out")]
+    pub cmd_out: Option<String>,
+    pub input: Option<PathBuf>,
+}
+
+#[derive(clap::Args, Clone)]
+pub struct SelectArgs {
+    pub condition: String,
+    #[arg(short = 'o', long)]
+    pub output: Option<PathBuf>,
+    #[arg(long = "output-rest")]
+    pub output_rest: Option<PathBuf>,
+    #[arg(long = "chrom-subset")]
+    pub chrom_subset: Option<String>,
+    #[arg(long = "startup-code")]
+    pub startup_code: Option<String>,
+    #[arg(short = 't', long = "type-cast")]
+    pub type_cast: Vec<String>,
+    #[arg(short = 'r', long = "remove-columns")]
+    pub remove_columns: Option<String>,
     #[arg(long = "nproc-in")]
     pub nproc_in: Option<usize>,
     #[arg(long = "nproc-out")]

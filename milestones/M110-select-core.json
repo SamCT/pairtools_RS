@@ -1,7 +1,7 @@
 {
   "id": "M110",
   "name": "Select core",
-  "status": "active",
+  "status": "complete",
   "summary": "Implement the first downstream Rust command: pairtools-compatible select for exact pair_type predicates.",
   "goal": "Implement oracle-tested `pairs-rs select '(pair_type == \"UU\")'` with normal header/body streaming and loud failures for unsupported select features.",
   "explicit_non_goals": [
