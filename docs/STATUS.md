@@ -6,7 +6,7 @@ Last reconciled: 2026-05-04
 
 M140: split core.
 
-M130 is complete. It added scoped `pairs-rs stats` output for stable small-fixture counts and activated M140 for split core work.
+M131 and M132 are complete. They extended `pairs-rs stats` from stable count fields to pairtools-style report parity for the committed small stats fixture, plus stats merge, YAML output, and HTSlib BGZF threaded `.gz` stats I/O. M140 is active again for split core work.
 
 ## Current branch
 
@@ -14,7 +14,7 @@ M130 is complete. It added scoped `pairs-rs stats` output for stable small-fixtu
 
 ## Current commit
 
-`uncommitted` during M130 implementation. The final task response must report the committed SHA.
+`uncommitted` during M131/M132 implementation. The final task response must report the committed SHA.
 
 ## Implemented behavior
 
@@ -82,6 +82,15 @@ Completed parse milestones are covered by the guarded oracle suite:
   - `-o/--output` writes plain stats output, and `.gz` output validates as BGZF.
   - Plain and `.gz` stats input is supported through HTSlib BGZF helpers.
   - Unsupported stats options fail loudly with `not implemented`.
+- M131 Stats report parity:
+  - `pairs-rs stats` now emits the full pairtools-style TSV report for the committed small stats fixture, including distance-frequency bins, convergence summary fields, chromosome sizes by default, and library complexity.
+  - Oracle tests compare normalized full report output against installed Python pairtools for default output, `--no-chromsizes`, and `--n-dist-bins-decade 1`.
+  - `summary/complexity_naive` is compared numerically with tolerance because the Rust implementation uses a local Lambert W solver instead of SciPy.
+- M132 Stats I/O and merge:
+  - `pairs-rs stats --merge` merges TSV stats files and is oracle-tested against pairtools for committed small stats outputs.
+  - `pairs-rs stats --yaml` emits pairtools-style YAML for the committed fixture and is oracle-tested after normalizing only the complexity representation.
+  - `--nproc-in` and `--nproc-out` control HTSlib BGZF threading for `.gz` stats input and output.
+  - `--cmd-in`, `--cmd-out`, `--merge --yaml`, filters, by-tile stats, chrom subsets, type casts, and custom shell compression remain loud non-goals.
 
 ## Intentionally unsupported behavior
 
@@ -90,40 +99,43 @@ Completed parse milestones are covered by the guarded oracle suite:
 - `select` supports only exact `pair_type == "VALUE"` predicates. The broader pairtools expression language is not implemented.
 - `merge` supports small sorted inputs only. Broad pairtools merge options such as `--nproc`, `--tmpdir`, `--memory`, `--compress-program`, `--keep-first-header`, and `--concatenate` remain explicitly unsupported.
 - `dedup` does not yet implement full pairtools stats, by-tile stats, alternate backends, parent IDs, extra-column duplicate matching, filtering, YAML output, chrom subsets, type casts, or custom input/output shell commands.
-- `stats` does not yet implement pairtools stats merge mode, full distance-frequency sections, YAML output, filters, chrom subsets, by-tile duplicate statistics, type casts, custom compression commands, or every derived summary field.
+- `stats` does not yet implement YAML merge mode, expression filters, chrom subsets, by-tile duplicate statistics, type casts, custom compression shell commands, or broad uncommitted-fixture parity beyond the tested report surface.
 - Rust split and other downstream commands remain unimplemented until their command-specific milestones land.
 - Compressed parse output and compressed parse stats output are not implemented.
 - No benchmark or speedup is claimed by M056.
 
 ## Validation performed
 
-Validation commands for M130:
+Validation commands for M131/M132:
 
 ```bash
 git status --short --branch
-python3 scripts/milestone_gate.py pre --milestone M130
+python3 scripts/milestone_gate.py pre --milestone M131
 scripts/cargo_guard.sh check
 scripts/cargo_guard.sh test
 python3 scripts/check_milestone_schema.py
-python3 scripts/check_no_runtime_pairtools.py --milestone M130
-python3 scripts/check_no_noop_flags.py --milestone M130
-python3 scripts/check_parse_lite_drift.py --milestone M130
-python3 scripts/check_cargo_needed.py --milestone M130
-python3 scripts/milestone_gate.py post --milestone M130 --allow-nonactive
-python3 scripts/codex_report.py --milestone M130
+python3 scripts/milestone_gate.py pre --milestone M132
+python3 scripts/check_no_runtime_pairtools.py --milestone M132
+python3 scripts/check_no_noop_flags.py --milestone M132
+python3 scripts/check_parse_lite_drift.py --milestone M132
+python3 scripts/check_cargo_needed.py --milestone M132
+python3 scripts/milestone_gate.py post --milestone M131 --allow-nonactive
+python3 scripts/milestone_gate.py post --milestone M132 --allow-nonactive
+python3 scripts/codex_report.py --milestone M132
 git diff --check
 ```
 
-`scripts/cargo_guard.sh test` passed 36 compatibility tests and the walk oracle test after adding stats coverage.
+`scripts/cargo_guard.sh test` passed 40 compatibility tests and the walk oracle test after adding stats report, merge, YAML, and threaded BGZF coverage.
 
 ## Validation not performed and why
 
-- Benchmarks were not run because M130 is a correctness milestone.
-- Full pairtools stats byte-for-byte output comparison was not run because M130 intentionally scopes stable count fields rather than every distance-frequency and derived summary section.
+- Benchmarks were not run because M131/M132 are correctness milestones.
+- Exact byte-for-byte `summary/complexity_naive` string parity is not claimed because Rust uses a local Lambert W implementation while pairtools uses SciPy; tests compare it numerically within tolerance.
+- YAML merge mode was not run because `pairs-rs stats --merge --yaml` remains explicitly unsupported.
 
 ## Cargo required
 
-Yes. M130 changed Rust source and tests. `scripts/cargo_guard.sh check` and `scripts/cargo_guard.sh test` both passed through Pixi/WSL with `CARGO_TARGET_DIR=$HOME/pairtools_RS_target_codex`.
+Yes. M131/M132 changed Rust source and tests. `scripts/cargo_guard.sh check` and `scripts/cargo_guard.sh test` both passed through Pixi/WSL with `CARGO_TARGET_DIR=$HOME/pairtools_RS_target_codex`.
 
 ## External real-data oracle status
 

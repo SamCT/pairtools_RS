@@ -46,6 +46,12 @@ M150 implements a scoped `dedup` command for sorted `.pairs` and `.pairsam` inpu
 
 M130 implements a scoped `stats` command for stable small-fixture counts. The oracle tests compare total, mapped/unmapped/single-sided, duplicate/nodup, cis/trans, pair-type, cis-threshold, fraction, chromosome-frequency, and `--with-chromsizes` fields against installed Python pairtools. M130 also tests `-o/--output`, BGZF `.gz` stats output, and loud failures for unsupported stats options. Full pairtools stats merge mode, distance-frequency sections, YAML output, filters, chrom subsets, by-tile duplicate statistics, type casts, custom input/output shell commands, and every derived summary field are not claimed.
 
+## M131-M132 Stats Report, Merge, and I/O Notes
+
+M131 extends `pairs-rs stats` to the pairtools-style report surface for committed small fixtures. The oracle tests compare the full normalized TSV report against installed Python pairtools for default output, `--no-chromsizes`, and `--n-dist-bins-decade 1`. The report includes distance-frequency bins, convergence summary fields, chromosome sizes by default, chromosome frequencies, pair-type counts, duplicate counts, and derived fractions. `summary/complexity_naive` is compared numerically within tolerance because Rust uses a local Lambert W implementation while pairtools uses SciPy.
+
+M132 adds TSV stats merge, YAML output, and HTSlib BGZF threaded `.gz` stats input/output. `--nproc-in` and `--nproc-out` are implemented for BGZF streams through `rust-htslib`/HTSlib and do not shell out. `--cmd-in` and `--cmd-out` remain explicitly unsupported because Rust runtime shell compression is not allowed. `--merge --yaml` is also explicitly unsupported.
+
 ## M020 Parse I/O Note
 
 M020 adds tests for parse input and writer plumbing without changing pair formation semantics. The tested parse I/O baseline is:
@@ -125,7 +131,7 @@ If an exact pairtools `.sorted.pairsam.gz` oracle and downstream `merged.*` outp
 | `scaling` | explicitly not implemented |
 | `select` | partial, oracle-gated exact `pair_type` equality |
 | `split` | explicitly not implemented |
-| `stats` | partial, oracle-gated stable count fields |
+| `stats` | partial, oracle-gated report, merge, YAML, and BGZF I/O |
 
 ## `parse`
 
@@ -234,17 +240,19 @@ Arguments: zero or more `INPUT_PATH` values.
 | Option | Rust status |
 |---|---|
 | `-o`, `--output` | implemented for stdout, plain files, and `.gz` BGZF output |
-| `--merge` | explicitly not implemented |
-| `--n-dist-bins-decade` | explicitly not implemented |
-| `--with-chromsizes` | implemented from `#chromsize:` header lines |
-| `--no-chromsizes` | implemented as the default no-chromsizes mode |
-| `--yaml`, `--no-yaml` | explicitly not implemented |
-| `--bytile-dups`, `--no-bytile-dups` | explicitly not implemented |
+| `--merge` | implemented for TSV stats files; `--merge --yaml` explicitly not implemented |
+| `--n-dist-bins-decade` | implemented for tested values, including `1` and default `8` |
+| `--with-chromsizes` | implemented from `#chromsize:` header lines and matches pairtools default behavior when chromsizes are present |
+| `--no-chromsizes` | implemented |
+| `--yaml`, `--no-yaml` | YAML output implemented for normal stats reports; YAML merge explicitly not implemented |
+| `--bytile-dups` | explicitly not implemented |
+| `--no-bytile-dups` | accepted as the default no-bytile mode; by-tile output itself is not implemented |
 | `--output-bytile-stats` | explicitly not implemented |
 | `--filter`, `--engine`, `--chrom-subset`, `--startup-code`, `-t`/`--type-cast` | explicitly not implemented |
-| `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` | explicitly not implemented |
+| `--nproc-in`, `--nproc-out` | implemented for HTSlib BGZF `.gz` input/output; `0` is rejected |
+| `--cmd-in`, `--cmd-out` | explicitly not implemented |
 
-M130 output includes stable count fields tested against pairtools: total rows, unmapped and single-sided mapped rows, mapped rows, duplicates, nodups, cis/trans nodup counts, pair-type counts, cis-threshold counts, selected summary fractions, chromosome-frequency counts, and optional chromosome sizes. It does not emit the full pairtools distance-frequency report or all derived summary fields.
+M131/M132 output includes the full tested pairtools-style report for the committed stats fixture. It emits total rows, unmapped and single-sided mapped rows, mapped rows, duplicates, nodups, cis/trans nodup counts, pair-type counts, cis-threshold counts, summary fractions, naive library complexity, convergence fields, chromosome-frequency counts, distance-frequency bins, and optional chromosome sizes. Compatibility beyond committed fixtures is not claimed until additional oracle cases are added.
 
 ## Other Command Inventories
 

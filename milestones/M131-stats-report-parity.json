@@ -1,0 +1,95 @@
+{
+  "id": "M131",
+  "name": "Stats report parity",
+  "status": "complete",
+  "summary": "Extend `pairs-rs stats` from stable count fields to the full pairtools-style TSV report for committed small fixtures.",
+  "goal": "Implement oracle-tested pairtools stats report parity for distance-frequency bins, selected convergence summary fields, and stable derived stats on small `.pairs` fixtures.",
+  "explicit_non_goals": [
+    "Do not implement split, restrict, phase, sample, scaling, filterbycov, parse2, or header behavior.",
+    "Do not change parse, sort, select, merge, or dedup behavior.",
+    "Do not benchmark or claim speedup.",
+    "Do not call Python pairtools at Rust runtime.",
+    "Do not implement arbitrary pairtools expression filtering in M131."
+  ],
+  "allowed_paths": [
+    "src/cli.rs",
+    "src/main.rs",
+    "src/stats.rs",
+    "tests/**",
+    "docs/**",
+    "milestones/ACTIVE_MILESTONE",
+    "milestones/M131-stats-report-parity.json",
+    "milestones/M132-stats-io-and-merge.json",
+    "milestones/M140-split-core.json"
+  ],
+  "forbidden_paths": [
+    "src/parse.rs",
+    "src/sort.rs",
+    "src/select.rs",
+    "src/merge.rs",
+    "src/dedup.rs"
+  ],
+  "allowed_commands": [
+    "pixi run pairtools stats tests/data/mock.4stats.pairs",
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "forbidden_commands": [
+    "cargo check",
+    "cargo test",
+    "pixi run cargo check",
+    "pixi run cargo test"
+  ],
+  "allowed_pairtools_commands": [
+    "pairtools stats"
+  ],
+  "forbidden_pairtools_commands": [
+    "pairtools merge",
+    "pairtools dedup",
+    "pairtools select",
+    "pairtools split"
+  ],
+  "oracle_commands": [
+    "pixi run pairtools stats tests/data/mock.4stats.pairs"
+  ],
+  "candidate_commands": [
+    "target/debug/pairs-rs stats tests/data/mock.4stats.pairs"
+  ],
+  "required_tests": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "`pairs-rs stats` matches pairtools TSV output for committed small stats fixtures after excluding only documented floating-point/NaN instability if needed.",
+    "`--n-dist-bins-decade` controls distance-frequency bins consistently with pairtools for tested values.",
+    "No runtime pairtools calls are introduced."
+  ],
+  "known_risks": [
+    "Pairtools stats convergence and complexity fields use floating-point algorithms that may require exact fixture-scoped parity before broad claims."
+  ],
+  "next_milestone_candidates": [
+    "M132"
+  ]
+}

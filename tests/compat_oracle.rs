@@ -217,16 +217,68 @@ fn stats_map(text: &str) -> HashMap<String, String> {
         .collect()
 }
 
-fn assert_stats_fields_match(pairs_rs: &str, pairtools: &str, keys: &[&str]) {
+fn normalize_stats_report(text: &str) -> String {
+    let normalized_lines = text
+        .lines()
+        .map(|line| {
+            if line.starts_with("summary/complexity_naive\t") {
+                "summary/complexity_naive\t<complexity>".to_string()
+            } else if line.trim_start().starts_with("complexity_naive: ") {
+                format!(
+                    "{}complexity_naive: <complexity>",
+                    &line[..line.len() - line.trim_start().len()]
+                )
+            } else {
+                line.to_string()
+            }
+        })
+        .collect::<Vec<_>>();
+
+    let mut pair_type_lines: Vec<String> = normalized_lines
+        .iter()
+        .filter(|line| line.starts_with("pair_types/"))
+        .cloned()
+        .collect();
+    pair_type_lines.sort();
+
+    let mut inserted_pair_types = false;
+    let mut out = Vec::new();
+    for line in normalized_lines {
+        if line.starts_with("pair_types/") {
+            if !inserted_pair_types {
+                out.extend(pair_type_lines.clone());
+                inserted_pair_types = true;
+            }
+        } else {
+            out.push(line);
+        }
+    }
+    out.join("\n") + "\n"
+}
+
+fn assert_complexity_close(pairs_rs: &str, pairtools: &str) {
     let pairs_rs = stats_map(pairs_rs);
     let pairtools = stats_map(pairtools);
-    for key in keys {
-        assert_eq!(
-            pairs_rs.get(*key),
-            pairtools.get(*key),
-            "stats field {key} differed"
-        );
-    }
+    let Some(left) = pairs_rs.get("summary/complexity_naive") else {
+        return;
+    };
+    let Some(right) = pairtools.get("summary/complexity_naive") else {
+        return;
+    };
+    let left: f64 = left.parse().unwrap();
+    let right: f64 = right.parse().unwrap();
+    assert!(
+        (left - right).abs() < 1e-10,
+        "complexity_naive differed too much: {left} vs {right}"
+    );
+}
+
+fn assert_stats_report_matches(pairs_rs: &str, pairtools: &str) {
+    assert_eq!(
+        normalize_stats_report(pairs_rs),
+        normalize_stats_report(pairtools)
+    );
+    assert_complexity_close(pairs_rs, pairtools);
 }
 
 fn assert_bgzip_compatible(path: &Path) {
@@ -240,6 +292,20 @@ fn assert_bgzip_compatible(path: &Path) {
         "bgzip -t failed:\n{}",
         String::from_utf8_lossy(&output.stderr)
     );
+}
+
+fn bgzip_file(input: &Path, output: &Path) {
+    let input_s = input.to_string_lossy();
+    let bgzip = Command::new("pixi")
+        .args(["run", "bgzip", "-c", input_s.as_ref()])
+        .output()
+        .unwrap();
+    assert!(
+        bgzip.status.success(),
+        "bgzip -c failed:\n{}",
+        String::from_utf8_lossy(&bgzip.stderr)
+    );
+    fs::write(output, bgzip.stdout).unwrap();
 }
 
 fn assert_parse_fixture(name: &str, extra_args: &[&str]) {
@@ -797,96 +863,136 @@ fn dedup_rejects_unsupported_features_loudly() {
     );
 }
 
-const STABLE_STATS_KEYS: &[&str] = &[
-    "total",
-    "total_unmapped",
-    "total_single_sided_mapped",
-    "total_mapped",
-    "total_dups",
-    "total_nodups",
-    "cis",
-    "trans",
-    "pair_types/UU",
-    "pair_types/DD",
-    "pair_types/UR",
-    "pair_types/NU",
-    "pair_types/MU",
-    "pair_types/WW",
-    "cis_1kb+",
-    "cis_2kb+",
-    "cis_4kb+",
-    "cis_10kb+",
-    "cis_20kb+",
-    "cis_40kb+",
-    "summary/frac_cis",
-    "summary/frac_cis_1kb+",
-    "summary/frac_cis_2kb+",
-    "summary/frac_cis_4kb+",
-    "summary/frac_cis_10kb+",
-    "summary/frac_cis_20kb+",
-    "summary/frac_cis_40kb+",
-    "summary/frac_dups",
-    "chrom_freq/chr1/chr1",
-    "chrom_freq/chr1/chr2",
-    "chrom_freq/chr2/chr3",
-];
-
 #[test]
-fn stats_stable_fields_match_pairtools_1_1_3_oracle() {
+fn stats_full_tsv_matches_pairtools_1_1_3_oracle() {
     let input = "tests/data/mock.4stats.pairs";
     let args = ["stats", input];
-    assert_stats_fields_match(&run_pairs_rs(&args), &run_pairtools(&args), STABLE_STATS_KEYS);
+    assert_stats_report_matches(&run_pairs_rs(&args), &run_pairtools(&args));
 }
 
 #[test]
-fn stats_with_chromsizes_matches_pairtools_1_1_3_oracle() {
+fn stats_no_chromsizes_matches_pairtools_1_1_3_oracle() {
     let input = "tests/data/mock.4stats.pairs";
-    let args = ["stats", "--with-chromsizes", input];
-    let mut keys = STABLE_STATS_KEYS.to_vec();
-    keys.extend(["chromsizes/chr2", "chromsizes/chr3", "chromsizes/chr1"]);
-    assert_stats_fields_match(&run_pairs_rs(&args), &run_pairtools(&args), &keys);
+    let args = ["stats", "--no-chromsizes", input];
+    assert_stats_report_matches(&run_pairs_rs(&args), &run_pairtools(&args));
 }
 
 #[test]
-fn stats_writes_output_and_gz_output() {
+fn stats_n_dist_bins_decade_matches_pairtools_1_1_3_oracle() {
     let input = "tests/data/mock.4stats.pairs";
-    let expected = run_pairs_rs(&["stats", "--with-chromsizes", input]);
+    let args = ["stats", "--n-dist-bins-decade", "1", input];
+    assert_stats_report_matches(&run_pairs_rs(&args), &run_pairtools(&args));
+}
+
+#[test]
+fn stats_yaml_matches_pairtools_1_1_3_oracle() {
+    let input = "tests/data/mock.4stats.pairs";
+    let args = ["stats", "--yaml", input];
+    assert_eq!(
+        normalize_stats_report(&run_pairs_rs(&args)),
+        normalize_stats_report(&run_pairtools(&args))
+    );
+}
+
+#[test]
+fn stats_merge_matches_pairtools_1_1_3_oracle() {
+    let input = "tests/data/mock.4stats.pairs";
+    let tmp = TempDir::new().unwrap();
+    let rs_one = tmp.path().join("rs.one.stats");
+    let rs_two = tmp.path().join("rs.two.stats");
+    let pt_one = tmp.path().join("pt.one.stats");
+    let pt_two = tmp.path().join("pt.two.stats");
+    let rs_one_s = rs_one.to_string_lossy();
+    let rs_two_s = rs_two.to_string_lossy();
+    let pt_one_s = pt_one.to_string_lossy();
+    let pt_two_s = pt_two.to_string_lossy();
+
+    run_pairs_rs_to_path(&["stats", "-o", rs_one_s.as_ref(), input]);
+    run_pairs_rs_to_path(&["stats", "-o", rs_two_s.as_ref(), input]);
+    run_pairtools(&["stats", "-o", pt_one_s.as_ref(), input]);
+    run_pairtools(&["stats", "-o", pt_two_s.as_ref(), input]);
+
+    let pairs_rs = run_pairs_rs(&[
+        "stats",
+        "--merge",
+        rs_one_s.as_ref(),
+        rs_two_s.as_ref(),
+    ]);
+    let pairtools = run_pairtools(&[
+        "stats",
+        "--merge",
+        pt_one_s.as_ref(),
+        pt_two_s.as_ref(),
+    ]);
+    assert_stats_report_matches(&pairs_rs, &pairtools);
+}
+
+#[test]
+fn stats_writes_output_and_threaded_gz_output() {
+    let input = "tests/data/mock.4stats.pairs";
+    let expected = run_pairs_rs(&["stats", input]);
     let tmp = TempDir::new().unwrap();
     let plain = tmp.path().join("stats.txt");
     let gz = tmp.path().join("stats.txt.gz");
     let plain_s = plain.to_string_lossy();
     let gz_s = gz.to_string_lossy();
 
-    run_pairs_rs_to_path(&["stats", "--with-chromsizes", "-o", plain_s.as_ref(), input]);
+    run_pairs_rs_to_path(&["stats", "-o", plain_s.as_ref(), input]);
     assert_eq!(fs::read_to_string(&plain).unwrap(), expected);
 
-    run_pairs_rs_to_path(&["stats", "--with-chromsizes", "-o", gz_s.as_ref(), input]);
+    run_pairs_rs_to_path(&["stats", "--nproc-out", "2", "-o", gz_s.as_ref(), input]);
     assert_bgzip_compatible(&gz);
     assert_eq!(read_gzip_with_gzip(&gz), expected.into_bytes());
+}
+
+#[test]
+fn stats_threaded_bgzf_input_matches_uncompressed() {
+    let input = "tests/data/mock.4stats.pairs";
+    let tmp = TempDir::new().unwrap();
+    let gz_input = tmp.path().join("mock.4stats.pairs.gz");
+    bgzip_file(Path::new(input), &gz_input);
+    assert_bgzip_compatible(&gz_input);
+    let gz_input_s = gz_input.to_string_lossy();
+
+    let expected = run_pairs_rs(&["stats", input]);
+    let observed = run_pairs_rs(&["stats", "--nproc-in", "2", gz_input_s.as_ref()]);
+    assert_eq!(observed, expected);
 }
 
 #[test]
 fn stats_rejects_unsupported_features_loudly() {
     let input = "tests/data/mock.4stats.pairs";
     assert_pairs_rs_failure(
-        &["stats", "--merge", input],
-        "not implemented: pairtools stats --merge",
+        &["stats", "--merge", "--yaml", input],
+        "not implemented: pairtools stats --merge --yaml",
     );
     assert_pairs_rs_failure(
-        &["stats", "--n-dist-bins-decade", "4", input],
-        "not implemented: pairtools stats --n-dist-bins-decade",
-    );
-    assert_pairs_rs_failure(
-        &["stats", "--yaml", input],
-        "not implemented: pairtools stats --yaml",
+        &["stats", "--yaml", "--no-yaml", input],
+        "pairtools stats cannot use --yaml and --no-yaml together",
     );
     assert_pairs_rs_failure(
         &["stats", "--filter", "unique:(pair_type==\"UU\")", input],
         "not implemented: pairtools stats --filter",
     );
     assert_pairs_rs_failure(
-        &["stats", "--nproc-in", "2", input],
-        "not implemented: pairtools stats --nproc-in",
+        &["stats", "--cmd-in", "gzip -dc", input],
+        "not implemented: pairtools stats --cmd-in",
+    );
+    assert_pairs_rs_failure(
+        &["stats", "--cmd-out", "gzip", input],
+        "not implemented: pairtools stats --cmd-out",
+    );
+    assert_pairs_rs_failure(
+        &["stats", "--bytile-dups", input],
+        "not implemented: pairtools stats --bytile-dups",
+    );
+    assert_pairs_rs_failure(
+        &["stats", "--output-bytile-stats", "bytile.txt", input],
+        "not implemented: pairtools stats --output-bytile-stats",
+    );
+    assert_pairs_rs_failure(
+        &["stats", "--nproc-in", "0", input],
+        "pairtools stats --nproc-in must be greater than zero",
     );
 }
 

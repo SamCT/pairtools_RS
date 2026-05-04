@@ -1,0 +1,98 @@
+{
+  "id": "M132",
+  "name": "Stats I/O and merge",
+  "status": "complete",
+  "summary": "Complete stats merge/YAML and rust-htslib BGZF threaded I/O behavior without runtime pairtools shellouts.",
+  "goal": "Implement oracle-tested `pairs-rs stats --merge`, YAML output for stats reports, and supported `--nproc-in/--nproc-out` BGZF threading through HTSlib.",
+  "explicit_non_goals": [
+    "Do not implement split, restrict, phase, sample, scaling, filterbycov, parse2, or header behavior.",
+    "Do not call Python pairtools at Rust runtime.",
+    "Do not implement `--cmd-in` or `--cmd-out` by shelling out in Rust runtime.",
+    "Do not benchmark or claim speedup."
+  ],
+  "allowed_paths": [
+    "src/cli.rs",
+    "src/main.rs",
+    "src/stats.rs",
+    "tests/**",
+    "docs/**",
+    "milestones/ACTIVE_MILESTONE",
+    "milestones/M131-stats-report-parity.json",
+    "milestones/M132-stats-io-and-merge.json",
+    "milestones/M140-split-core.json"
+  ],
+  "forbidden_paths": [
+    "src/parse.rs",
+    "src/sort.rs",
+    "src/select.rs",
+    "src/merge.rs",
+    "src/dedup.rs"
+  ],
+  "allowed_commands": [
+    "pixi run pairtools stats --merge <stats files>",
+    "pixi run pairtools stats --yaml tests/data/mock.4stats.pairs",
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "forbidden_commands": [
+    "cargo check",
+    "cargo test",
+    "pixi run cargo check",
+    "pixi run cargo test"
+  ],
+  "allowed_pairtools_commands": [
+    "pairtools stats"
+  ],
+  "forbidden_pairtools_commands": [
+    "pairtools merge",
+    "pairtools dedup",
+    "pairtools select",
+    "pairtools split"
+  ],
+  "oracle_commands": [
+    "pixi run pairtools stats --merge <stats files>",
+    "pixi run pairtools stats --yaml tests/data/mock.4stats.pairs"
+  ],
+  "candidate_commands": [
+    "target/debug/pairs-rs stats --merge <stats files>",
+    "target/debug/pairs-rs stats --yaml tests/data/mock.4stats.pairs"
+  ],
+  "required_tests": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "`pairs-rs stats --merge` matches pairtools merge behavior for committed small TSV stats fixtures.",
+    "`pairs-rs stats --yaml` matches pairtools YAML for committed small fixtures or documents exact scoped parity.",
+    "`--nproc-in` and `--nproc-out` control HTSlib BGZF threading for `.gz` stats input/output.",
+    "`--cmd-in` and `--cmd-out` fail loudly instead of shelling out."
+  ],
+  "known_risks": [
+    "Pairtools YAML formatting and stats merge behavior must be kept deterministic without adding Python runtime dependencies."
+  ],
+  "next_milestone_candidates": [
+    "M140"
+  ]
+}
