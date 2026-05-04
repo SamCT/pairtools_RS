@@ -23,27 +23,26 @@ python3 scripts/codex_report.py --milestone M000
 
 See `milestones/README.md` for the registry, scope rules, and how future milestones move from planning to implementation.
 
-## Hybrid pairs-rs/pairtools Hi-C pipeline
+## Exact hybrid pairs-rs/pairtools Hi-C pipeline
 
-The script `scripts/run_hic_hybrid_pairs_rs_pipeline.sh` is a production bridge for the current milestone. It uses `pairs-rs` only for the accelerated front half of the pipeline, `parse` and `sort`, then hands off to `pairtools` for downstream commands that are not implemented in Rust yet: `merge`, `dedup`, `select`, `split`, and `stats`.
+The script `scripts/run_hic_exact_pairs_rs_pipeline.sh` reproduces the known production pairtools Hi-C pipeline with one intentional substitution: `pairs-rs parse | pairs-rs sort` replaces `pairtools parse | pairtools sort`. Downstream `merge`, `dedup`, `select`, `split`, and `stats` remain `pairtools` shell commands because those Rust commands are not implemented yet.
 
 Single-lane example:
 
 ```bash
-THREADS=32 \
-SORT_THREADS=16 \
+THREADS=64 \
+SORT_THREADS=32 \
 MAPQ=10 \
-REF=/path/to/ref.fa \
 BWA_INDEX=/path/to/bwa-mem2/index/prefix \
 CHROMS=/path/to/Hop282H1.chrom.sizes \
-ASM=Hop282H1 \
-PREFIX=/work/sample1/sample1 \
-TMPDIR=/scratch/sample1.tmp \
-R1=/data/sample1_R1.fastq.gz \
-R2=/data/sample1_R2.fastq.gz \
+ASM=HopH1_282 \
+PREFIX=/work/sample1/hic \
+TMPDIR=/scratch \
+R1=/data/Plant_R1_001_fp_s01.fastq.gz \
+R2=/data/Plant_R2_001_fp_s01.fastq.gz \
 PAIRS_RS=/path/to/pairs-rs \
 PAIRTOOLS="pixi run pairtools" \
-scripts/run_hic_hybrid_pairs_rs_pipeline.sh
+scripts/run_hic_exact_pairs_rs_pipeline.sh
 ```
 
 For multiple lanes, provide comma-separated `R1` and `R2` lists with matching lane order:
@@ -51,10 +50,36 @@ For multiple lanes, provide comma-separated `R1` and `R2` lists with matching la
 ```bash
 R1=/data/lane1_R1.fastq.gz,/data/lane2_R1.fastq.gz \
 R2=/data/lane1_R2.fastq.gz,/data/lane2_R2.fastq.gz \
-scripts/run_hic_hybrid_pairs_rs_pipeline.sh
+scripts/run_hic_exact_pairs_rs_pipeline.sh
 ```
 
-Use `DRY_RUN=1` or `--dry-run` to print the planned commands after validating required inputs. The script writes per-lane sorted `.pairsam.gz` files from `pairs-rs sort`, validates gzip/BGZF outputs with `bgzip -t`, writes merged outputs as `merged.*` beside `PREFIX`, and validates the final BAM with `samtools quickcheck`.
+Use `DRY_RUN=1` or `--dry-run` to print the planned commands after validating required inputs. The dry-run plan must show `pairs-rs parse` and `pairs-rs sort`, and must not show `pairtools parse` or `pairtools sort`.
+
+Single-lane front-half outputs:
+
+- `${PREFIX}.sorted.pairsam.gz`
+- `${PREFIX}.parse.stats.txt`
+- `merged.sorted.pairsam.gz`, symlinked beside `PREFIX`
+
+Multiple-lane front-half outputs:
+
+- `${PREFIX}.lane01.sorted.pairsam.gz`
+- `${PREFIX}.lane01.parse.stats.txt`
+- `${PREFIX}.lane02.sorted.pairsam.gz`
+- `${PREFIX}.lane02.parse.stats.txt`
+- `merged.sorted.pairsam.gz`, produced by `pairtools merge`
+
+Downstream outputs are written beside `PREFIX` and are exactly:
+
+- `merged.nodups.pairsam.gz`
+- `merged.dups.pairsam.gz`
+- `merged.unmapped.pairsam.gz`
+- `merged.dedup.stats.txt`
+- `merged.valid.pairsam.gz`
+- `merged.valid.pairs.gz`
+- `merged.valid.coord.bam`
+- `merged.valid.coord.bam.bai`
+- `merged.valid.stats.txt`
 
 # pairtools
 

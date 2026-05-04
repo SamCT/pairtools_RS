@@ -1,18 +1,21 @@
 {
   "id": "M080",
   "name": "Hybrid pipeline",
-  "status": "planned",
-  "summary": "Production bridge script using pairs-rs only for implemented front-half and pairtools only for downstream shell steps.",
-  "goal": "Maintain the shell pipeline that uses pairs-rs for parse+sort only and pairtools for downstream commands that are not implemented in Rust.",
+  "status": "active",
+  "summary": "Exact production bridge script using pairs-rs parse+sort and pairtools only for downstream shell steps.",
+  "goal": "Reproduce the known pairtools Hi-C pipeline with pairs-rs replacing parse+sort only.",
   "explicit_non_goals": [
     "Do not implement downstream commands in Rust.",
     "Do not call pairtools from Rust runtime code.",
     "Do not tune Rust parse or sort performance."
   ],
   "allowed_paths": [
+    "scripts/run_hic_exact_pairs_rs_pipeline.sh",
     "scripts/run_hic_hybrid_pairs_rs_pipeline.sh",
+    "tests/scripts/**",
     "README.md",
     "docs/**",
+    "milestones/**",
     "milestones/M080-hybrid-pipeline.json"
   ],
   "forbidden_paths": [
@@ -21,7 +24,10 @@
     "pixi.toml"
   ],
   "allowed_commands": [
-    "bash -n scripts/run_hic_hybrid_pairs_rs_pipeline.sh",
+    "bash -n scripts/run_hic_exact_pairs_rs_pipeline.sh",
+    "bash tests/scripts/test_hic_exact_pipeline_dry_run.sh",
+    "bash tests/scripts/test_hic_exact_pipeline_validation.sh",
+    "bash tests/scripts/test_hic_exact_pipeline_real_oracle.sh",
     "git diff --check"
   ],
   "forbidden_commands": [
@@ -42,17 +48,22 @@
     "Not applicable as a Rust runtime oracle; pairtools downstream commands are intentionally shell-pipeline-only for this milestone."
   ],
   "candidate_commands": [
-    "DRY_RUN=1 scripts/run_hic_hybrid_pairs_rs_pipeline.sh"
+    "DRY_RUN=1 scripts/run_hic_exact_pairs_rs_pipeline.sh",
+    "bash tests/scripts/test_hic_exact_pipeline_real_oracle.sh"
   ],
   "required_tests": [
-    "bash -n scripts/run_hic_hybrid_pairs_rs_pipeline.sh",
+    "bash -n scripts/run_hic_exact_pairs_rs_pipeline.sh",
+    "bash tests/scripts/test_hic_exact_pipeline_dry_run.sh",
+    "bash tests/scripts/test_hic_exact_pipeline_validation.sh",
+    "bash tests/scripts/test_hic_exact_pipeline_real_oracle.sh",
     "git diff --check"
   ],
   "optional_tests": [],
   "required_benchmarks": [],
   "cargo_required_if_paths_changed": [
     "src/**",
-    "tests/**",
+    "tests/*.rs",
+    "tests/**/*.rs",
     "Cargo.toml",
     "Cargo.lock",
     "pixi.toml",

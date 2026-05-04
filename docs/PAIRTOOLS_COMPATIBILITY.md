@@ -26,6 +26,29 @@ M000 adds repository-enforced milestone automation only. It does not change Rust
 
 M010 verifies that the Rust CLI exposes the current command inventory in help text, that `parse --help` and `sort --help` expose the inventoried options, and that unsupported global options and unsupported commands fail loudly with `not implemented`. M010 does not implement downstream command behavior and does not modify parse or sort runtime semantics.
 
+## Supported Hybrid Pipeline Contract
+
+M080 supports an exact shell-orchestrated hybrid pipeline in `scripts/run_hic_exact_pairs_rs_pipeline.sh`. The supported contract is:
+
+- `bwa-mem2 mem -5SPM -T 30` produces the alignment stream.
+- `pairs-rs parse` replaces `pairtools parse` with the target flags: `--chroms-path`, `--assembly`, `--min-mapq`, `--walks-policy 5unique`, `--max-inter-align-gap 30`, `--report-alignment-end 5`, `--add-columns mapq,pos5,pos3,cigar,read_len`, and `--output-stats`.
+- `pairs-rs sort` replaces `pairtools sort` with `--nproc`, `--tmpdir`, and `-o *.sorted.pairsam.gz`.
+- For one lane, the sorted pairsam is symlinked to `merged.sorted.pairsam.gz`.
+- For multiple lanes, `pairtools merge` creates `merged.sorted.pairsam.gz`.
+- Downstream `pairtools dedup`, `pairtools select`, `pairtools split`, `samtools view/sort/index`, and `pairtools stats` produce the requested `merged.*` outputs.
+
+This is not an all-Rust pipeline. Downstream pairtools commands remain shell dependencies because merge, dedup, select, split, and stats are not implemented in Rust.
+
+## External Real-Data Oracle Status
+
+External data was discovered in `/mnt/d/pairtools_RS_test`. The directory contains a BWA-MEM2 aligned input, chrom sizes, command provenance, stats files, and a legacy pairtools sorted `.pairs` output.
+
+The discovered sorted oracle is not an exact M080 `.pairsam.gz` oracle. The documented legacy command in `p3.commands` used `--drop-sam` and `--min-mapq 1`, while M080 targets `.pairsam.gz` with SAM columns, extra columns, and MAPQ 10 from `pairtools_1.sh`. Therefore full real-data parity is not claimed from that file.
+
+`bash tests/scripts/test_hic_exact_pipeline_real_oracle.sh` passed on the external aligned input by generating candidate `pairs-rs parse | pairs-rs sort` output and verifying 11,359,961 sorted pairsam rows in pairtools-compatible key order. Exact semantic comparison against pairtools `.sorted.pairsam.gz` and final downstream output comparison were not run because those exact oracle files were not present.
+
+If an exact pairtools `.sorted.pairsam.gz` oracle and downstream `merged.*` outputs are added to `/mnt/d/pairtools_RS_test`, `tests/scripts/test_hic_exact_pipeline_real_oracle.sh` can compare semantic decompressed pairsam content and optional downstream outputs. Until then, M080 claims only the exact shell pipeline contract and dry-run/validation coverage, not final all-output oracle parity.
+
 ## Top-Level Options
 
 | Option | Rust status |
