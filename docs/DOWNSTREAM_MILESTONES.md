@@ -35,6 +35,9 @@ M100 is the planning boundary for replacing pairtools downstream shell steps wit
 - M161 real-data oracle validation:
   - Run the all-Rust pipeline on external real-data fixtures and compare against the pairtools oracle outputs.
   - This milestone gates optimization claims.
+- M300 full-pipeline benchmark:
+  - Benchmark only after M161 real-data validation passes.
+  - Report exact commands, artifacts, wall time, CPU, memory, disk, output size, and throughput.
 
 ## Post-Validation Parity Candidates
 

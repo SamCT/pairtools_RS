@@ -20,6 +20,7 @@
     ".gitignore",
     ".github/**",
     "docs/**",
+    "milestone_results/**",
     "milestones/**",
     "scripts/**",
     "tests/README.md",
@@ -41,8 +42,8 @@
     "python3 -m py_compile",
     "bash -n scripts/cargo_guard.sh",
     "python3 scripts/check_milestone_schema.py",
-    "python3 scripts/milestone_gate.py pre --milestone M000",
-    "python3 scripts/milestone_gate.py post --milestone M000",
+    "python3 scripts/milestone_gate.py pre --milestone M000 --allow-nonactive",
+    "python3 scripts/milestone_gate.py post --milestone M000 --allow-nonactive",
     "python3 scripts/codex_report.py --milestone M000",
     "git diff --check"
   ],
@@ -67,21 +68,21 @@
     "Not applicable for M000; no pairtools behavior is changed."
   ],
   "candidate_commands": [
-    "python3 scripts/milestone_gate.py pre --milestone M000",
-    "python3 scripts/milestone_gate.py post --milestone M000",
+    "python3 scripts/milestone_gate.py pre --milestone M000 --allow-nonactive",
+    "python3 scripts/milestone_gate.py post --milestone M000 --allow-nonactive",
     "python3 scripts/codex_report.py --milestone M000"
   ],
   "required_tests": [
     "git status --short --branch",
-    "python3 -m py_compile scripts/milestone_gate.py scripts/codex_report.py scripts/check_no_runtime_pairtools.py scripts/check_no_noop_flags.py scripts/check_docs_sync.py scripts/check_parse_lite_drift.py scripts/check_changed_paths.py scripts/check_milestone_schema.py scripts/check_cargo_needed.py scripts/record_test_result.py scripts/list_milestones.py",
+    "python3 -m py_compile scripts/milestone_gate.py scripts/codex_report.py scripts/check_no_runtime_pairtools.py scripts/check_no_noop_flags.py scripts/check_docs_sync.py scripts/check_parse_lite_drift.py scripts/check_changed_paths.py scripts/check_milestone_schema.py scripts/check_cargo_needed.py scripts/record_test_result.py scripts/list_milestones.py scripts/codex_next.py",
     "bash -n scripts/cargo_guard.sh",
     "python3 scripts/check_milestone_schema.py",
-    "python3 scripts/milestone_gate.py pre --milestone M000",
+    "python3 scripts/milestone_gate.py pre --milestone M000 --allow-nonactive",
     "python3 scripts/check_no_runtime_pairtools.py --milestone M000",
     "python3 scripts/check_no_noop_flags.py --milestone M000",
     "python3 scripts/check_parse_lite_drift.py --milestone M000",
     "python3 scripts/check_cargo_needed.py --milestone M000",
-    "python3 scripts/milestone_gate.py post --milestone M000",
+    "python3 scripts/milestone_gate.py post --milestone M000 --allow-nonactive",
     "python3 scripts/codex_report.py --milestone M000",
     "git diff --check"
   ],
@@ -127,6 +128,8 @@
     "Cargo need detection treats documentation-only files as docs even when they live under tests/."
   ],
   "next_milestone_candidates": [
-    "M010"
+    "M007",
+    "M005",
+    "M006"
   ]
 }

@@ -1,0 +1,101 @@
+{
+  "id": "M160",
+  "name": "All-Rust Hi-C pipeline",
+  "status": "planned",
+  "summary": "Add a shell pipeline that uses Rust commands for the implemented pairtools front and downstream surface.",
+  "goal": "Replace the hybrid shell pipeline with a guarded all-Rust command chain for parse, sort, merge, dedup, select, split, and stats where scoped implementations exist.",
+  "explicit_non_goals": [
+    "Do not claim production parity before M161.",
+    "Do not add new pairtools command behavior in Rust.",
+    "Do not benchmark or claim speedup.",
+    "Do not call Python pairtools from Rust runtime."
+  ],
+  "allowed_paths": [
+    "docs/**",
+    "milestones/ACTIVE_MILESTONE",
+    "milestones/M160-all-rust-hic-pipeline.json",
+    "scripts/**",
+    "tests/scripts/**",
+    "milestone_results/**"
+  ],
+  "forbidden_paths": [
+    "src/parse.rs",
+    "src/sort.rs",
+    "src/select.rs",
+    "src/merge.rs",
+    "src/dedup.rs",
+    "src/stats.rs"
+  ],
+  "allowed_commands": [
+    "bash tests/scripts/test_all_rust_hic_pipeline_dry_run.sh",
+    "python3 scripts/milestone_gate.py pre --milestone M160",
+    "python3 scripts/milestone_gate.py post --milestone M160",
+    "python3 scripts/codex_report.py --milestone M160",
+    "git diff --check"
+  ],
+  "forbidden_commands": [
+    "cargo check",
+    "cargo test",
+    "cargo build",
+    "pixi run cargo check",
+    "pixi run cargo test",
+    "pixi run cargo build"
+  ],
+  "allowed_pairtools_commands": [],
+  "forbidden_pairtools_commands": [
+    "pairtools parse",
+    "pairtools sort",
+    "pairtools merge",
+    "pairtools dedup",
+    "pairtools select",
+    "pairtools split",
+    "pairtools stats"
+  ],
+  "oracle_commands": [
+    "Not applicable at runtime; pairtools comparisons belong in M161 validation."
+  ],
+  "candidate_commands": [
+    "bash scripts/run_hic_all_rust_pairs_rs_pipeline.sh"
+  ],
+  "required_tests": [
+    "bash tests/scripts/test_all_rust_hic_pipeline_dry_run.sh"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "benches/**",
+    "examples/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Current branch",
+    "Current commit",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Validation not performed and why",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "Dry-run plan contains only `pairs-rs` for pairtools-equivalent commands.",
+    "The pipeline preserves the existing production output contract names.",
+    "The docs state that parity still depends on M161 real-data oracle validation."
+  ],
+  "known_risks": [
+    "Scoped command implementations may not yet cover every production option used by legacy pairtools pipelines."
+  ],
+  "next_milestone_candidates": [
+    "M161"
+  ]
+}

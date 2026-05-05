@@ -19,16 +19,35 @@ python3 scripts/codex_report.py --milestone <ID>
 
 The JSON files define goals, non-goals, allowed paths, forbidden paths, allowed commands, forbidden commands, oracle and candidate commands, required validation, required docs, and status fields. Prose documentation may explain the milestone workflow, but the JSON registry plus `scripts/milestone_gate.py` enforce it.
 
+Registry documentation must stay synchronized with milestone JSON files. Any commit that adds, removes, renames, or changes milestone status must update this README in the same task.
+
 Current registry:
 
 - `M000-governance.json`: governance automation only.
+- `M005-codex-autonomous-runner.json`: active-milestone runner command planning.
+- `M006-milestone-result-ledger.json`: machine-readable result ledger planning.
+- `M007-milestone-registry-sync.json`: registry sync and active milestone transition.
 - `M010-cli-inventory.json`: CLI inventory only.
 - `M020-parse-io.json`: parse input/output plumbing.
 - `M030-parse-core-pairs.json`: ordinary paired-read parse formation.
 - `M040-parse-pairsam-and-extra-columns.json`: pairsam and supported extra columns.
 - `M050-parse-walks-and-chimeric-limits.json`: bounded walk/chimeric behavior.
+- `M055-parse-walk-resolution.json`: pairtools parse walk-resolution policy parity.
+- `M056-parse-all-walks.json`: `--walks-policy all` parse parity for committed fixtures.
 - `M060-sort-core.json`: sort key/header/determinism.
 - `M070-sort-compression-and-tempfiles.json`: sort compression, tempdir, and nproc behavior.
 - `M080-hybrid-pipeline.json`: shell pipeline bridge.
 - `M090-benchmarking.json`: benchmark harnesses after parity.
 - `M100-downstream-command-planning.json`: downstream planning only.
+- `M110-select-core.json`: scoped `select` implementation.
+- `M120-merge-core.json`: scoped sorted-input `merge` implementation.
+- `M130-stats-core.json`: scoped `stats` implementation.
+- `M131-stats-report-parity.json`: pairtools-style stats report parity expansion.
+- `M132-stats-io-and-merge.json`: stats merge, YAML, and BGZF I/O.
+- `M140-split-core.json`: scoped `split` implementation, currently planned after registry sync.
+- `M141-split-production-validation.json`: production-shaped split validation.
+- `M150-dedup-core.json`: scoped sorted-input `dedup` implementation.
+- `M151-dedup-production-validation.json`: production-shaped dedup validation.
+- `M160-all-rust-hic-pipeline.json`: all-Rust pipeline shell orchestration.
+- `M161-real-data-oracle-validation.json`: external real-data oracle validation.
+- `M300-full-pipeline-benchmark.json`: full-pipeline benchmark after real-data validation.

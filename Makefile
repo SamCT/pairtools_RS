@@ -1,4 +1,4 @@
-.PHONY: init install clean-pyc clean-build build test publish docs-init docs milestone-pre milestone-post governance-check cargo-check report
+.PHONY: init install clean-pyc clean-build build test publish docs-init docs milestone-pre milestone-post governance-check cargo-check report codex-next
 
 M ?= M000
 
@@ -51,6 +51,9 @@ cargo-check:
 
 report:
 	python3 scripts/codex_report.py --milestone $(M)
+
+codex-next:
+	python3 scripts/codex_next.py
 
 #docs-init:
 #	conda install --file docs/requirements.txt

@@ -4,6 +4,8 @@ This repository is a full pairtools-compatible Rust rewrite. The long-term goal 
 
 ## Enforced Milestone Workflow
 
+For ordinary implementation work, `milestones/ACTIVE_MILESTONE` is authoritative. Governance/bootstrap tasks may use M000 with `--allow-nonactive` only when the user explicitly identifies the task as governance work and the edits stay inside M000 allowed paths.
+
 At task start:
 
 1. Identify the milestone ID from `milestones/ACTIVE_MILESTONE` or explicitly justify changing it.
@@ -22,6 +24,7 @@ During the task:
 3. Do not run Cargo directly.
 4. Use `scripts/cargo_guard.sh` if Cargo validation is required.
 5. Record each validation with `scripts/record_test_result.py`.
+6. For guided active-milestone execution, use `make codex-next`. This runner lists required tests and fails until they are recorded; it must not be treated as proof that tests ran.
 
 Before the final response:
 
@@ -69,6 +72,8 @@ Before the final response:
 - Future work must fit the active milestone or explicitly change `ACTIVE_MILESTONE` in the same commit with justification.
 - Downstream commands are non-goals unless the active milestone explicitly lists them.
 - Do not implement broad feature surface in one task.
+- Keep `milestones/README.md` synchronized with milestone JSON files.
+- Record completed milestone evidence in `milestone_results/<MILESTONE>.json` when the active milestone requires a result ledger.
 - Every Codex task must end by updating or explicitly confirming no content change is needed in:
   - `docs/PAIRTOOLS_COMPATIBILITY.md`
   - `docs/STATUS.md`

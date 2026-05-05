@@ -1,0 +1,110 @@
+{
+  "id": "M007",
+  "name": "Milestone registry sync",
+  "status": "active",
+  "summary": "Keep milestone JSON files, registry documentation, active milestone state, and result-ledger expectations synchronized.",
+  "goal": "Enforce a registry maintenance pass before returning to functional M140 split work.",
+  "explicit_non_goals": [
+    "Do not implement pairtools runtime behavior.",
+    "Do not implement split.",
+    "Do not run benchmarks.",
+    "Do not claim full pairtools parity."
+  ],
+  "allowed_paths": [
+    "AGENTS.md",
+    "README.md",
+    "Makefile",
+    ".github/**",
+    "docs/**",
+    "milestones/**",
+    "scripts/**",
+    "milestone_results/**"
+  ],
+  "forbidden_paths": [
+    "src/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "allowed_commands": [
+    "python3 scripts/check_milestone_schema.py",
+    "python3 scripts/milestone_gate.py pre --milestone M007",
+    "python3 scripts/milestone_gate.py post --milestone M007",
+    "python3 scripts/codex_report.py --milestone M007",
+    "git diff --check"
+  ],
+  "forbidden_commands": [
+    "cargo check",
+    "cargo test",
+    "cargo build",
+    "pixi run cargo check",
+    "pixi run cargo test",
+    "pixi run cargo build"
+  ],
+  "allowed_pairtools_commands": [],
+  "forbidden_pairtools_commands": [
+    "pairtools parse",
+    "pairtools sort",
+    "pairtools merge",
+    "pairtools dedup",
+    "pairtools select",
+    "pairtools split",
+    "pairtools stats"
+  ],
+  "oracle_commands": [
+    "Not applicable; M007 changes registry governance only."
+  ],
+  "candidate_commands": [
+    "python3 scripts/check_milestone_schema.py"
+  ],
+  "required_tests": [
+    "python3 scripts/check_milestone_schema.py",
+    "python3 scripts/check_docs_sync.py --milestone M007",
+    "python3 scripts/milestone_gate.py post --milestone M007",
+    "python3 scripts/codex_report.py --milestone M007",
+    "git diff --check"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "benches/**",
+    "examples/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Current branch",
+    "Current commit",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Validation not performed and why",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "`milestones/README.md` lists every `milestones/M*.json` file.",
+    "Registry documentation states that JSON files and README entries must stay synchronized.",
+    "Future planned milestones exist for split validation, all-Rust pipeline validation, real-data validation, and benchmarking.",
+    "`milestones/ACTIVE_MILESTONE` points to the next intended milestone after registry sync."
+  ],
+  "known_risks": [
+    "Registry sync is still partly documentary until a future check compares README entries against JSON filenames."
+  ],
+  "next_milestone_candidates": [
+    "M005",
+    "M006",
+    "M140"
+  ]
+}

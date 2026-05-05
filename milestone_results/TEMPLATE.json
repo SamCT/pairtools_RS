@@ -1,0 +1,16 @@
+{
+  "milestone": "M000",
+  "commit": "UNKNOWN",
+  "commands_run": [
+    {
+      "command": "python3 scripts/check_milestone_schema.py",
+      "status": "UNKNOWN",
+      "log": null
+    }
+  ],
+  "passed": false,
+  "artifacts": [],
+  "blockers": [
+    "Fill this template with the exact commands and blockers before claiming milestone completion."
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "id": "M006",
+  "name": "Milestone result ledger",
+  "status": "planned",
+  "summary": "Add machine-readable milestone completion records that summarize commands, artifacts, blockers, and pass/fail status.",
+  "goal": "Require `milestone_results/<MILESTONE>.json` records before milestone completion claims are treated as authoritative.",
+  "explicit_non_goals": [
+    "Do not implement pairtools runtime behavior.",
+    "Do not claim a milestone passed without exact commands.",
+    "Do not run benchmarks."
+  ],
+  "allowed_paths": [
+    "AGENTS.md",
+    "README.md",
+    "Makefile",
+    "docs/**",
+    "milestones/ACTIVE_MILESTONE",
+    "milestones/M006-milestone-result-ledger.json",
+    "scripts/**",
+    "milestone_results/**"
+  ],
+  "forbidden_paths": [
+    "src/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "allowed_commands": [
+    "python3 scripts/milestone_gate.py pre --milestone M006",
+    "python3 scripts/milestone_gate.py post --milestone M006",
+    "python3 scripts/codex_report.py --milestone M006",
+    "git diff --check"
+  ],
+  "forbidden_commands": [
+    "cargo check",
+    "cargo test",
+    "cargo build",
+    "pixi run cargo check",
+    "pixi run cargo test",
+    "pixi run cargo build"
+  ],
+  "allowed_pairtools_commands": [],
+  "forbidden_pairtools_commands": [
+    "pairtools parse",
+    "pairtools sort",
+    "pairtools merge",
+    "pairtools dedup",
+    "pairtools select",
+    "pairtools split",
+    "pairtools stats"
+  ],
+  "oracle_commands": [
+    "Not applicable; M006 changes governance recording only."
+  ],
+  "candidate_commands": [
+    "milestone_results/<MILESTONE>.json"
+  ],
+  "required_tests": [
+    "python3 scripts/check_milestone_schema.py",
+    "git diff --check"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "benches/**",
+    "examples/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Current branch",
+    "Current commit",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Validation not performed and why",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "`milestone_results/README.md` documents the ledger contract.",
+    "A JSON template or writer exists for `milestone_results/<MILESTONE>.json`.",
+    "Completion records include milestone, commit, commands_run, passed, artifacts, and blockers."
+  ],
+  "known_risks": [
+    "Human-authored result ledgers can become stale unless M007 registry sync enforces them."
+  ],
+  "next_milestone_candidates": [
+    "M140"
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "id": "M300",
+  "name": "Full pipeline benchmark",
+  "status": "planned",
+  "summary": "Benchmark the validated all-Rust Hi-C pipeline only after real-data oracle validation passes.",
+  "goal": "Measure wall time, CPU, memory, disk, output sizes, and throughput for the all-Rust pipeline without weakening parity requirements.",
+  "explicit_non_goals": [
+    "Do not benchmark before M161 passes.",
+    "Do not change runtime behavior while benchmarking.",
+    "Do not claim speedup without reporting exact commands and artifacts."
+  ],
+  "allowed_paths": [
+    "docs/**",
+    "milestones/ACTIVE_MILESTONE",
+    "milestones/M300-full-pipeline-benchmark.json",
+    "scripts/**",
+    "tests/scripts/**",
+    "milestone_results/**"
+  ],
+  "forbidden_paths": [
+    "src/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "allowed_commands": [
+    "bash scripts/benchmark_full_pipeline.sh",
+    "python3 scripts/milestone_gate.py pre --milestone M300",
+    "python3 scripts/milestone_gate.py post --milestone M300",
+    "python3 scripts/codex_report.py --milestone M300",
+    "git diff --check"
+  ],
+  "forbidden_commands": [
+    "cargo check",
+    "cargo test",
+    "cargo build",
+    "pixi run cargo check",
+    "pixi run cargo test",
+    "pixi run cargo build"
+  ],
+  "allowed_pairtools_commands": [],
+  "forbidden_pairtools_commands": [
+    "pairtools parse",
+    "pairtools sort",
+    "pairtools merge",
+    "pairtools dedup",
+    "pairtools select",
+    "pairtools split",
+    "pairtools stats"
+  ],
+  "oracle_commands": [
+    "M161 real-data oracle validation result must pass before M300."
+  ],
+  "candidate_commands": [
+    "bash scripts/benchmark_full_pipeline.sh"
+  ],
+  "required_tests": [
+    "bash scripts/benchmark_full_pipeline.sh"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [
+    "bash scripts/benchmark_full_pipeline.sh"
+  ],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "benches/**",
+    "examples/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Current branch",
+    "Current commit",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Validation not performed and why",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "Benchmark command records wall time, CPU utilization, max RSS, disk usage, output sizes, and throughput.",
+    "Benchmark docs cite the passing M161 result ledger entry.",
+    "No speedup is claimed without exact commands and artifacts."
+  ],
+  "known_risks": [
+    "Benchmark results are environment-dependent and must be labeled with hardware and input details."
+  ],
+  "next_milestone_candidates": [
+    "M170"
+  ]
+}

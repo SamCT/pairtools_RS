@@ -1,0 +1,108 @@
+{
+  "id": "M005",
+  "name": "Codex autonomous runner",
+  "status": "planned",
+  "summary": "Provide a single conservative local command that guides Codex through the active milestone without fabricating test execution.",
+  "goal": "Make `make codex-next` the standard entrypoint for active-milestone preflight, required-test visibility, postflight, and report generation.",
+  "explicit_non_goals": [
+    "Do not implement pairtools runtime behavior.",
+    "Do not run arbitrary tests without listing or recording them.",
+    "Do not claim milestone completion from unrecorded validations.",
+    "Do not run benchmarks."
+  ],
+  "allowed_paths": [
+    "AGENTS.md",
+    "README.md",
+    "Makefile",
+    "docs/**",
+    "milestones/ACTIVE_MILESTONE",
+    "milestones/M005-codex-autonomous-runner.json",
+    "scripts/**",
+    "milestone_results/**"
+  ],
+  "forbidden_paths": [
+    "src/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "allowed_commands": [
+    "make codex-next",
+    "python3 scripts/codex_next.py",
+    "python3 scripts/milestone_gate.py pre --milestone M005",
+    "python3 scripts/milestone_gate.py post --milestone M005",
+    "python3 scripts/codex_report.py --milestone M005",
+    "git diff --check"
+  ],
+  "forbidden_commands": [
+    "cargo check",
+    "cargo test",
+    "cargo build",
+    "pixi run cargo check",
+    "pixi run cargo test",
+    "pixi run cargo build"
+  ],
+  "allowed_pairtools_commands": [],
+  "forbidden_pairtools_commands": [
+    "pairtools parse",
+    "pairtools sort",
+    "pairtools merge",
+    "pairtools dedup",
+    "pairtools select",
+    "pairtools split",
+    "pairtools stats"
+  ],
+  "oracle_commands": [
+    "Not applicable; M005 changes governance automation only."
+  ],
+  "candidate_commands": [
+    "make codex-next"
+  ],
+  "required_tests": [
+    "python3 -m py_compile scripts/codex_next.py",
+    "make codex-next"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "benches/**",
+    "examples/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Current branch",
+    "Current commit",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Validation not performed and why",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "`make codex-next` reads `milestones/ACTIVE_MILESTONE`.",
+    "The runner executes the active milestone pre-gate.",
+    "The runner prints the active milestone summary and required tests.",
+    "The runner runs post-gate and `scripts/codex_report.py`.",
+    "The runner fails clearly when required tests have not been recorded."
+  ],
+  "known_risks": [
+    "Required-test command strings must be recorded consistently for automatic recognition."
+  ],
+  "next_milestone_candidates": [
+    "M006",
+    "M140"
+  ]
+}

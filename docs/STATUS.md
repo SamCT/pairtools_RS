@@ -4,9 +4,9 @@ Last reconciled: 2026-05-05
 
 ## Active milestone
 
-M140: split core.
+M007: milestone registry sync.
 
-M151 is complete. It adds production-shaped dedup command validation so completion claims are backed by the exact command shape, not only small synthetic unit-style fixtures. M140 split core is active again.
+M151 is complete. It adds production-shaped dedup command validation so completion claims are backed by the exact command shape, not only small synthetic unit-style fixtures. M140 split core remains the next functional command milestone, but M007 is active first so the registry, runner, and result-ledger scaffolding can be synchronized before returning to split work.
 
 ## Current branch
 
@@ -14,7 +14,7 @@ M151 is complete. It adds production-shaped dedup command validation so completi
 
 ## Current commit
 
-`60573874f875966ca93437cfd0d180c0c9a2f343` before the M140 planning-scope blocker update. The final task response must report the committed SHA.
+`uncommitted` during the M000 governance/bootstrap update. The final task response must report the committed SHA.
 
 ## Implemented behavior
 
@@ -84,6 +84,11 @@ Completed parse milestones are covered by the guarded oracle suite:
 - Codex autonomous milestone protocol:
   - `docs/CODEX_AUTONOMY.md` records the repository-local autonomous milestone executor protocol.
   - The protocol requires reading the active milestone and compatibility docs, staying inside allowed paths, running required tests, running milestone gates, documenting blockers, and avoiding parity or optimization claims unless the milestone verifies them.
+- M000 governance/bootstrap update:
+  - Added planned milestone JSON files for M005, M006, M007, M141, M160, M161, and M300.
+  - Added `make codex-next` through `scripts/codex_next.py` as a conservative active-milestone runner that lists required tests and fails until they are recorded.
+  - Added `milestone_results/` ledger scaffolding for machine-readable milestone completion evidence.
+  - Set `milestones/ACTIVE_MILESTONE` to M007 so registry sync is the next active milestone before M140 split core resumes.
 - M130 Stats core:
   - `pairs-rs stats` computes stable pairtools-compatible count fields on small `.pairs`/`.pairsam` inputs.
   - Oracle tests compare total, mapped/unmapped/single-sided, duplicate/nodup, cis/trans, pair-type, cis-threshold, fraction, chromosome-frequency, and `--with-chromsizes` fields against installed Python pairtools.
@@ -146,10 +151,11 @@ The script reported `dedup production command shape validation passed`. Pairtool
 - Real full-size production data was not run by this script; it validates the exact production command shape on a small pipeline-style sorted pairsam fixture and compares routing against Python pairtools.
 - The requested next-milestone planning and automation scaffolding was not added under M140 because the active milestone allows only `src/cli.rs`, `src/main.rs`, `src/split.rs`, `tests/**`, `docs/**`, `milestones/ACTIVE_MILESTONE`, and `milestones/M140-split-core.json`.
 - M140 does not allow the required planning files: `milestones/README.md`, new milestone registry JSON files, `Makefile`, `milestone_results/**`, or new automation scripts. A planning/governance milestone such as M007 registry sync or M005 autonomous runner must become active before those files can be changed.
+- That previous stop was correct: M140 forbids governance and automation files. The current task intentionally uses M000 with `--allow-nonactive` to bootstrap the governance files and then makes M007 active.
 
 ## Cargo required
 
-Yes. M151 changes tests, so guarded Cargo build is required to provide the candidate binary for the shell validation script.
+No for the M000 governance/bootstrap update. This task changes docs, milestones, scripts, Makefile, AGENTS, and milestone result scaffolding only; no Rust source, Cargo, Pixi, test, bench, or example files are changed.
 
 ## External real-data oracle status
 
@@ -160,9 +166,9 @@ External real-data oracle discovery for M080 remains documented in `docs/REAL_DA
 Recommended sequence:
 
 ```text
-M151 -> M007 -> M005 -> M140 -> M141 -> M160 -> M161 -> M300
+M007 -> M005 -> M006 -> M140 -> M141 -> M160 -> M161 -> M300
 ```
 
-M151 is already complete locally, and M140 is currently active. To add the requested registry sync, result ledger, runner target, and future milestone JSON files, switch next to M007 or M005 before resuming M140 split implementation.
+M007 is active. Complete registry sync first, then tighten the autonomous runner in M005, add result-ledger enforcement in M006, and return to M140 split implementation.
 
 Optimization remains blocked until M161 real-data oracle validation passes. Full pairtools parity is not claimed.

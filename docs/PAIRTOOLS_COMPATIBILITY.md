@@ -22,6 +22,8 @@ Runtime code uses `rust-htslib`/HTSlib for SAM/BAM/CRAM input and BGZF output. T
 
 M000 adds repository-enforced milestone automation only. It does not change Rust parse, sort, or downstream pairtools behavior. Parse/sort oracle parity was not rerun in M000, so this file records the previously reconciled compatibility baseline rather than new behavioral evidence from this milestone.
 
+The M000 governance/bootstrap update added planned milestone JSON files for registry sync, autonomous runner work, result ledgers, split production validation, all-Rust pipeline orchestration, real-data oracle validation, and full-pipeline benchmarking. It also added `make codex-next` scaffolding and `milestone_results/` ledger scaffolding. These are governance changes only; no Rust runtime behavior or compatibility claim changed.
+
 ## M010 CLI Inventory Note
 
 M010 verifies that the Rust CLI exposes the current command inventory in help text, that `parse --help` and `sort --help` expose the inventoried options, and that unsupported global options and unsupported commands fail loudly with `not implemented`. M010 does not implement downstream command behavior and does not modify parse or sort runtime semantics.

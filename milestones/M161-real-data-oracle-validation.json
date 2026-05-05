@@ -1,0 +1,102 @@
+{
+  "id": "M161",
+  "name": "Real-data oracle validation",
+  "status": "planned",
+  "summary": "Validate the all-Rust pipeline against external real-data pairtools oracle outputs.",
+  "goal": "Compare all-Rust pipeline outputs to pairtools-generated real-data oracle outputs before any optimization or production parity claim.",
+  "explicit_non_goals": [
+    "Do not tune performance.",
+    "Do not run benchmarks.",
+    "Do not commit external real-data fixtures.",
+    "Do not call pairtools from Rust runtime."
+  ],
+  "allowed_paths": [
+    "docs/**",
+    "milestones/ACTIVE_MILESTONE",
+    "milestones/M161-real-data-oracle-validation.json",
+    "scripts/**",
+    "tests/scripts/**",
+    "milestone_results/**"
+  ],
+  "forbidden_paths": [
+    "src/parse.rs",
+    "src/sort.rs",
+    "src/select.rs",
+    "src/merge.rs",
+    "src/dedup.rs",
+    "src/stats.rs"
+  ],
+  "allowed_commands": [
+    "bash tests/scripts/test_all_rust_pipeline_real_oracle.sh",
+    "python3 scripts/milestone_gate.py pre --milestone M161",
+    "python3 scripts/milestone_gate.py post --milestone M161",
+    "python3 scripts/codex_report.py --milestone M161",
+    "git diff --check"
+  ],
+  "forbidden_commands": [
+    "cargo check",
+    "cargo test",
+    "cargo build",
+    "pixi run cargo check",
+    "pixi run cargo test",
+    "pixi run cargo build"
+  ],
+  "allowed_pairtools_commands": [
+    "pairtools parse",
+    "pairtools sort",
+    "pairtools merge",
+    "pairtools dedup",
+    "pairtools select",
+    "pairtools split",
+    "pairtools stats"
+  ],
+  "forbidden_pairtools_commands": [],
+  "oracle_commands": [
+    "bash tests/scripts/test_all_rust_pipeline_real_oracle.sh"
+  ],
+  "candidate_commands": [
+    "bash scripts/run_hic_all_rust_pairs_rs_pipeline.sh"
+  ],
+  "required_tests": [
+    "bash tests/scripts/test_all_rust_pipeline_real_oracle.sh"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "benches/**",
+    "examples/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Current branch",
+    "Current commit",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Validation not performed and why",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "External test data discovery is deterministic and documented.",
+    "All-Rust outputs are compared semantically to pairtools oracle outputs.",
+    "Any normalized differences are explicitly documented.",
+    "Optimization remains blocked if real-data oracle validation fails or is unavailable."
+  ],
+  "known_risks": [
+    "External real-data oracle files may be absent, stale, or generated with different parameters."
+  ],
+  "next_milestone_candidates": [
+    "M300"
+  ]
+}

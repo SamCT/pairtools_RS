@@ -1,0 +1,103 @@
+{
+  "id": "M141",
+  "name": "Split production validation",
+  "status": "planned",
+  "summary": "Validate the production-shaped `pairs-rs split` command after M140 implements split core.",
+  "goal": "Prove the split output contract needed by the Hi-C pipeline on small pipeline-style pairsam fixtures.",
+  "explicit_non_goals": [
+    "Do not broaden split runtime behavior beyond M140.",
+    "Do not implement merge, dedup, select, stats, restrict, phase, sample, scaling, parse2, or header behavior.",
+    "Do not benchmark or claim speedup."
+  ],
+  "allowed_paths": [
+    "docs/**",
+    "milestones/ACTIVE_MILESTONE",
+    "milestones/M141-split-production-validation.json",
+    "tests/**",
+    "scripts/**"
+  ],
+  "forbidden_paths": [
+    "src/parse.rs",
+    "src/sort.rs",
+    "src/select.rs",
+    "src/merge.rs",
+    "src/dedup.rs",
+    "src/stats.rs"
+  ],
+  "allowed_commands": [
+    "scripts/cargo_guard.sh build",
+    "bash tests/scripts/test_split_pipeline_command_shape.sh",
+    "python3 scripts/milestone_gate.py pre --milestone M141",
+    "python3 scripts/milestone_gate.py post --milestone M141",
+    "python3 scripts/codex_report.py --milestone M141",
+    "git diff --check"
+  ],
+  "forbidden_commands": [
+    "cargo check",
+    "cargo test",
+    "cargo build",
+    "pixi run cargo check",
+    "pixi run cargo test",
+    "pixi run cargo build"
+  ],
+  "allowed_pairtools_commands": [
+    "pairtools split"
+  ],
+  "forbidden_pairtools_commands": [
+    "pairtools parse",
+    "pairtools sort",
+    "pairtools merge",
+    "pairtools dedup",
+    "pairtools select",
+    "pairtools stats"
+  ],
+  "oracle_commands": [
+    "pixi run pairtools split --output-pairs <pairs> --output-sam <sam> <fixture.pairsam>"
+  ],
+  "candidate_commands": [
+    "target/debug/pairs-rs split --output-pairs <pairs> --output-sam <sam> <fixture.pairsam>"
+  ],
+  "required_tests": [
+    "scripts/cargo_guard.sh build",
+    "bash tests/scripts/test_split_pipeline_command_shape.sh"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "benches/**",
+    "examples/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Current branch",
+    "Current commit",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Validation not performed and why",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "Production-shaped split command exits 0 on a small pipeline-style pairsam fixture.",
+    "Pairs output exists and contains non-header rows.",
+    "SAM stream can be consumed by samtools in shell validation when available.",
+    "Read routing is compared against Python pairtools split on the same fixture."
+  ],
+  "known_risks": [
+    "SAM stream normalization may require careful handling of header and PG metadata."
+  ],
+  "next_milestone_candidates": [
+    "M160"
+  ]
+}
