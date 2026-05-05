@@ -64,7 +64,7 @@
   "required_benchmarks": [],
   "cargo_required_if_paths_changed": [
     "src/**",
-    "tests/**",
+    "tests/*.rs",
     "benches/**",
     "examples/**",
     "Cargo.toml",

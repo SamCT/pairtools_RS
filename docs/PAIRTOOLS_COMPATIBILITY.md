@@ -90,6 +90,12 @@ M140 implements scoped `pairs-rs split` for small pairsam inputs. The tested sur
 
 M141 adds `tests/scripts/test_split_pipeline_command_shape.sh`, which validates the production-shaped split contract on a small pairsam fixture. The script feeds gzipped pairsam into `pairs-rs split`, writes `merged.valid.pairs.gz`, captures `--output-sam -`, validates body rows, checks SAM parseability with samtools when available, and compares normalized pairs/SAM content and readID routing against Python pairtools split on the same fixture. This is validation of the scoped M140 split surface, not a broader split parity claim.
 
+## M160 All-Rust Pipeline Orchestration Note
+
+M160 adds `scripts/run_hic_all_rust_pairs_rs_pipeline.sh`, a shell orchestration script that uses `pairs-rs` for every pairtools-equivalent stage that currently has a scoped Rust implementation: parse, sort, merge, dedup, select, split, and stats. The script still uses `bwa-mem2` for alignment and `samtools` for BAM conversion, coordinate sorting, quickcheck, and indexing.
+
+`tests/scripts/test_all_rust_hic_pipeline_dry_run.sh` validates the one-lane and two-lane dry-run command graph and confirms that Python pairtools is not present in the planned commands. This is dry-run orchestration coverage only. Production parity and final-output equivalence remain blocked on M161 real-data oracle validation.
+
 ## M020 Parse I/O Note
 
 M020 adds tests for parse input and writer plumbing without changing pair formation semantics. The tested parse I/O baseline is:

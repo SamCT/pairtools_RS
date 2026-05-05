@@ -6,7 +6,7 @@ Last reconciled: 2026-05-05
 
 M160: all-Rust Hi-C pipeline.
 
-M141 is complete. It validates the production-shaped `pairs-rs split` command on a small pipeline-style fixture and records the result in `milestone_results/M141.json`. M160 is now active for all-Rust Hi-C pipeline orchestration, but this task stops before starting M160.
+M141 is complete. It validates the production-shaped `pairs-rs split` command on a small pipeline-style fixture and records the result in `milestone_results/M141.json`. M160 adds all-Rust pipeline orchestration and dry-run validation only; production parity remains blocked on M161 real-data oracle validation.
 
 ## Current branch
 
@@ -14,7 +14,7 @@ M141 is complete. It validates the production-shaped `pairs-rs split` command on
 
 ## Current commit
 
-`800c056311e53baa1b1349365adc8513ec147f77` contains the M141 split production validation. The final task response must report the committed SHA for the transition/result-ledger commit.
+`85467a36d48c7358f35a9f9df34fb8288860151b` contains the M141 split production validation result and activates M160.
 
 ## Implemented behavior
 
@@ -116,6 +116,11 @@ Completed parse milestones are covered by the guarded oracle suite:
   - The script verifies candidate command exit, pairs output existence and body rows, SAM stream body rows, optional samtools parsing, exact normalized pairs/SAM content against Python pairtools split, and readID routing.
   - The validation uses a small pipeline-style temporary fixture derived from `tests/data/mock.pairsam` with CIGAR strings adjusted to match toy sequence lengths for samtools parsing.
   - `milestone_results/M141.json` records the validation commands and points to commit `800c056311e53baa1b1349365adc8513ec147f77`.
+- M160 All-Rust Hi-C pipeline orchestration:
+  - `scripts/run_hic_all_rust_pairs_rs_pipeline.sh` orchestrates `bwa-mem2 mem` followed by `pairs-rs parse`, `pairs-rs sort`, `pairs-rs merge` for multiple lanes, `pairs-rs dedup`, `pairs-rs select`, `pairs-rs split`, `samtools view/sort/index/quickcheck`, and `pairs-rs stats`.
+  - The script preserves the established production output names: per-lane sorted pairsam and parse stats, `merged.sorted.pairsam.gz`, `merged.nodups.pairsam.gz`, `merged.dups.pairsam.gz`, `merged.unmapped.pairsam.gz`, `merged.dedup.stats.txt`, `merged.valid.pairsam.gz`, `merged.valid.pairs.gz`, `merged.valid.coord.bam`, `merged.valid.coord.bam.bai`, and `merged.valid.stats.txt`.
+  - `tests/scripts/test_all_rust_hic_pipeline_dry_run.sh` validates the full dry-run command graph for one-lane and two-lane inputs and checks that pairtools-equivalent stages use `pairs-rs` rather than Python pairtools.
+  - M160 does not run real data and does not claim production parity.
 - M130 Stats core:
   - `pairs-rs stats` computes stable pairtools-compatible count fields on small `.pairs`/`.pairsam` inputs.
   - Oracle tests compare total, mapped/unmapped/single-sided, duplicate/nodup, cis/trans, pair-type, cis-threshold, fraction, chromosome-frequency, and `--with-chromsizes` fields against installed Python pairtools.
@@ -141,6 +146,7 @@ Completed parse milestones are covered by the guarded oracle suite:
 - `dedup` does not yet implement full pairtools stats, by-tile stats, alternate backends, parent IDs, extra-column duplicate matching, filtering, YAML output, chrom subsets, type casts, custom input/output shell commands, optimization claims, or full pairtools parity beyond scoped sorted-input routing.
 - `stats` does not yet implement YAML merge mode, expression filters, chrom subsets, by-tile duplicate statistics, type casts, custom compression shell commands, or broad uncommitted-fixture parity beyond the tested report surface.
 - Rust split and other downstream commands remain unimplemented until their command-specific milestones land.
+- The all-Rust pipeline is dry-run validated only until M161 real-data oracle validation passes.
 - Compressed parse output and compressed parse stats output are not implemented.
 - No benchmark or speedup is claimed by M056.
 
@@ -186,9 +192,18 @@ bash tests/scripts/test_dedup_pipeline_command_shape.sh
 
 The script reported `dedup production command shape validation passed`. Pairtools emitted a warning from its stats internals on the tiny fixture; the command still exited successfully and readID routing checks passed.
 
+Validation commands for M160:
+
+```bash
+python3 scripts/milestone_gate.py pre --milestone M160
+bash tests/scripts/test_all_rust_hic_pipeline_dry_run.sh
+```
+
+M160 dry-run validation passed and reported `all-Rust Hi-C pipeline dry-run validation passed`.
+
 ## Validation not performed and why
 
-- Benchmarks were not run because M151 is a validation milestone.
+- Benchmarks were not run because M160 is an orchestration milestone and M161 real-data oracle validation has not passed.
 - Real full-size production data was not run by this script; it validates the exact production command shape on a small pipeline-style sorted pairsam fixture and compares routing against Python pairtools.
 - The requested next-milestone planning and automation scaffolding was not added under M140 because the active milestone allows only `src/cli.rs`, `src/main.rs`, `src/split.rs`, `tests/**`, `docs/**`, `milestones/ACTIVE_MILESTONE`, and `milestones/M140-split-core.json`.
 - M140 does not allow the required planning files: `milestones/README.md`, new milestone registry JSON files, `Makefile`, `milestone_results/**`, or new automation scripts. A planning/governance milestone such as M007 registry sync or M005 autonomous runner must become active before those files can be changed.
@@ -210,6 +225,6 @@ Recommended sequence after M007 completion:
 M005 -> M006 -> M140 -> M141 -> M160 -> M161 -> M300
 ```
 
-M160 is active for the next task. Do not claim all-Rust pipeline parity until M161 real-data oracle validation passes.
+M161 should validate the all-Rust pipeline against external real-data pairtools oracle outputs. Do not claim all-Rust pipeline parity until M161 real-data oracle validation passes.
 
 Optimization remains blocked until M161 real-data oracle validation passes. Full pairtools parity is not claimed.
