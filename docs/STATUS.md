@@ -4,9 +4,9 @@ Last reconciled: 2026-05-05
 
 ## Active milestone
 
-M151: dedup production command validation.
+M140: split core.
 
-M151 is active because completion claims must be backed by production-shaped command validation, not only small synthetic unit-style fixtures. M140 split core is planned again until the dedup production command validation pass is committed.
+M151 is complete. It adds production-shaped dedup command validation so completion claims are backed by the exact command shape, not only small synthetic unit-style fixtures. M140 split core is active again.
 
 ## Current branch
 
@@ -14,7 +14,7 @@ M151 is active because completion claims must be backed by production-shaped com
 
 ## Current commit
 
-`uncommitted` during M151 validation work. The final task response must report the committed SHA.
+`uncommitted` during M151 completion and autonomy protocol documentation. The final task response must report the committed SHA.
 
 ## Implemented behavior
 
@@ -81,6 +81,9 @@ Completed parse milestones are covered by the guarded oracle suite:
     `pairs-rs dedup --mark-dups --output-stats merged.dedup.s01.RS.stats.txt --output-dups merged.dups.pairsam.s01.RS.gz --output-unmapped merged.unmapped.pairsam.s01.RS.gz -o nodups.parse_RS_s01.sorted.pairsam H1_ALL_parse_RS_1.sorted_2.pairsam`.
   - The script validates command exit, nodups output existence and body rows, compressed duplicate/unmapped outputs, required stats fields, `pair_type` `DD`, pairsam SAM duplicate flag `0x400`, `Yt:Z:DD`, and readID routing against Python pairtools on the same pipeline-style fixture.
   - This is scoped sorted-input dedup routing validation. It is not an optimization claim or full pairtools dedup parity claim.
+- Codex autonomous milestone protocol:
+  - `docs/CODEX_AUTONOMY.md` records the repository-local autonomous milestone executor protocol.
+  - The protocol requires reading the active milestone and compatibility docs, staying inside allowed paths, running required tests, running milestone gates, documenting blockers, and avoiding parity or optimization claims unless the milestone verifies them.
 - M130 Stats core:
   - `pairs-rs stats` computes stable pairtools-compatible count fields on small `.pairs`/`.pairsam` inputs.
   - Oracle tests compare total, mapped/unmapped/single-sided, duplicate/nodup, cis/trans, pair-type, cis-threshold, fraction, chromosome-frequency, and `--with-chromsizes` fields against installed Python pairtools.
@@ -128,7 +131,14 @@ python3 scripts/codex_report.py --milestone M151
 git diff --check
 ```
 
-M151 validation is recorded by `tests/scripts/test_dedup_pipeline_command_shape.sh`; the final task report must say whether it passed.
+M151 validation passed in the autonomy completion pass:
+
+```bash
+scripts/cargo_guard.sh build
+bash tests/scripts/test_dedup_pipeline_command_shape.sh
+```
+
+The script reported `dedup production command shape validation passed`. Pairtools emitted a warning from its stats internals on the tiny fixture; the command still exited successfully and readID routing checks passed.
 
 ## Validation not performed and why
 
@@ -145,4 +155,4 @@ External real-data oracle discovery for M080 remains documented in `docs/REAL_DA
 
 ## Next recommended milestone
 
-M140: resume split core only after M151 is committed and the production-shaped dedup command validation remains part of the required checks.
+M140: resume split core now that M151 is complete and the production-shaped dedup command validation remains part of the repository checks.

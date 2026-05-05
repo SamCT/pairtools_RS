@@ -1,7 +1,7 @@
 {
   "id": "M151",
   "name": "Dedup production command validation",
-  "status": "active",
+  "status": "complete",
   "summary": "Add a production-shaped integration check for the real sorted pairsam dedup command contract.",
   "goal": "Validate the exact `pairs-rs dedup` command class used by the real pipeline, including output files, compressed duplicate/unmapped streams, stats keys, DD marking, pairsam SAM duplicate flags/Yt tags, and readID routing against Python pairtools.",
   "explicit_non_goals": [
