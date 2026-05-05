@@ -1,7 +1,7 @@
 {
   "id": "M005",
   "name": "Codex autonomous runner",
-  "status": "planned",
+  "status": "active",
   "summary": "Provide a single conservative local command that guides Codex through the active milestone without fabricating test execution.",
   "goal": "Make `make codex-next` the standard entrypoint for active-milestone preflight, required-test visibility, postflight, and report generation.",
   "explicit_non_goals": [

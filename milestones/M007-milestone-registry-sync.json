@@ -1,7 +1,7 @@
 {
   "id": "M007",
   "name": "Milestone registry sync",
-  "status": "active",
+  "status": "complete",
   "summary": "Keep milestone JSON files, registry documentation, active milestone state, and result-ledger expectations synchronized.",
   "goal": "Enforce a registry maintenance pass before returning to functional M140 split work.",
   "explicit_non_goals": [
@@ -100,7 +100,7 @@
     "`milestones/ACTIVE_MILESTONE` points to the next intended milestone after registry sync."
   ],
   "known_risks": [
-    "Registry sync is still partly documentary until a future check compares README entries against JSON filenames."
+    "The README sync check verifies filenames only; it does not validate prose descriptions for semantic accuracy."
   ],
   "next_milestone_candidates": [
     "M005",

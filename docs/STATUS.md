@@ -4,9 +4,9 @@ Last reconciled: 2026-05-05
 
 ## Active milestone
 
-M007: milestone registry sync.
+M005: Codex autonomous runner.
 
-M151 is complete. It adds production-shaped dedup command validation so completion claims are backed by the exact command shape, not only small synthetic unit-style fixtures. M140 split core remains the next functional command milestone, but M007 is active first so the registry, runner, and result-ledger scaffolding can be synchronized before returning to split work.
+M007 is complete. It adds an executable registry-doc synchronization check so `milestones/README.md` cannot drift away from `milestones/M*.json`. M140 split core remains the next functional command milestone, but M005 is active first to tighten the autonomous runner before returning to split work.
 
 ## Current branch
 
@@ -14,7 +14,7 @@ M151 is complete. It adds production-shaped dedup command validation so completi
 
 ## Current commit
 
-`fb72b209fd90d5881caa73ace2dfc2a9e492568c` before the M007 registry sync task. The final task response must report the committed SHA.
+`60759c2816a1655ce583e9bd9f62167fbaa1536d` contains the M007 registry sync enforcement change. The final task response must report the committed SHA for the transition/result-ledger commit.
 
 ## Implemented behavior
 
@@ -92,6 +92,7 @@ Completed parse milestones are covered by the guarded oracle suite:
 - M007 registry sync:
   - `scripts/check_docs_sync.py` now checks that every `milestones/M*.json` file is listed in `milestones/README.md`.
   - The same check also verifies that the registry README contains the rule requiring milestone JSON files and registry docs to stay synchronized.
+  - `milestone_results/M007.json` records the validation commands and points to commit `60759c2816a1655ce583e9bd9f62167fbaa1536d`.
   - This is governance-only and does not change Rust runtime behavior.
 - M130 Stats core:
   - `pairs-rs stats` computes stable pairtools-compatible count fields on small `.pairs`/`.pairsam` inputs.
@@ -181,12 +182,12 @@ External real-data oracle discovery for M080 remains documented in `docs/REAL_DA
 
 ## Next recommended milestone
 
-Recommended sequence:
+Recommended sequence after M007 completion:
 
 ```text
-M007 -> M005 -> M006 -> M140 -> M141 -> M160 -> M161 -> M300
+M005 -> M006 -> M140 -> M141 -> M160 -> M161 -> M300
 ```
 
-M007 is active. Complete registry sync first, then tighten the autonomous runner in M005, add result-ledger enforcement in M006, and return to M140 split implementation.
+M005 is active. Tighten the autonomous runner next, add result-ledger enforcement in M006, and return to M140 split implementation.
 
 Optimization remains blocked until M161 real-data oracle validation passes. Full pairtools parity is not claimed.
