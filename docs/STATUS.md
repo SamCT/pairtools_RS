@@ -14,7 +14,7 @@ M151 is complete. It adds production-shaped dedup command validation so completi
 
 ## Current commit
 
-`uncommitted` during M151 completion and autonomy protocol documentation. The final task response must report the committed SHA.
+`60573874f875966ca93437cfd0d180c0c9a2f343` before the M140 planning-scope blocker update. The final task response must report the committed SHA.
 
 ## Implemented behavior
 
@@ -144,6 +144,8 @@ The script reported `dedup production command shape validation passed`. Pairtool
 
 - Benchmarks were not run because M151 is a validation milestone.
 - Real full-size production data was not run by this script; it validates the exact production command shape on a small pipeline-style sorted pairsam fixture and compares routing against Python pairtools.
+- The requested next-milestone planning and automation scaffolding was not added under M140 because the active milestone allows only `src/cli.rs`, `src/main.rs`, `src/split.rs`, `tests/**`, `docs/**`, `milestones/ACTIVE_MILESTONE`, and `milestones/M140-split-core.json`.
+- M140 does not allow the required planning files: `milestones/README.md`, new milestone registry JSON files, `Makefile`, `milestone_results/**`, or new automation scripts. A planning/governance milestone such as M007 registry sync or M005 autonomous runner must become active before those files can be changed.
 
 ## Cargo required
 
@@ -155,4 +157,12 @@ External real-data oracle discovery for M080 remains documented in `docs/REAL_DA
 
 ## Next recommended milestone
 
-M140: resume split core now that M151 is complete and the production-shaped dedup command validation remains part of the repository checks.
+Recommended sequence:
+
+```text
+M151 -> M007 -> M005 -> M140 -> M141 -> M160 -> M161 -> M300
+```
+
+M151 is already complete locally, and M140 is currently active. To add the requested registry sync, result ledger, runner target, and future milestone JSON files, switch next to M007 or M005 before resuming M140 split implementation.
+
+Optimization remains blocked until M161 real-data oracle validation passes. Full pairtools parity is not claimed.
