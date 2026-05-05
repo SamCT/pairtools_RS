@@ -14,7 +14,7 @@ M151 is complete. It adds production-shaped dedup command validation so completi
 
 ## Current commit
 
-`uncommitted` during the M000 governance/bootstrap update. The final task response must report the committed SHA.
+`fb72b209fd90d5881caa73ace2dfc2a9e492568c` before the M007 registry sync task. The final task response must report the committed SHA.
 
 ## Implemented behavior
 
@@ -89,6 +89,10 @@ Completed parse milestones are covered by the guarded oracle suite:
   - Added `make codex-next` through `scripts/codex_next.py` as a conservative active-milestone runner that lists required tests and fails until they are recorded.
   - Added `milestone_results/` ledger scaffolding for machine-readable milestone completion evidence.
   - Set `milestones/ACTIVE_MILESTONE` to M007 so registry sync is the next active milestone before M140 split core resumes.
+- M007 registry sync:
+  - `scripts/check_docs_sync.py` now checks that every `milestones/M*.json` file is listed in `milestones/README.md`.
+  - The same check also verifies that the registry README contains the rule requiring milestone JSON files and registry docs to stay synchronized.
+  - This is governance-only and does not change Rust runtime behavior.
 - M130 Stats core:
   - `pairs-rs stats` computes stable pairtools-compatible count fields on small `.pairs`/`.pairsam` inputs.
   - Oracle tests compare total, mapped/unmapped/single-sided, duplicate/nodup, cis/trans, pair-type, cis-threshold, fraction, chromosome-frequency, and `--with-chromsizes` fields against installed Python pairtools.
@@ -118,6 +122,20 @@ Completed parse milestones are covered by the guarded oracle suite:
 - No benchmark or speedup is claimed by M056.
 
 ## Validation performed
+
+Validation commands for M007:
+
+```bash
+git status -sb
+git log --oneline -n 5
+cat milestones/ACTIVE_MILESTONE
+python3 scripts/milestone_gate.py pre --milestone M007
+python3 scripts/check_milestone_schema.py
+python3 scripts/check_docs_sync.py --milestone M007
+python3 scripts/milestone_gate.py post --milestone M007
+python3 scripts/codex_report.py --milestone M007
+git diff --check
+```
 
 Validation commands for M151:
 
@@ -155,7 +173,7 @@ The script reported `dedup production command shape validation passed`. Pairtool
 
 ## Cargo required
 
-No for the M000 governance/bootstrap update. This task changes docs, milestones, scripts, Makefile, AGENTS, and milestone result scaffolding only; no Rust source, Cargo, Pixi, test, bench, or example files are changed.
+No for the M007 registry sync task. This task changes docs, milestones, scripts, and milestone result scaffolding only; no Rust source, Cargo, Pixi, test, bench, or example files are changed.
 
 ## External real-data oracle status
 

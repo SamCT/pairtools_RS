@@ -24,6 +24,10 @@ M000 adds repository-enforced milestone automation only. It does not change Rust
 
 The M000 governance/bootstrap update added planned milestone JSON files for registry sync, autonomous runner work, result ledgers, split production validation, all-Rust pipeline orchestration, real-data oracle validation, and full-pipeline benchmarking. It also added `make codex-next` scaffolding and `milestone_results/` ledger scaffolding. These are governance changes only; no Rust runtime behavior or compatibility claim changed.
 
+## M007 Registry Sync Note
+
+M007 makes registry synchronization executable by extending `scripts/check_docs_sync.py` to fail when any `milestones/M*.json` file is missing from `milestones/README.md`, or when the README omits the rule that registry docs must stay synchronized with milestone JSON files. This is governance-only; it does not change Rust runtime behavior or pairtools compatibility status.
+
 ## M010 CLI Inventory Note
 
 M010 verifies that the Rust CLI exposes the current command inventory in help text, that `parse --help` and `sort --help` expose the inventoried options, and that unsupported global options and unsupported commands fail loudly with `not implemented`. M010 does not implement downstream command behavior and does not modify parse or sort runtime semantics.

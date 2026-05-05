@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import argparse
 
-from governance_common import REPO_ROOT, changed_files, load_milestone, print_list
+from governance_common import REPO_ROOT, changed_files, load_milestone, milestone_files, print_list
 
 
 IMPLEMENTATION_OR_SCRIPT_PREFIXES = ("src/", "scripts/", "tests/", "benches/", "examples/")
@@ -26,6 +26,26 @@ STATUS_REQUIRED_TEXT = [
     "Validation not performed and why",
     "Next recommended milestone",
 ]
+
+
+def check_milestone_readme_sync() -> None:
+    readme_path = REPO_ROOT / "milestones" / "README.md"
+    if not readme_path.exists():
+        print_list("missing registry docs", ["milestones/README.md"])
+        raise SystemExit(1)
+
+    readme_text = readme_path.read_text(encoding="utf-8")
+    missing = [
+        path.name
+        for path in milestone_files()
+        if path.name != "schema.json" and path.name not in readme_text
+    ]
+    if "Registry documentation must stay synchronized with milestone JSON files." not in readme_text:
+        missing.append("registry synchronization rule text")
+
+    if missing:
+        print_list("milestone registry README missing entries", missing)
+        raise SystemExit(1)
 
 
 def source_or_script_changed(files: list[str]) -> bool:
@@ -66,6 +86,8 @@ def main() -> None:
     if missing_status:
         print_list("docs/STATUS.md missing required text", missing_status)
         raise SystemExit(1)
+
+    check_milestone_readme_sync()
 
     print("docs sync check passed")
 
