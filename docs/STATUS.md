@@ -4,9 +4,9 @@ Last reconciled: 2026-05-05
 
 ## Active milestone
 
-M141: split production validation.
+M160: all-Rust Hi-C pipeline.
 
-M140 is complete. It implements scoped `pairs-rs split` for small pairsam inputs and records the result in `milestone_results/M140.json`. M141 is now active for production-shaped split validation.
+M141 is complete. It validates the production-shaped `pairs-rs split` command on a small pipeline-style fixture and records the result in `milestone_results/M141.json`. M160 is now active for all-Rust Hi-C pipeline orchestration, but this task stops before starting M160.
 
 ## Current branch
 
@@ -14,7 +14,7 @@ M140 is complete. It implements scoped `pairs-rs split` for small pairsam inputs
 
 ## Current commit
 
-`ae4a341d2a0413a6c2408b73717c1f96403a0ce6` contains the M140 split implementation. The final task response must report the committed SHA for the transition/result-ledger commit.
+`800c056311e53baa1b1349365adc8513ec147f77` contains the M141 split production validation. The final task response must report the committed SHA for the transition/result-ledger commit.
 
 ## Implemented behavior
 
@@ -115,6 +115,7 @@ Completed parse milestones are covered by the guarded oracle suite:
   - `tests/scripts/test_split_pipeline_command_shape.sh` validates a production-shaped split command using gzipped pairsam input, gzipped pairs output, and SAM stream output.
   - The script verifies candidate command exit, pairs output existence and body rows, SAM stream body rows, optional samtools parsing, exact normalized pairs/SAM content against Python pairtools split, and readID routing.
   - The validation uses a small pipeline-style temporary fixture derived from `tests/data/mock.pairsam` with CIGAR strings adjusted to match toy sequence lengths for samtools parsing.
+  - `milestone_results/M141.json` records the validation commands and points to commit `800c056311e53baa1b1349365adc8513ec147f77`.
 - M130 Stats core:
   - `pairs-rs stats` computes stable pairtools-compatible count fields on small `.pairs`/`.pairsam` inputs.
   - Oracle tests compare total, mapped/unmapped/single-sided, duplicate/nodup, cis/trans, pair-type, cis-threshold, fraction, chromosome-frequency, and `--with-chromsizes` fields against installed Python pairtools.
@@ -195,7 +196,7 @@ The script reported `dedup production command shape validation passed`. Pairtool
 
 ## Cargo required
 
-M141 changes validation scripts/tests only unless the production-shaped validation exposes a direct M140 bug. Guarded Cargo is required only if Rust source or tests change.
+M160 has not started. M141 changed validation scripts/tests, so guarded Cargo build was run to provide the candidate binary.
 
 ## External real-data oracle status
 
@@ -209,6 +210,6 @@ Recommended sequence after M007 completion:
 M005 -> M006 -> M140 -> M141 -> M160 -> M161 -> M300
 ```
 
-M141 is active. Add production-shaped split validation next and stop after M141 passes.
+M160 is active for the next task. Do not claim all-Rust pipeline parity until M161 real-data oracle validation passes.
 
 Optimization remains blocked until M161 real-data oracle validation passes. Full pairtools parity is not claimed.

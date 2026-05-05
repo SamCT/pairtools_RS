@@ -1,0 +1,46 @@
+{
+  "milestone": "M141",
+  "commit": "800c056311e53baa1b1349365adc8513ec147f77",
+  "commands_run": [
+    {
+      "command": "python3 scripts/milestone_gate.py pre --milestone M141",
+      "status": "pass",
+      "log": "target/codex_task_state/M141.pre.json"
+    },
+    {
+      "command": "scripts/cargo_guard.sh build",
+      "status": "pass",
+      "log": "target/codex_logs/cargo_build_20260505T014108Z.log"
+    },
+    {
+      "command": "bash tests/scripts/test_split_pipeline_command_shape.sh",
+      "status": "pass",
+      "log": null
+    },
+    {
+      "command": "python3 scripts/milestone_gate.py post --milestone M141",
+      "status": "pass",
+      "log": "target/codex_task_state/M141.post.json"
+    },
+    {
+      "command": "python3 scripts/codex_report.py --milestone M141",
+      "status": "pass",
+      "log": null
+    },
+    {
+      "command": "git diff --check",
+      "status": "pass",
+      "log": null
+    }
+  ],
+  "passed": true,
+  "artifacts": [
+    "tests/scripts/test_split_pipeline_command_shape.sh",
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md",
+    "target/codex_task_state/M141.pre.json",
+    "target/codex_task_state/M141.post.json",
+    "target/codex_logs/cargo_build_20260505T014108Z.log"
+  ],
+  "blockers": []
+}
