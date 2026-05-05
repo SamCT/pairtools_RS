@@ -1,7 +1,7 @@
 {
   "id": "M161",
   "name": "Real-data oracle validation",
-  "status": "planned",
+  "status": "active",
   "summary": "Validate the all-Rust pipeline against external real-data pairtools oracle outputs.",
   "goal": "Compare all-Rust pipeline outputs to pairtools-generated real-data oracle outputs before any optimization or production parity claim.",
   "explicit_non_goals": [

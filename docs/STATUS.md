@@ -4,9 +4,9 @@ Last reconciled: 2026-05-05
 
 ## Active milestone
 
-M160: all-Rust Hi-C pipeline.
+M161: real-data oracle validation.
 
-M141 is complete. It validates the production-shaped `pairs-rs split` command on a small pipeline-style fixture and records the result in `milestone_results/M141.json`. M160 adds all-Rust pipeline orchestration and dry-run validation only; production parity remains blocked on M161 real-data oracle validation.
+M160 is complete. It adds all-Rust pipeline orchestration and dry-run validation only, recorded in `milestone_results/M160.json`. Production parity remains blocked on M161 real-data oracle validation.
 
 ## Current branch
 
@@ -14,7 +14,7 @@ M141 is complete. It validates the production-shaped `pairs-rs split` command on
 
 ## Current commit
 
-`85467a36d48c7358f35a9f9df34fb8288860151b` contains the M141 split production validation result and activates M160.
+`5c72fc6041ce2ac6d1f69c193632fb2a2b00a68c` contains the M160 all-Rust pipeline dry-run implementation. The transition commit activates M161.
 
 ## Implemented behavior
 

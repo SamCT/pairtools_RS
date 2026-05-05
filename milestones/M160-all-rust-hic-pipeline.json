@@ -1,7 +1,7 @@
 {
   "id": "M160",
   "name": "All-Rust Hi-C pipeline",
-  "status": "active",
+  "status": "complete",
   "summary": "Add a shell pipeline that uses Rust commands for the implemented pairtools front and downstream surface.",
   "goal": "Replace the hybrid shell pipeline with a guarded all-Rust command chain for parse, sort, merge, dedup, select, split, and stats where scoped implementations exist.",
   "explicit_non_goals": [
