@@ -85,9 +85,11 @@
     "Unsupported dedup options fail loudly with `not implemented`."
   ],
   "known_risks": [
-    "Full pairtools dedup includes richer stats, parent IDs, SAM duplicate flag parity, and backend options that are outside M150."
+    "Full pairtools dedup includes richer stats, parent IDs, SAM duplicate flag parity, and backend options that are outside M150.",
+    "M151 adds production-shaped command validation before any broader real-pipeline dedup claim."
   ],
   "next_milestone_candidates": [
+    "M151",
     "M130",
     "M140"
   ]

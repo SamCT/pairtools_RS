@@ -42,6 +42,22 @@ M120 implements a scoped `merge` command for small already sorted `.pairs` and `
 
 M150 implements a scoped `dedup` command for sorted `.pairs` and `.pairsam` inputs. The oracle tests compare read routing for nodups, duplicates, and unmapped records against installed Python pairtools on a committed fixture. M150 also tests `.gz` duplicate/unmapped output, `pair_type` `DD` marking, feasible pairsam SAM duplicate flag/Yt tag updates, simple stats output, and loud failures for unsupported dedup options. Full pairtools dedup stats, backend behavior, parent ID handling, extra-column duplicate matching, by-tile stats, filtering, YAML output, and custom input/output shell commands are not claimed.
 
+## M151 Dedup Production Command Validation Note
+
+M151 adds `tests/scripts/test_dedup_pipeline_command_shape.sh`, a production-shaped shell validation that runs the exact class of command used by the real pipeline:
+
+```bash
+pairs-rs dedup \
+  --mark-dups \
+  --output-stats merged.dedup.s01.RS.stats.txt \
+  --output-dups merged.dups.pairsam.s01.RS.gz \
+  --output-unmapped merged.unmapped.pairsam.s01.RS.gz \
+  -o nodups.parse_RS_s01.sorted.pairsam \
+  H1_ALL_parse_RS_1.sorted_2.pairsam
+```
+
+The script uses a small pipeline-style sorted pairsam fixture with the production input basename, validates the expected output files, validates compressed duplicate/unmapped streams, checks required simple stats fields, checks duplicate `pair_type` `DD`, checks pairsam SAM duplicate flag `0x400` and `Yt:Z:DD` where SAM columns exist, and compares readID routing against Python pairtools dedup on the same fixture. This supports a scoped sorted-input dedup routing claim only; it is not a full pairtools dedup parity or optimization claim.
+
 ## M130 Stats Note
 
 M130 implements a scoped `stats` command for stable small-fixture counts. The oracle tests compare total, mapped/unmapped/single-sided, duplicate/nodup, cis/trans, pair-type, cis-threshold, fraction, chromosome-frequency, and `--with-chromsizes` fields against installed Python pairtools. M130 also tests `-o/--output`, BGZF `.gz` stats output, and loud failures for unsupported stats options. Full pairtools stats merge mode, distance-frequency sections, YAML output, filters, chrom subsets, by-tile duplicate statistics, type casts, custom input/output shell commands, and every derived summary field are not claimed.

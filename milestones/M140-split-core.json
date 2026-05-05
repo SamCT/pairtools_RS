@@ -1,7 +1,7 @@
 {
   "id": "M140",
   "name": "Split core",
-  "status": "active",
+  "status": "planned",
   "summary": "Implement the next downstream command: scoped pairtools-compatible split for pairsam output.",
   "goal": "Implement oracle-tested `pairs-rs split` for small pairsam inputs, producing pairs output and SAM stream output.",
   "explicit_non_goals": [

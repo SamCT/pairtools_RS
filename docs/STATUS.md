@@ -1,12 +1,12 @@
 # pairs-rs Status
 
-Last reconciled: 2026-05-04
+Last reconciled: 2026-05-05
 
 ## Active milestone
 
-M140: split core.
+M151: dedup production command validation.
 
-M131 and M132 are complete. They extended `pairs-rs stats` from stable count fields to pairtools-style report parity for the committed small stats fixture, plus stats merge, YAML output, and HTSlib BGZF threaded `.gz` stats I/O. M140 is active again for split core work.
+M151 is active because completion claims must be backed by production-shaped command validation, not only small synthetic unit-style fixtures. M140 split core is planned again until the dedup production command validation pass is committed.
 
 ## Current branch
 
@@ -14,7 +14,7 @@ M131 and M132 are complete. They extended `pairs-rs stats` from stable count fie
 
 ## Current commit
 
-`uncommitted` during M131/M132 implementation. The final task response must report the committed SHA.
+`uncommitted` during M151 validation work. The final task response must report the committed SHA.
 
 ## Implemented behavior
 
@@ -76,6 +76,11 @@ Completed parse milestones are covered by the guarded oracle suite:
   - Duplicate detection supports `--method max` and `--method sum` with `--max-mismatch`.
   - `--mark-dups` marks duplicate pair records as `pair_type` `DD`; pairsam `sam1`/`sam2` fields have duplicate flag `0x400` set and `Yt:Z:DD` updated where feasible.
   - A committed fixture compares read routing against installed Python pairtools.
+- M151 Dedup production command validation:
+  - `tests/scripts/test_dedup_pipeline_command_shape.sh` runs the production-shaped command:
+    `pairs-rs dedup --mark-dups --output-stats merged.dedup.s01.RS.stats.txt --output-dups merged.dups.pairsam.s01.RS.gz --output-unmapped merged.unmapped.pairsam.s01.RS.gz -o nodups.parse_RS_s01.sorted.pairsam H1_ALL_parse_RS_1.sorted_2.pairsam`.
+  - The script validates command exit, nodups output existence and body rows, compressed duplicate/unmapped outputs, required stats fields, `pair_type` `DD`, pairsam SAM duplicate flag `0x400`, `Yt:Z:DD`, and readID routing against Python pairtools on the same pipeline-style fixture.
+  - This is scoped sorted-input dedup routing validation. It is not an optimization claim or full pairtools dedup parity claim.
 - M130 Stats core:
   - `pairs-rs stats` computes stable pairtools-compatible count fields on small `.pairs`/`.pairsam` inputs.
   - Oracle tests compare total, mapped/unmapped/single-sided, duplicate/nodup, cis/trans, pair-type, cis-threshold, fraction, chromosome-frequency, and `--with-chromsizes` fields against installed Python pairtools.
@@ -98,7 +103,7 @@ Completed parse milestones are covered by the guarded oracle suite:
 - Non-adjacent repeated read names remain unsupported and fail loudly.
 - `select` supports only exact `pair_type == "VALUE"` predicates. The broader pairtools expression language is not implemented.
 - `merge` supports small sorted inputs only. Broad pairtools merge options such as `--nproc`, `--tmpdir`, `--memory`, `--compress-program`, `--keep-first-header`, and `--concatenate` remain explicitly unsupported.
-- `dedup` does not yet implement full pairtools stats, by-tile stats, alternate backends, parent IDs, extra-column duplicate matching, filtering, YAML output, chrom subsets, type casts, or custom input/output shell commands.
+- `dedup` does not yet implement full pairtools stats, by-tile stats, alternate backends, parent IDs, extra-column duplicate matching, filtering, YAML output, chrom subsets, type casts, custom input/output shell commands, optimization claims, or full pairtools parity beyond scoped sorted-input routing.
 - `stats` does not yet implement YAML merge mode, expression filters, chrom subsets, by-tile duplicate statistics, type casts, custom compression shell commands, or broad uncommitted-fixture parity beyond the tested report surface.
 - Rust split and other downstream commands remain unimplemented until their command-specific milestones land.
 - Compressed parse output and compressed parse stats output are not implemented.
@@ -106,36 +111,33 @@ Completed parse milestones are covered by the guarded oracle suite:
 
 ## Validation performed
 
-Validation commands for M131/M132:
+Validation commands for M151:
 
 ```bash
 git status --short --branch
-python3 scripts/milestone_gate.py pre --milestone M131
-scripts/cargo_guard.sh check
-scripts/cargo_guard.sh test
+python3 scripts/milestone_gate.py pre --milestone M151
+scripts/cargo_guard.sh build
+bash tests/scripts/test_dedup_pipeline_command_shape.sh
 python3 scripts/check_milestone_schema.py
-python3 scripts/milestone_gate.py pre --milestone M132
-python3 scripts/check_no_runtime_pairtools.py --milestone M132
-python3 scripts/check_no_noop_flags.py --milestone M132
-python3 scripts/check_parse_lite_drift.py --milestone M132
-python3 scripts/check_cargo_needed.py --milestone M132
-python3 scripts/milestone_gate.py post --milestone M131 --allow-nonactive
-python3 scripts/milestone_gate.py post --milestone M132 --allow-nonactive
-python3 scripts/codex_report.py --milestone M132
+python3 scripts/check_no_runtime_pairtools.py --milestone M151
+python3 scripts/check_no_noop_flags.py --milestone M151
+python3 scripts/check_parse_lite_drift.py --milestone M151
+python3 scripts/check_cargo_needed.py --milestone M151
+python3 scripts/milestone_gate.py post --milestone M151
+python3 scripts/codex_report.py --milestone M151
 git diff --check
 ```
 
-`scripts/cargo_guard.sh test` passed 40 compatibility tests and the walk oracle test after adding stats report, merge, YAML, and threaded BGZF coverage.
+M151 validation is recorded by `tests/scripts/test_dedup_pipeline_command_shape.sh`; the final task report must say whether it passed.
 
 ## Validation not performed and why
 
-- Benchmarks were not run because M131/M132 are correctness milestones.
-- Exact byte-for-byte `summary/complexity_naive` string parity is not claimed because Rust uses a local Lambert W implementation while pairtools uses SciPy; tests compare it numerically within tolerance.
-- YAML merge mode was not run because `pairs-rs stats --merge --yaml` remains explicitly unsupported.
+- Benchmarks were not run because M151 is a validation milestone.
+- Real full-size production data was not run by this script; it validates the exact production command shape on a small pipeline-style sorted pairsam fixture and compares routing against Python pairtools.
 
 ## Cargo required
 
-Yes. M131/M132 changed Rust source and tests. `scripts/cargo_guard.sh check` and `scripts/cargo_guard.sh test` both passed through Pixi/WSL with `CARGO_TARGET_DIR=$HOME/pairtools_RS_target_codex`.
+Yes. M151 changes tests, so guarded Cargo build is required to provide the candidate binary for the shell validation script.
 
 ## External real-data oracle status
 
@@ -143,4 +145,4 @@ External real-data oracle discovery for M080 remains documented in `docs/REAL_DA
 
 ## Next recommended milestone
 
-M140: implement and oracle-test scoped `pairs-rs split` output for pairs and SAM stream handoff.
+M140: resume split core only after M151 is committed and the production-shaped dedup command validation remains part of the required checks.

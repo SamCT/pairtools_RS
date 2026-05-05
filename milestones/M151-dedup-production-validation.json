@@ -1,0 +1,100 @@
+{
+  "id": "M151",
+  "name": "Dedup production command validation",
+  "status": "active",
+  "summary": "Add a production-shaped integration check for the real sorted pairsam dedup command contract.",
+  "goal": "Validate the exact `pairs-rs dedup` command class used by the real pipeline, including output files, compressed duplicate/unmapped streams, stats keys, DD marking, pairsam SAM duplicate flags/Yt tags, and readID routing against Python pairtools.",
+  "explicit_non_goals": [
+    "Do not implement new dedup features.",
+    "Do not optimize dedup or claim performance.",
+    "Do not implement select, split, stats, restrict, phase, sample, scaling, filterbycov, parse2, or header behavior.",
+    "Do not claim full pairtools dedup parity from this validation.",
+    "Do not call Python pairtools at Rust runtime."
+  ],
+  "allowed_paths": [
+    "tests/**",
+    "docs/**",
+    "milestones/ACTIVE_MILESTONE",
+    "milestones/M140-split-core.json",
+    "milestones/M151-dedup-production-validation.json",
+    "milestones/M150-dedup-core.json"
+  ],
+  "forbidden_paths": [
+    "src/parse.rs",
+    "src/sort.rs",
+    "src/select.rs",
+    "src/merge.rs",
+    "src/dedup.rs",
+    "src/stats.rs",
+    "src/split.rs",
+    "src/main.rs",
+    "src/cli.rs"
+  ],
+  "allowed_commands": [
+    "bash tests/scripts/test_dedup_pipeline_command_shape.sh",
+    "scripts/cargo_guard.sh build"
+  ],
+  "forbidden_commands": [
+    "cargo check",
+    "cargo test",
+    "pixi run cargo check",
+    "pixi run cargo test",
+    "pixi run cargo build"
+  ],
+  "allowed_pairtools_commands": [
+    "pairtools dedup"
+  ],
+  "forbidden_pairtools_commands": [
+    "pairtools merge",
+    "pairtools select",
+    "pairtools split",
+    "pairtools stats"
+  ],
+  "oracle_commands": [
+    "pixi run pairtools dedup --mark-dups --output-stats <stats> --output-dups <dups> --output-unmapped <unmapped> -o <nodups> H1_ALL_parse_RS_1.sorted_2.pairsam"
+  ],
+  "candidate_commands": [
+    "pairs-rs dedup --mark-dups --output-stats merged.dedup.s01.RS.stats.txt --output-dups merged.dups.pairsam.s01.RS.gz --output-unmapped merged.unmapped.pairsam.s01.RS.gz -o nodups.parse_RS_s01.sorted.pairsam H1_ALL_parse_RS_1.sorted_2.pairsam"
+  ],
+  "required_tests": [
+    "scripts/cargo_guard.sh build",
+    "bash tests/scripts/test_dedup_pipeline_command_shape.sh"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "The production-shaped `pairs-rs dedup` command exits 0 on a pipeline-style sorted pairsam fixture.",
+    "The nodups file exists and contains non-header rows.",
+    "The duplicate and unmapped `.gz` outputs validate with BGZF or gzip tooling.",
+    "The stats file contains total, total_mapped, total_unmapped, total_dups, total_nodups, and fraction_dups.",
+    "Duplicate output rows have pair_type DD under `--mark-dups`.",
+    "Pairsam duplicate SAM records have duplicate flag 0x400 and Yt:Z:DD where SAM columns exist.",
+    "ReadID routing for nodups, dups, and unmapped matches Python pairtools dedup on the same fixture."
+  ],
+  "known_risks": [
+    "This validates the production command shape on a small pipeline-style fixture, not dedup optimization or full pairtools parity."
+  ],
+  "next_milestone_candidates": [
+    "M140"
+  ]
+}
