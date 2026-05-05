@@ -98,7 +98,7 @@ M160 adds `scripts/run_hic_all_rust_pairs_rs_pipeline.sh`, a shell orchestration
 
 ## M161 Real-Data Oracle Status
 
-M161 adds `tests/scripts/test_all_rust_pipeline_real_oracle.sh` as the all-Rust real-data validation harness. The harness discovers the external fixture directory, required FASTQs, chrom sizes, assembly/MAPQ provenance, BWA index prefix, and exact pairtools-generated `merged.*` oracle outputs before running the all-Rust pipeline.
+M161 adds `tests/scripts/test_all_rust_pipeline_real_oracle.sh` as the all-Rust real-data validation harness. The harness discovers the external fixture directory, required FASTQs, chrom sizes, assembly/MAPQ provenance, BWA index prefix, and exact pairtools-generated `merged.*` oracle outputs before running the all-Rust pipeline. When the oracle set is incomplete, it prints expected inputs, expected oracle files, expected candidate outputs, a pairtools oracle-generation command, and an all-Rust candidate command before exiting nonzero.
 
 The current external directory `/mnt/d/pairtools_RS_test` is not sufficient for M161 validation. It is missing the exact `merged.sorted.pairsam.gz`, `merged.nodups.pairsam.gz`, `merged.dups.pairsam.gz`, `merged.unmapped.pairsam.gz`, `merged.valid.pairsam.gz`, `merged.valid.pairs.gz`, `merged.valid.stats.txt`, and BWA index prefix required for final-output comparison. No all-Rust real-data parity claim is made.
 

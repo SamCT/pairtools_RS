@@ -114,3 +114,14 @@ The harness expects the external directory to contain the exact pairtools-genera
 - a BWA index prefix with index files, or `BWA_INDEX` set explicitly
 
 The current `/mnt/d/pairtools_RS_test` directory does not contain those exact oracle files. M161 therefore remains blocked and does not claim final all-Rust pipeline parity.
+
+When the oracle set is incomplete, the M161 harness prints:
+
+- the expected external input directory
+- the discovered FASTQs, chrom sizes, assembly, MAPQ, and BWA index status
+- every expected pairtools oracle file
+- every expected all-Rust candidate output path
+- a copy-pasteable command block to generate missing pairtools oracle outputs
+- a copy-pasteable command block to run the all-Rust candidate pipeline
+
+This makes the blocker actionable on local or HPC storage without committing external data.

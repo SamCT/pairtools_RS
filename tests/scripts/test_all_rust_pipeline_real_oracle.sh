@@ -7,6 +7,8 @@ SORT_THREADS="${SORT_THREADS:-2}"
 THREADS="${THREADS:-2}"
 TMPROOT="$(mktemp -d)"
 trap 'rm -rf "$TMPROOT"' EXIT
+CANDIDATE_DIR="${CANDIDATE_DIR:-$TMPROOT/candidate}"
+CANDIDATE_PREFIX="${CANDIDATE_PREFIX:-$CANDIDATE_DIR/candidate}"
 
 die() {
   echo "error: $*" >&2
@@ -15,6 +17,24 @@ die() {
 
 log() {
   echo "$*" >&2
+}
+
+quote() {
+  printf "%q" "$1"
+}
+
+quote_cmd() {
+  local out="" q
+  for arg in "$@"; do
+    printf -v q "%q" "$arg"
+    out+="${q} "
+  done
+  printf "%s" "${out% }"
+}
+
+print_env_line() {
+  local key="$1" value="$2" suffix="${3:-\\}"
+  printf '  %s=%q %s\n' "$key" "$value" "$suffix" >&2
 }
 
 pick_one_optional() {
@@ -53,6 +73,20 @@ command_or_pixi() {
     printf "pixi run %s" "$tool"
   else
     return 1
+  fi
+}
+
+display_command() {
+  local var_name="$1" tool="$2" value
+  value="${!var_name:-}"
+  if [[ -n "$value" ]]; then
+    printf "%s" "$value"
+  elif command -v "$tool" >/dev/null 2>&1; then
+    printf "%s" "$tool"
+  elif command -v pixi >/dev/null 2>&1; then
+    printf "pixi run %s" "$tool"
+  else
+    printf "%s" "$tool"
   fi
 }
 
@@ -162,6 +196,106 @@ discover() {
     "$TEST_DATA_DIR/merged.valid.pairs.gz"
     "$TEST_DATA_DIR/merged.valid.stats.txt"
   )
+  CANDIDATE_OUTPUTS=(
+    "$CANDIDATE_PREFIX.sorted.pairsam.gz"
+    "$CANDIDATE_PREFIX.parse.stats.txt"
+    "$CANDIDATE_DIR/merged.sorted.pairsam.gz"
+    "$CANDIDATE_DIR/merged.nodups.pairsam.gz"
+    "$CANDIDATE_DIR/merged.dups.pairsam.gz"
+    "$CANDIDATE_DIR/merged.unmapped.pairsam.gz"
+    "$CANDIDATE_DIR/merged.dedup.stats.txt"
+    "$CANDIDATE_DIR/merged.valid.pairsam.gz"
+    "$CANDIDATE_DIR/merged.valid.pairs.gz"
+    "$CANDIDATE_DIR/merged.valid.coord.bam"
+    "$CANDIDATE_DIR/merged.valid.coord.bam.bai"
+    "$CANDIDATE_DIR/merged.valid.stats.txt"
+  )
+}
+
+print_expected_layout() {
+  log ""
+  log "M161 expected external input directory:"
+  log "  $TEST_DATA_DIR"
+  log ""
+  log "Discovered required inputs:"
+  log "  R1: $R1"
+  log "  R2: $R2"
+  log "  CHROMS: $CHROMS"
+  log "  ASM: $ASM"
+  log "  MAPQ: $MAPQ"
+  log "  BWA_INDEX: ${BWA_INDEX:-unset}"
+  log ""
+  log "Expected pairtools oracle files:"
+  printf '  - %s\n' "${REQUIRED_ORACLES[@]}" >&2
+  log ""
+  log "Expected all-Rust candidate output paths:"
+  printf '  - %s\n' "${CANDIDATE_OUTPUTS[@]}" >&2
+}
+
+print_oracle_generation_command() {
+  local pairtools_cmd bwa_cmd samtools_cmd oracle_prefix tmp_for_oracle bwa_index_for_print
+  pairtools_cmd="$(display_command PAIRTOOLS pairtools)"
+  bwa_cmd="$(display_command BWA_MEM2 bwa-mem2)"
+  samtools_cmd="$(display_command SAMTOOLS samtools)"
+  oracle_prefix="$TEST_DATA_DIR/pairtools_oracle"
+  tmp_for_oracle="${ORACLE_TMPDIR:-$TEST_DATA_DIR/tmp_pairtools_oracle}"
+  bwa_index_for_print="${BWA_INDEX:-SET_BWA_INDEX_PREFIX}"
+
+  split_command "$pairtools_cmd" ORACLE_PAIRTOOLS_CMD
+  split_command "$bwa_cmd" ORACLE_BWA_CMD
+  split_command "$samtools_cmd" ORACLE_SAMTOOLS_CMD
+
+  log ""
+  log "Command to generate missing pairtools oracle outputs:"
+  log "  # Run from the repository or shell environment where pairtools, bwa-mem2, and samtools are available."
+  if [[ "$bwa_index_for_print" == "SET_BWA_INDEX_PREFIX" ]]; then
+    log "  # Replace SET_BWA_INDEX_PREFIX with the real BWA-MEM2 index prefix before running."
+  fi
+  printf '  cd %q\n' "$TEST_DATA_DIR" >&2
+  printf '  mkdir -p %q\n' "$tmp_for_oracle" >&2
+  printf '  %s | \\\n' "$(quote_cmd "${ORACLE_BWA_CMD[@]}" mem -5SPM -T 30 -t "$THREADS" "$bwa_index_for_print" "$R1" "$R2")" >&2
+  printf '    %s | \\\n' "$(quote_cmd "${ORACLE_PAIRTOOLS_CMD[@]}" parse --chroms-path "$CHROMS" --assembly "$ASM" --min-mapq "$MAPQ" --walks-policy 5unique --max-inter-align-gap 30 --report-alignment-end 5 --add-columns mapq,pos5,pos3,cigar,read_len --output-stats "$oracle_prefix.parse.stats.txt")" >&2
+  printf '    %s\n' "$(quote_cmd "${ORACLE_PAIRTOOLS_CMD[@]}" sort --nproc "$SORT_THREADS" --tmpdir "$tmp_for_oracle" -o "$oracle_prefix.sorted.pairsam.gz")" >&2
+  printf '  rm -f merged.sorted.pairsam.gz\n' >&2
+  printf '  ln -s %q merged.sorted.pairsam.gz\n' "$(basename "$oracle_prefix.sorted.pairsam.gz")" >&2
+  printf '  %s\n' "$(quote_cmd "${ORACLE_PAIRTOOLS_CMD[@]}" dedup --mark-dups --output-stats merged.dedup.stats.txt --output-dups merged.dups.pairsam.gz --output-unmapped merged.unmapped.pairsam.gz -o merged.nodups.pairsam.gz merged.sorted.pairsam.gz)" >&2
+  printf '  %s\n' "$(quote_cmd "${ORACLE_PAIRTOOLS_CMD[@]}" select '(pair_type == "UU")' -o merged.valid.pairsam.gz merged.nodups.pairsam.gz)" >&2
+  printf '  %s | \\\n' "$(quote_cmd "${ORACLE_PAIRTOOLS_CMD[@]}" split --output-pairs merged.valid.pairs.gz --output-sam - merged.valid.pairsam.gz)" >&2
+  printf '    %s | \\\n' "$(quote_cmd "${ORACLE_SAMTOOLS_CMD[@]}" view -@ "$SORT_THREADS" -b -)" >&2
+  printf '    %s\n' "$(quote_cmd "${ORACLE_SAMTOOLS_CMD[@]}" sort -@ "$SORT_THREADS" -o merged.valid.coord.bam -)" >&2
+  printf '  %s\n' "$(quote_cmd "${ORACLE_SAMTOOLS_CMD[@]}" index merged.valid.coord.bam)" >&2
+  printf '  %s\n' "$(quote_cmd "${ORACLE_PAIRTOOLS_CMD[@]}" stats --with-chromsizes -o merged.valid.stats.txt merged.valid.pairs.gz)" >&2
+}
+
+print_candidate_command() {
+  local pairs_rs_for_print bwa_cmd samtools_cmd bgzip_cmd bwa_index_for_print
+  pairs_rs_for_print="${PAIRS_RS:-${CARGO_TARGET_DIR:-$HOME/pairtools_RS_target_codex}/debug/pairs-rs}"
+  bwa_cmd="$(display_command BWA_MEM2 bwa-mem2)"
+  samtools_cmd="$(display_command SAMTOOLS samtools)"
+  bgzip_cmd="$(display_command BGZIP bgzip)"
+  bwa_index_for_print="${BWA_INDEX:-SET_BWA_INDEX_PREFIX}"
+
+  log ""
+  log "Command to run the all-Rust candidate pipeline:"
+  if [[ "$bwa_index_for_print" == "SET_BWA_INDEX_PREFIX" ]]; then
+    log "  # Replace SET_BWA_INDEX_PREFIX with the real BWA-MEM2 index prefix before running."
+  fi
+  printf '  cd %q\n' "$REPO_ROOT" >&2
+  print_env_line THREADS "$THREADS"
+  print_env_line SORT_THREADS "$SORT_THREADS"
+  print_env_line MAPQ "$MAPQ"
+  print_env_line BWA_INDEX "$bwa_index_for_print"
+  print_env_line CHROMS "$CHROMS"
+  print_env_line ASM "$ASM"
+  print_env_line PREFIX "$CANDIDATE_PREFIX"
+  print_env_line TMPDIR "$TMPROOT/tmp"
+  print_env_line R1 "$R1"
+  print_env_line R2 "$R2"
+  print_env_line PAIRS_RS "$pairs_rs_for_print"
+  print_env_line BWA_MEM2 "$bwa_cmd"
+  print_env_line SAMTOOLS "$samtools_cmd"
+  print_env_line BGZIP "$bgzip_cmd"
+  printf '  bash scripts/run_hic_all_rust_pairs_rs_pipeline.sh\n' >&2
 }
 
 report_missing_oracles() {
@@ -170,19 +304,14 @@ report_missing_oracles() {
   for path in "${REQUIRED_ORACLES[@]}"; do
     [[ -r "$path" ]] || missing+=("$path")
   done
-  if [[ -z "$BWA_INDEX" || ! -e "$BWA_INDEX" ]] && ! compgen -G "${BWA_INDEX}*" >/dev/null 2>&1; then
+  if [[ -z "$BWA_INDEX" ]]; then
+    missing+=("BWA_INDEX prefix with index files")
+  elif [[ ! -e "$BWA_INDEX" ]] && ! compgen -G "${BWA_INDEX}*" >/dev/null 2>&1; then
     missing+=("BWA_INDEX prefix with index files")
   fi
 
   if (( ${#missing[@]} > 0 )); then
     log "M161 blocker: required exact all-Rust pipeline oracle inputs are missing."
-    log "Detected:"
-    log "  R1: $R1"
-    log "  R2: $R2"
-    log "  CHROMS: $CHROMS"
-    log "  ASM: $ASM"
-    log "  MAPQ: $MAPQ"
-    log "  BWA_INDEX: ${BWA_INDEX:-unset}"
     log "Missing:"
     printf '  - %s\n' "${missing[@]}" >&2
     die "external real-data oracle set is incomplete"
@@ -190,7 +319,7 @@ report_missing_oracles() {
 }
 
 run_candidate_pipeline() {
-  local outdir="$TMPROOT/candidate"
+  local outdir="$CANDIDATE_DIR"
   mkdir -p "$outdir" "$TMPROOT/tmp"
   PAIRS_RS="${PAIRS_RS:-${CARGO_TARGET_DIR:-$HOME/pairtools_RS_target_codex}/debug/pairs-rs}"
   BWA_MEM2="${BWA_MEM2:-$(command_or_pixi bwa-mem2)}"
@@ -211,7 +340,7 @@ run_candidate_pipeline() {
       BWA_INDEX="$BWA_INDEX" \
       CHROMS="$CHROMS" \
       ASM="$ASM" \
-      PREFIX="$outdir/merged" \
+      PREFIX="$CANDIDATE_PREFIX" \
       TMPDIR="$TMPROOT/tmp" \
       R1="$R1" \
       R2="$R2" \
@@ -242,6 +371,9 @@ compare_outputs() {
 }
 
 discover
+print_expected_layout
+print_oracle_generation_command
+print_candidate_command
 report_missing_oracles
 run_candidate_pipeline
 compare_outputs

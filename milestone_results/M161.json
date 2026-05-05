@@ -6,7 +6,7 @@
     "docs/REAL_DATA_ORACLE_TESTING.md"
   ],
   "blockers": [
-    "External real-data oracle set is incomplete: /mnt/d/pairtools_RS_test is missing merged.sorted.pairsam.gz, merged.nodups.pairsam.gz, merged.dups.pairsam.gz, merged.unmapped.pairsam.gz, merged.valid.pairsam.gz, merged.valid.pairs.gz, merged.valid.stats.txt, and a BWA index prefix with index files."
+    "External real-data oracle set is incomplete: /mnt/d/pairtools_RS_test is missing merged.sorted.pairsam.gz, merged.nodups.pairsam.gz, merged.dups.pairsam.gz, merged.unmapped.pairsam.gz, merged.valid.pairsam.gz, merged.valid.pairs.gz, merged.valid.stats.txt, and a BWA index prefix with index files. The harness now prints exact oracle-generation and candidate-pipeline commands before exiting."
   ],
   "commands_run": [
     {
@@ -16,7 +16,7 @@
     {
       "command": "bash tests/scripts/test_all_rust_pipeline_real_oracle.sh",
       "status": "not-run",
-      "reason": "The harness stopped before running the all-Rust pipeline because exact external oracle files and BWA index files are missing."
+      "reason": "The harness stopped before running the all-Rust pipeline because exact external oracle files and BWA index files are missing; it printed expected paths plus oracle-generation and candidate commands."
     },
     {
       "command": "python3 scripts/milestone_gate.py post --milestone M161",

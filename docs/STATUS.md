@@ -123,6 +123,7 @@ Completed parse milestones are covered by the guarded oracle suite:
   - M160 does not run real data and does not claim production parity.
 - M161 Real-data oracle setup:
   - `tests/scripts/test_all_rust_pipeline_real_oracle.sh` deterministically discovers the external real-data directory, FASTQs, chrom sizes, assembly, MAPQ, BWA index prefix, and exact `merged.*` oracle files needed for all-Rust pipeline validation.
+  - The harness now prints the expected external input directory, expected pairtools oracle files, expected all-Rust candidate output paths, a copy-pasteable command block to generate missing pairtools oracle outputs, and a copy-pasteable all-Rust candidate command block.
   - The current external directory `/mnt/d/pairtools_RS_test` is incomplete for M161. It contains FASTQs, an aligned BAM, chrom sizes, provenance files, and older parse/sort artifacts, but it is missing the exact pairtools-generated `merged.*` oracle outputs and a usable BWA index prefix.
   - M161 remains active and blocked; no all-Rust real-data parity claim is made.
 - M130 Stats core:
@@ -222,6 +223,8 @@ The M161 real-data oracle harness stopped before running the all-Rust pipeline b
 - `/mnt/d/pairtools_RS_test/merged.valid.pairs.gz`
 - `/mnt/d/pairtools_RS_test/merged.valid.stats.txt`
 - a BWA index prefix with index files
+
+The harness prints the exact `pairtools` oracle-generation command and the exact all-Rust candidate command before exiting nonzero.
 
 ## Validation not performed and why
 
