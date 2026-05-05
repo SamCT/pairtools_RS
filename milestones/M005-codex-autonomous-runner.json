@@ -62,6 +62,8 @@
   ],
   "required_tests": [
     "python3 -m py_compile scripts/codex_next.py",
+    "python3 scripts/codex_next.py --status",
+    "python3 scripts/codex_next.py --status --chain",
     "make codex-next"
   ],
   "optional_tests": [],
@@ -95,6 +97,7 @@
     "`make codex-next` reads `milestones/ACTIVE_MILESTONE`.",
     "The runner executes the active milestone pre-gate.",
     "The runner prints the active milestone summary and required tests.",
+    "The runner provides explicit `--status`, `--run-required-tests`, and `--chain` modes.",
     "The runner runs post-gate and `scripts/codex_report.py`.",
     "The runner fails clearly when required tests have not been recorded."
   ],

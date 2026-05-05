@@ -94,6 +94,10 @@ Completed parse milestones are covered by the guarded oracle suite:
   - The same check also verifies that the registry README contains the rule requiring milestone JSON files and registry docs to stay synchronized.
   - `milestone_results/M007.json` records the validation commands and points to commit `60759c2816a1655ce583e9bd9f62167fbaa1536d`.
   - This is governance-only and does not change Rust runtime behavior.
+- M005 autonomous runner:
+  - `scripts/codex_next.py` now has explicit `--status`, `--run-required-tests`, and `--chain` modes.
+  - `make codex-next` still runs preflight, prints the milestone summary, checks recorded required tests, runs postflight and the report, and fails clearly if required validations are missing.
+  - The runner refuses recursive required-test execution instead of fabricating test results.
 - M130 Stats core:
   - `pairs-rs stats` computes stable pairtools-compatible count fields on small `.pairs`/`.pairsam` inputs.
   - Oracle tests compare total, mapped/unmapped/single-sided, duplicate/nodup, cis/trans, pair-type, cis-threshold, fraction, chromosome-frequency, and `--with-chromsizes` fields against installed Python pairtools.
@@ -174,7 +178,7 @@ The script reported `dedup production command shape validation passed`. Pairtool
 
 ## Cargo required
 
-No for the M007 registry sync task. This task changes docs, milestones, scripts, and milestone result scaffolding only; no Rust source, Cargo, Pixi, test, bench, or example files are changed.
+No for M005. This task changes docs, milestones, scripts, and milestone result scaffolding only; no Rust source, Cargo, Pixi, test, bench, or example files are changed.
 
 ## External real-data oracle status
 
