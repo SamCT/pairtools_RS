@@ -14,7 +14,7 @@ M160 is complete. It adds all-Rust pipeline orchestration and dry-run validation
 
 ## Current commit
 
-`5c72fc6041ce2ac6d1f69c193632fb2a2b00a68c` contains the M160 all-Rust pipeline dry-run implementation. The transition commit activates M161.
+`8b59725b12bde1f0ae21cfc86f07e0e5f13cbd98` records the M160 result and activates M161.
 
 ## Implemented behavior
 
@@ -121,6 +121,10 @@ Completed parse milestones are covered by the guarded oracle suite:
   - The script preserves the established production output names: per-lane sorted pairsam and parse stats, `merged.sorted.pairsam.gz`, `merged.nodups.pairsam.gz`, `merged.dups.pairsam.gz`, `merged.unmapped.pairsam.gz`, `merged.dedup.stats.txt`, `merged.valid.pairsam.gz`, `merged.valid.pairs.gz`, `merged.valid.coord.bam`, `merged.valid.coord.bam.bai`, and `merged.valid.stats.txt`.
   - `tests/scripts/test_all_rust_hic_pipeline_dry_run.sh` validates the full dry-run command graph for one-lane and two-lane inputs and checks that pairtools-equivalent stages use `pairs-rs` rather than Python pairtools.
   - M160 does not run real data and does not claim production parity.
+- M161 Real-data oracle setup:
+  - `tests/scripts/test_all_rust_pipeline_real_oracle.sh` deterministically discovers the external real-data directory, FASTQs, chrom sizes, assembly, MAPQ, BWA index prefix, and exact `merged.*` oracle files needed for all-Rust pipeline validation.
+  - The current external directory `/mnt/d/pairtools_RS_test` is incomplete for M161. It contains FASTQs, an aligned BAM, chrom sizes, provenance files, and older parse/sort artifacts, but it is missing the exact pairtools-generated `merged.*` oracle outputs and a usable BWA index prefix.
+  - M161 remains active and blocked; no all-Rust real-data parity claim is made.
 - M130 Stats core:
   - `pairs-rs stats` computes stable pairtools-compatible count fields on small `.pairs`/`.pairsam` inputs.
   - Oracle tests compare total, mapped/unmapped/single-sided, duplicate/nodup, cis/trans, pair-type, cis-threshold, fraction, chromosome-frequency, and `--with-chromsizes` fields against installed Python pairtools.
@@ -201,17 +205,36 @@ bash tests/scripts/test_all_rust_hic_pipeline_dry_run.sh
 
 M160 dry-run validation passed and reported `all-Rust Hi-C pipeline dry-run validation passed`.
 
+Validation commands for M161 setup:
+
+```bash
+python3 scripts/milestone_gate.py pre --milestone M161
+bash tests/scripts/test_all_rust_pipeline_real_oracle.sh
+```
+
+The M161 real-data oracle harness stopped before running the all-Rust pipeline because required external oracle files are missing:
+
+- `/mnt/d/pairtools_RS_test/merged.sorted.pairsam.gz`
+- `/mnt/d/pairtools_RS_test/merged.nodups.pairsam.gz`
+- `/mnt/d/pairtools_RS_test/merged.dups.pairsam.gz`
+- `/mnt/d/pairtools_RS_test/merged.unmapped.pairsam.gz`
+- `/mnt/d/pairtools_RS_test/merged.valid.pairsam.gz`
+- `/mnt/d/pairtools_RS_test/merged.valid.pairs.gz`
+- `/mnt/d/pairtools_RS_test/merged.valid.stats.txt`
+- a BWA index prefix with index files
+
 ## Validation not performed and why
 
 - Benchmarks were not run because M160 is an orchestration milestone and M161 real-data oracle validation has not passed.
 - Real full-size production data was not run by this script; it validates the exact production command shape on a small pipeline-style sorted pairsam fixture and compares routing against Python pairtools.
+- M161 full external validation was not run because `/mnt/d/pairtools_RS_test` is missing the exact all-Rust pipeline oracle outputs and BWA index files listed above.
 - The requested next-milestone planning and automation scaffolding was not added under M140 because the active milestone allows only `src/cli.rs`, `src/main.rs`, `src/split.rs`, `tests/**`, `docs/**`, `milestones/ACTIVE_MILESTONE`, and `milestones/M140-split-core.json`.
 - M140 does not allow the required planning files: `milestones/README.md`, new milestone registry JSON files, `Makefile`, `milestone_results/**`, or new automation scripts. A planning/governance milestone such as M007 registry sync or M005 autonomous runner must become active before those files can be changed.
 - That previous stop was correct: M140 forbids governance and automation files. The current task intentionally uses M000 with `--allow-nonactive` to bootstrap the governance files and then makes M007 active.
 
 ## Cargo required
 
-M160 has not started. M141 changed validation scripts/tests, so guarded Cargo build was run to provide the candidate binary.
+M161 setup changed shell/docs/result files only. Cargo was not required or run.
 
 ## External real-data oracle status
 
@@ -225,6 +248,12 @@ Recommended sequence after M007 completion:
 M005 -> M006 -> M140 -> M141 -> M160 -> M161 -> M300
 ```
 
-M161 should validate the all-Rust pipeline against external real-data pairtools oracle outputs. Do not claim all-Rust pipeline parity until M161 real-data oracle validation passes.
+M161 remains active. Add the exact pairtools-generated `merged.*` oracle outputs and BWA index prefix to `/mnt/d/pairtools_RS_test`, then rerun:
+
+```bash
+bash tests/scripts/test_all_rust_pipeline_real_oracle.sh
+```
+
+Do not claim all-Rust pipeline parity until M161 real-data oracle validation passes.
 
 Optimization remains blocked until M161 real-data oracle validation passes. Full pairtools parity is not claimed.

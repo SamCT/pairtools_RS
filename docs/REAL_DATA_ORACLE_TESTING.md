@@ -93,3 +93,24 @@ Compressed `.pairs.gz` and `.pairsam.gz` files are not compared byte-for-byte. T
 Stats comparisons do not ignore numeric differences. If an oracle stats file is known to come from different command flags or is numerically impossible for the aligned input, the harness reports the incompatibility and skips that comparison rather than fabricating parity.
 
 BAM files are validated with `samtools quickcheck` when downstream mode is enabled. Byte-identical BAM output is not required.
+
+## M161 All-Rust Pipeline Oracle Requirements
+
+M161 uses:
+
+```bash
+bash tests/scripts/test_all_rust_pipeline_real_oracle.sh
+```
+
+The harness expects the external directory to contain the exact pairtools-generated outputs for the all-Rust pipeline contract:
+
+- `merged.sorted.pairsam.gz`
+- `merged.nodups.pairsam.gz`
+- `merged.dups.pairsam.gz`
+- `merged.unmapped.pairsam.gz`
+- `merged.valid.pairsam.gz`
+- `merged.valid.pairs.gz`
+- `merged.valid.stats.txt`
+- a BWA index prefix with index files, or `BWA_INDEX` set explicitly
+
+The current `/mnt/d/pairtools_RS_test` directory does not contain those exact oracle files. M161 therefore remains blocked and does not claim final all-Rust pipeline parity.

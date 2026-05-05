@@ -1,0 +1,37 @@
+{
+  "artifacts": [
+    "tests/scripts/test_all_rust_pipeline_real_oracle.sh",
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md",
+    "docs/REAL_DATA_ORACLE_TESTING.md"
+  ],
+  "blockers": [
+    "External real-data oracle set is incomplete: /mnt/d/pairtools_RS_test is missing merged.sorted.pairsam.gz, merged.nodups.pairsam.gz, merged.dups.pairsam.gz, merged.unmapped.pairsam.gz, merged.valid.pairsam.gz, merged.valid.pairs.gz, merged.valid.stats.txt, and a BWA index prefix with index files."
+  ],
+  "commands_run": [
+    {
+      "command": "python3 scripts/milestone_gate.py pre --milestone M161",
+      "status": "pass"
+    },
+    {
+      "command": "bash tests/scripts/test_all_rust_pipeline_real_oracle.sh",
+      "status": "not-run",
+      "reason": "The harness stopped before running the all-Rust pipeline because exact external oracle files and BWA index files are missing."
+    },
+    {
+      "command": "python3 scripts/milestone_gate.py post --milestone M161",
+      "status": "pass"
+    },
+    {
+      "command": "python3 scripts/codex_report.py --milestone M161",
+      "status": "pass"
+    },
+    {
+      "command": "git diff --check",
+      "status": "pass"
+    }
+  ],
+  "commit": "UNKNOWN",
+  "milestone": "M161",
+  "passed": false
+}
