@@ -86,6 +86,10 @@ M132 adds TSV stats merge, YAML output, and HTSlib BGZF threaded `.gz` stats inp
 
 M140 implements scoped `pairs-rs split` for small pairsam inputs. The tested surface supports `--output-pairs`, `--output-sam`, optional input path or stdin, file/stdout routing, `.gz` pairs output through HTSlib BGZF, and SAM reconstruction from `sam1`/`sam2` pairsam fields. Oracle tests compare pairs and SAM output against Python pairtools on `tests/data/mock.pairsam` after normalizing volatile split `@PG` command text. `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out`, `.lz4`, and BAM `--output-sam` remain explicitly unsupported.
 
+## M141 Split Production Validation Note
+
+M141 adds `tests/scripts/test_split_pipeline_command_shape.sh`, which validates the production-shaped split contract on a small pairsam fixture. The script feeds gzipped pairsam into `pairs-rs split`, writes `merged.valid.pairs.gz`, captures `--output-sam -`, validates body rows, checks SAM parseability with samtools when available, and compares normalized pairs/SAM content and readID routing against Python pairtools split on the same fixture. This is validation of the scoped M140 split surface, not a broader split parity claim.
+
 ## M020 Parse I/O Note
 
 M020 adds tests for parse input and writer plumbing without changing pair formation semantics. The tested parse I/O baseline is:

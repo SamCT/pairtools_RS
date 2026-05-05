@@ -111,6 +111,10 @@ Completed parse milestones are covered by the guarded oracle suite:
   - Pairs `.gz` output and `.gz` input use HTSlib BGZF helpers; `.lz4`, custom compression commands, nproc I/O controls, and BAM output fail loudly.
   - Oracle tests compare split pairs and SAM output against Python pairtools on a committed small pairsam fixture after normalizing volatile split `@PG` command text.
   - `milestone_results/M140.json` records the validation commands and points to commit `ae4a341d2a0413a6c2408b73717c1f96403a0ce6`.
+- M141 Split production validation:
+  - `tests/scripts/test_split_pipeline_command_shape.sh` validates a production-shaped split command using gzipped pairsam input, gzipped pairs output, and SAM stream output.
+  - The script verifies candidate command exit, pairs output existence and body rows, SAM stream body rows, optional samtools parsing, exact normalized pairs/SAM content against Python pairtools split, and readID routing.
+  - The validation uses a small pipeline-style temporary fixture derived from `tests/data/mock.pairsam` with CIGAR strings adjusted to match toy sequence lengths for samtools parsing.
 - M130 Stats core:
   - `pairs-rs stats` computes stable pairtools-compatible count fields on small `.pairs`/`.pairsam` inputs.
   - Oracle tests compare total, mapped/unmapped/single-sided, duplicate/nodup, cis/trans, pair-type, cis-threshold, fraction, chromosome-frequency, and `--with-chromsizes` fields against installed Python pairtools.
