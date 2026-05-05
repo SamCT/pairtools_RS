@@ -4,9 +4,9 @@ Last reconciled: 2026-05-05
 
 ## Active milestone
 
-M006: milestone result ledger.
+M140: split core.
 
-M005 is complete. It tightens `make codex-next` and `scripts/codex_next.py` so future tasks have explicit status, required-test execution, and chain-summary modes without fabricating validation results. M140 split core remains the next functional command milestone, but M006 is active first to enforce milestone result ledgers before returning to split work.
+M006 is complete. It adds result-ledger validation and makes postflight/reporting aware of `milestone_results/<MILESTONE>.json`. M140 split core is now active as the next functional command milestone.
 
 ## Current branch
 
@@ -14,7 +14,7 @@ M005 is complete. It tightens `make codex-next` and `scripts/codex_next.py` so f
 
 ## Current commit
 
-`aa12ad4d1c028c08f3bd1b69424d20ec6ca9a23a` contains the M005 autonomous runner change. The final task response must report the committed SHA for the transition/result-ledger commit.
+`8e0ecfaca12a665a9dd3917b3f6600d1acefa7c3` contains the M006 result-ledger validation change. The final task response must report the committed SHA for the transition/result-ledger commit.
 
 ## Implemented behavior
 
@@ -103,6 +103,7 @@ Completed parse milestones are covered by the guarded oracle suite:
   - Added `scripts/check_milestone_results.py` to validate `milestone_results/*.json` required fields, command records, pass/blocker consistency, and registered milestone IDs.
   - `scripts/milestone_gate.py` now runs the result-ledger validator during postflight.
   - `scripts/codex_report.py` now reports whether `milestone_results/<MILESTONE>.json` exists.
+  - `milestone_results/M006.json` records the validation commands and points to commit `8e0ecfaca12a665a9dd3917b3f6600d1acefa7c3`.
 - M130 Stats core:
   - `pairs-rs stats` computes stable pairtools-compatible count fields on small `.pairs`/`.pairsam` inputs.
   - Oracle tests compare total, mapped/unmapped/single-sided, duplicate/nodup, cis/trans, pair-type, cis-threshold, fraction, chromosome-frequency, and `--with-chromsizes` fields against installed Python pairtools.
@@ -183,7 +184,7 @@ The script reported `dedup production command shape validation passed`. Pairtool
 
 ## Cargo required
 
-No for M006. This task changes docs, milestones, scripts, and milestone result scaffolding only; no Rust source, Cargo, Pixi, test, bench, or example files are changed.
+M140 changes Rust source and tests, so guarded Cargo validation is required through `scripts/cargo_guard.sh`.
 
 ## External real-data oracle status
 
@@ -197,6 +198,6 @@ Recommended sequence after M007 completion:
 M005 -> M006 -> M140 -> M141 -> M160 -> M161 -> M300
 ```
 
-M006 is active. Add result-ledger enforcement next, then return to M140 split implementation.
+M140 is active. Implement scoped split core next, then run M141 production-shaped split validation.
 
 Optimization remains blocked until M161 real-data oracle validation passes. Full pairtools parity is not claimed.

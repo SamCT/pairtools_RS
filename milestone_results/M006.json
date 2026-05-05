@@ -1,0 +1,57 @@
+{
+  "milestone": "M006",
+  "commit": "8e0ecfaca12a665a9dd3917b3f6600d1acefa7c3",
+  "commands_run": [
+    {
+      "command": "python3 scripts/milestone_gate.py pre --milestone M006",
+      "status": "pass",
+      "log": "target/codex_task_state/M006.pre.json"
+    },
+    {
+      "command": "python3 -m py_compile scripts/check_milestone_results.py scripts/milestone_gate.py scripts/codex_report.py",
+      "status": "pass",
+      "log": null
+    },
+    {
+      "command": "python3 scripts/check_milestone_schema.py",
+      "status": "pass",
+      "log": null
+    },
+    {
+      "command": "python3 scripts/check_milestone_results.py",
+      "status": "pass",
+      "log": null
+    },
+    {
+      "command": "python3 scripts/check_docs_sync.py --milestone M006",
+      "status": "pass",
+      "log": null
+    },
+    {
+      "command": "python3 scripts/milestone_gate.py post --milestone M006",
+      "status": "pass",
+      "log": "target/codex_task_state/M006.post.json"
+    },
+    {
+      "command": "python3 scripts/codex_report.py --milestone M006",
+      "status": "pass",
+      "log": null
+    },
+    {
+      "command": "git diff --check",
+      "status": "pass",
+      "log": null
+    }
+  ],
+  "passed": true,
+  "artifacts": [
+    "scripts/check_milestone_results.py",
+    "scripts/milestone_gate.py",
+    "scripts/codex_report.py",
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md",
+    "target/codex_task_state/M006.pre.json",
+    "target/codex_task_state/M006.post.json"
+  ],
+  "blockers": []
+}
