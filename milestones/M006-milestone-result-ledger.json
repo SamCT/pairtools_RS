@@ -58,7 +58,12 @@
     "milestone_results/<MILESTONE>.json"
   ],
   "required_tests": [
+    "python3 -m py_compile scripts/check_milestone_results.py scripts/milestone_gate.py scripts/codex_report.py",
     "python3 scripts/check_milestone_schema.py",
+    "python3 scripts/check_milestone_results.py",
+    "python3 scripts/check_docs_sync.py --milestone M006",
+    "python3 scripts/milestone_gate.py post --milestone M006",
+    "python3 scripts/codex_report.py --milestone M006",
     "git diff --check"
   ],
   "optional_tests": [],
@@ -91,7 +96,9 @@
   "acceptance_criteria": [
     "`milestone_results/README.md` documents the ledger contract.",
     "A JSON template or writer exists for `milestone_results/<MILESTONE>.json`.",
-    "Completion records include milestone, commit, commands_run, passed, artifacts, and blockers."
+    "Completion records include milestone, commit, commands_run, passed, artifacts, and blockers.",
+    "`scripts/check_milestone_results.py` validates existing result ledger files.",
+    "Postflight and Codex reports expose result-ledger status."
   ],
   "known_risks": [
     "Human-authored result ledgers can become stale unless M007 registry sync enforces them."

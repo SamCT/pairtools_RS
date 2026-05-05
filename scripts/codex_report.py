@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 
 from governance_common import (
+    REPO_ROOT,
     changed_files,
     current_branch,
     current_commit,
@@ -129,6 +130,12 @@ def main() -> None:
     print("next recommended milestone:")
     candidates = milestone.get("next_milestone_candidates", [])
     print(f"  {first(candidates)}")
+    print("result ledger:")
+    ledger = REPO_ROOT / "milestone_results" / f"{args.milestone}.json"
+    if ledger.exists():
+        print(f"  {ledger.relative_to(REPO_ROOT)}")
+    else:
+        print(f"  missing: {ledger.relative_to(REPO_ROOT)}")
 
 
 if __name__ == "__main__":

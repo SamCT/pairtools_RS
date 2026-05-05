@@ -35,6 +35,7 @@ CHECKS = [
     ("compat flag guard", ["python3", "scripts/check_no_noop_flags.py"]),
     ("legacy parser drift", ["python3", "scripts/check_parse_lite_drift.py"]),
     ("docs sync", ["python3", "scripts/check_docs_sync.py"]),
+    ("milestone result ledgers", ["python3", "scripts/check_milestone_results.py"]),
     ("cargo needed", ["python3", "scripts/check_cargo_needed.py"]),
 ]
 

@@ -99,6 +99,10 @@ Completed parse milestones are covered by the guarded oracle suite:
   - `make codex-next` still runs preflight, prints the milestone summary, checks recorded required tests, runs postflight and the report, and fails clearly if required validations are missing.
   - The runner refuses recursive required-test execution instead of fabricating test results.
   - `milestone_results/M005.json` records the validation commands and points to commit `aa12ad4d1c028c08f3bd1b69424d20ec6ca9a23a`.
+- M006 result ledger:
+  - Added `scripts/check_milestone_results.py` to validate `milestone_results/*.json` required fields, command records, pass/blocker consistency, and registered milestone IDs.
+  - `scripts/milestone_gate.py` now runs the result-ledger validator during postflight.
+  - `scripts/codex_report.py` now reports whether `milestone_results/<MILESTONE>.json` exists.
 - M130 Stats core:
   - `pairs-rs stats` computes stable pairtools-compatible count fields on small `.pairs`/`.pairsam` inputs.
   - Oracle tests compare total, mapped/unmapped/single-sided, duplicate/nodup, cis/trans, pair-type, cis-threshold, fraction, chromosome-frequency, and `--with-chromsizes` fields against installed Python pairtools.
@@ -179,7 +183,7 @@ The script reported `dedup production command shape validation passed`. Pairtool
 
 ## Cargo required
 
-No for M005. That task changed docs, milestones, scripts, and milestone result scaffolding only; no Rust source, Cargo, Pixi, test, bench, or example files were changed.
+No for M006. This task changes docs, milestones, scripts, and milestone result scaffolding only; no Rust source, Cargo, Pixi, test, bench, or example files are changed.
 
 ## External real-data oracle status
 

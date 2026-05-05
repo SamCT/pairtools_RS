@@ -32,6 +32,10 @@ M007 makes registry synchronization executable by extending `scripts/check_docs_
 
 M005 updates `scripts/codex_next.py` and `make codex-next` only. The runner now has explicit status, required-test execution, and chain-summary modes, and it refuses to fabricate validation results. This is governance-only; it does not change Rust runtime behavior or pairtools compatibility status.
 
+## M006 Result Ledger Note
+
+M006 adds `scripts/check_milestone_results.py`, wires result-ledger validation into milestone postflight, and makes `scripts/codex_report.py` report ledger presence. This is governance-only; it does not change Rust runtime behavior or pairtools compatibility status.
+
 ## M010 CLI Inventory Note
 
 M010 verifies that the Rust CLI exposes the current command inventory in help text, that `parse --help` and `sort --help` expose the inventoried options, and that unsupported global options and unsupported commands fail loudly with `not implemented`. M010 does not implement downstream command behavior and does not modify parse or sort runtime semantics.
