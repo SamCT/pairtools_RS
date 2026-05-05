@@ -104,6 +104,12 @@ Completed parse milestones are covered by the guarded oracle suite:
   - `scripts/milestone_gate.py` now runs the result-ledger validator during postflight.
   - `scripts/codex_report.py` now reports whether `milestone_results/<MILESTONE>.json` exists.
   - `milestone_results/M006.json` records the validation commands and points to commit `8e0ecfaca12a665a9dd3917b3f6600d1acefa7c3`.
+- M140 Split core:
+  - `pairs-rs split` now supports scoped pairsam splitting with `--output-pairs`, `--output-sam`, optional input path/stdin, and file/stdout routing.
+  - Pairs output preserves all non-`sam1`/`sam2` columns and writes a pairs header with updated `#columns`.
+  - SAM output restores `sam1` and `sam2` records from pairsam unit separators into tab-delimited SAM records.
+  - Pairs `.gz` output and `.gz` input use HTSlib BGZF helpers; `.lz4`, custom compression commands, nproc I/O controls, and BAM output fail loudly.
+  - Oracle tests compare split pairs and SAM output against Python pairtools on a committed small pairsam fixture after normalizing volatile split `@PG` command text.
 - M130 Stats core:
   - `pairs-rs stats` computes stable pairtools-compatible count fields on small `.pairs`/`.pairsam` inputs.
   - Oracle tests compare total, mapped/unmapped/single-sided, duplicate/nodup, cis/trans, pair-type, cis-threshold, fraction, chromosome-frequency, and `--with-chromsizes` fields against installed Python pairtools.

@@ -82,6 +82,10 @@ M131 extends `pairs-rs stats` to the pairtools-style report surface for committe
 
 M132 adds TSV stats merge, YAML output, and HTSlib BGZF threaded `.gz` stats input/output. `--nproc-in` and `--nproc-out` are implemented for BGZF streams through `rust-htslib`/HTSlib and do not shell out. `--cmd-in` and `--cmd-out` remain explicitly unsupported because Rust runtime shell compression is not allowed. `--merge --yaml` is also explicitly unsupported.
 
+## M140 Split Note
+
+M140 implements scoped `pairs-rs split` for small pairsam inputs. The tested surface supports `--output-pairs`, `--output-sam`, optional input path or stdin, file/stdout routing, `.gz` pairs output through HTSlib BGZF, and SAM reconstruction from `sam1`/`sam2` pairsam fields. Oracle tests compare pairs and SAM output against Python pairtools on `tests/data/mock.pairsam` after normalizing volatile split `@PG` command text. `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out`, `.lz4`, and BAM `--output-sam` remain explicitly unsupported.
+
 ## M020 Parse I/O Note
 
 M020 adds tests for parse input and writer plumbing without changing pair formation semantics. The tested parse I/O baseline is:
@@ -160,7 +164,7 @@ If an exact pairtools `.sorted.pairsam.gz` oracle and downstream `merged.*` outp
 | `sample` | explicitly not implemented |
 | `scaling` | explicitly not implemented |
 | `select` | partial, oracle-gated exact `pair_type` equality |
-| `split` | explicitly not implemented |
+| `split` | partial, oracle-gated pairsam split |
 | `stats` | partial, oracle-gated report, merge, YAML, and BGZF I/O |
 
 ## `parse`
@@ -300,7 +304,7 @@ These commands are present so they fail loudly instead of looking absent. Their 
 | `sample` | required `FRACTION`, optional `PAIRS_PATH` | `-o`/`--output`, `-s`/`--seed`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
 | `scaling` | zero or more `INPUT_PATH` values | `-o`/`--output`, `--view`/`--regions`, `--chunksize`, `--dist-range`, `--n-dist-bins-decade`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
 | `select` | required `CONDITION`, optional `PAIRS_PATH` | `-o`/`--output` implemented for exact `pair_type == "VALUE"` predicates; `--output-rest`, `--chrom-subset`, `--startup-code`, `-t`/`--type-cast`, `-r`/`--remove-columns`, `--nproc-in`, `--nproc-out`, `--cmd-in`, and `--cmd-out` explicitly not implemented |
-| `split` | optional `PAIRSAM_PATH` | `--output-pairs`, `--output-sam`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
+| `split` | optional `PAIRSAM_PATH` | `--output-pairs` and `--output-sam` implemented for scoped pairsam splitting; `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out`, `.lz4`, and BAM output explicitly not implemented |
 
 ## `header` Subcommands
 

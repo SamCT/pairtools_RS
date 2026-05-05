@@ -190,6 +190,17 @@ fn normalize_merge_output(text: &str) -> String {
         + "\n"
 }
 
+fn normalize_split_output(text: &str) -> String {
+    text.lines()
+        .filter(|line| {
+            !line.starts_with("#samheader: @PG\tID:pairtools_split")
+                && !line.starts_with("@PG\tID:pairtools_split")
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+        + "\n"
+}
+
 fn body_read_ids(text: &str) -> Vec<String> {
     text.lines()
         .filter(|line| !line.starts_with('#') && !line.is_empty())
@@ -696,6 +707,99 @@ fn merge_rejects_unsupported_features_loudly() {
             "tests/oracle/sort_simple.expected.pairs",
         ],
         "not implemented: pairtools merge --concatenate",
+    );
+}
+
+#[test]
+fn split_pairsam_matches_pairtools_1_1_3_oracle() {
+    let tmp = TempDir::new().unwrap();
+    let pairs_rs_pairs = tmp.path().join("pairs-rs.pairs");
+    let pairs_rs_sam = tmp.path().join("pairs-rs.sam");
+    let pairtools_pairs = tmp.path().join("pairtools.pairs");
+    let pairtools_sam = tmp.path().join("pairtools.sam");
+    let pairs_rs_pairs_s = pairs_rs_pairs.to_string_lossy();
+    let pairs_rs_sam_s = pairs_rs_sam.to_string_lossy();
+    let pairtools_pairs_s = pairtools_pairs.to_string_lossy();
+    let pairtools_sam_s = pairtools_sam.to_string_lossy();
+    let input = "tests/data/mock.pairsam";
+
+    run_pairs_rs_to_path(&[
+        "split",
+        "--output-pairs",
+        pairs_rs_pairs_s.as_ref(),
+        "--output-sam",
+        pairs_rs_sam_s.as_ref(),
+        input,
+    ]);
+    run_pairtools(&[
+        "split",
+        "--output-pairs",
+        pairtools_pairs_s.as_ref(),
+        "--output-sam",
+        pairtools_sam_s.as_ref(),
+        input,
+    ]);
+
+    assert_eq!(
+        normalize_split_output(&fs::read_to_string(&pairs_rs_pairs).unwrap()),
+        normalize_split_output(&fs::read_to_string(&pairtools_pairs).unwrap())
+    );
+    assert_eq!(
+        normalize_split_output(&fs::read_to_string(&pairs_rs_sam).unwrap()),
+        normalize_split_output(&fs::read_to_string(&pairtools_sam).unwrap())
+    );
+}
+
+#[test]
+fn split_supports_stdout_and_gz_pairs_output() {
+    let input = "tests/data/mock.pairsam";
+    let tmp = TempDir::new().unwrap();
+    let sam = tmp.path().join("out.sam");
+    let pairs_gz = tmp.path().join("out.pairs.gz");
+    let sam_s = sam.to_string_lossy();
+    let pairs_gz_s = pairs_gz.to_string_lossy();
+
+    let stdout_pairs = run_pairs_rs(&[
+        "split",
+        "--output-pairs",
+        "-",
+        "--output-sam",
+        sam_s.as_ref(),
+        input,
+    ]);
+    assert!(stdout_pairs.contains("#columns: readID chrom1 pos1 chrom2 pos2 strand1 strand2 pair_type\n"));
+    assert!(fs::read_to_string(&sam).unwrap().contains("@SQ\tSN:chr1\tLN:100\n"));
+
+    run_pairs_rs_to_path(&[
+        "split",
+        "--output-pairs",
+        pairs_gz_s.as_ref(),
+        "--output-sam",
+        sam_s.as_ref(),
+        input,
+    ]);
+    assert_bgzip_compatible(&pairs_gz);
+    let decompressed = String::from_utf8(read_gzip_with_gzip(&pairs_gz)).unwrap();
+    assert_eq!(
+        normalize_split_output(&decompressed),
+        normalize_split_output(&stdout_pairs)
+    );
+}
+
+#[test]
+fn split_rejects_unsupported_features_loudly() {
+    let input = "tests/data/mock.pairsam";
+    assert_pairs_rs_failure(
+        &["split", "--nproc-in", "2", "--output-pairs", "out.pairs", input],
+        "not implemented: pairtools split --nproc-in",
+    );
+    assert_pairs_rs_failure(
+        &["split", "--cmd-out", "cat", "--output-pairs", "out.pairs", input],
+        "not implemented: pairtools split --cmd-out",
+    );
+    assert_pairs_rs_failure(
+        &["split", "--output-sam", "out.bam", input],
+        "not implemented: pairtools split --output-sam .bam",
     );
 }
 
@@ -1318,6 +1422,18 @@ fn cli_inventory_lists_current_pairtools_command_surface() {
     ] {
         assert!(stats_help.contains(option), "stats help missing {option}");
     }
+
+    let split_help = run_pairs_rs(&["split", "--help"]);
+    for option in [
+        "--output-pairs",
+        "--output-sam",
+        "--nproc-in",
+        "--nproc-out",
+        "--cmd-in",
+        "--cmd-out",
+    ] {
+        assert!(split_help.contains(option), "split help missing {option}");
+    }
 }
 
 #[test]
@@ -1443,7 +1559,6 @@ fn missing_pairtools_commands_exist_but_fail_loudly() {
     for (command, args) in [
         ("parse2", vec!["--single-end", "input.sam"]),
         ("flip", vec!["--chroms-path", "chrom.sizes", "input.pairs"]),
-        ("split", vec!["--output-pairs", "out.pairs", "input.pairsam"]),
         ("restrict", vec!["--frags", "frags.bed", "input.pairs"]),
         ("filterbycov", vec!["--max-cov", "3", "input.pairs"]),
         ("phase", vec!["--phase-suffixes", "PAT,MAT", "input.pairs"]),
