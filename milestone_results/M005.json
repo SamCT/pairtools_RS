@@ -1,0 +1,56 @@
+{
+  "milestone": "M005",
+  "commit": "aa12ad4d1c028c08f3bd1b69424d20ec6ca9a23a",
+  "commands_run": [
+    {
+      "command": "python3 scripts/milestone_gate.py pre --milestone M005",
+      "status": "pass",
+      "log": "target/codex_task_state/M005.pre.json"
+    },
+    {
+      "command": "python3 -m py_compile scripts/codex_next.py",
+      "status": "pass",
+      "log": null
+    },
+    {
+      "command": "python3 scripts/codex_next.py --status",
+      "status": "pass",
+      "log": null
+    },
+    {
+      "command": "python3 scripts/codex_next.py --status --chain",
+      "status": "pass",
+      "log": null
+    },
+    {
+      "command": "make codex-next",
+      "status": "pass",
+      "log": null
+    },
+    {
+      "command": "python3 scripts/milestone_gate.py post --milestone M005",
+      "status": "pass",
+      "log": "target/codex_task_state/M005.post.json"
+    },
+    {
+      "command": "python3 scripts/codex_report.py --milestone M005",
+      "status": "pass",
+      "log": null
+    },
+    {
+      "command": "git diff --check",
+      "status": "pass",
+      "log": null
+    }
+  ],
+  "passed": true,
+  "artifacts": [
+    "scripts/codex_next.py",
+    "Makefile",
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md",
+    "target/codex_task_state/M005.pre.json",
+    "target/codex_task_state/M005.post.json"
+  ],
+  "blockers": []
+}

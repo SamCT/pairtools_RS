@@ -1,7 +1,7 @@
 {
   "id": "M006",
   "name": "Milestone result ledger",
-  "status": "planned",
+  "status": "active",
   "summary": "Add machine-readable milestone completion records that summarize commands, artifacts, blockers, and pass/fail status.",
   "goal": "Require `milestone_results/<MILESTONE>.json` records before milestone completion claims are treated as authoritative.",
   "explicit_non_goals": [

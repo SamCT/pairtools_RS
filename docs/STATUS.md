@@ -4,9 +4,9 @@ Last reconciled: 2026-05-05
 
 ## Active milestone
 
-M005: Codex autonomous runner.
+M006: milestone result ledger.
 
-M007 is complete. It adds an executable registry-doc synchronization check so `milestones/README.md` cannot drift away from `milestones/M*.json`. M140 split core remains the next functional command milestone, but M005 is active first to tighten the autonomous runner before returning to split work.
+M005 is complete. It tightens `make codex-next` and `scripts/codex_next.py` so future tasks have explicit status, required-test execution, and chain-summary modes without fabricating validation results. M140 split core remains the next functional command milestone, but M006 is active first to enforce milestone result ledgers before returning to split work.
 
 ## Current branch
 
@@ -14,7 +14,7 @@ M007 is complete. It adds an executable registry-doc synchronization check so `m
 
 ## Current commit
 
-`60759c2816a1655ce583e9bd9f62167fbaa1536d` contains the M007 registry sync enforcement change. The final task response must report the committed SHA for the transition/result-ledger commit.
+`aa12ad4d1c028c08f3bd1b69424d20ec6ca9a23a` contains the M005 autonomous runner change. The final task response must report the committed SHA for the transition/result-ledger commit.
 
 ## Implemented behavior
 
@@ -98,6 +98,7 @@ Completed parse milestones are covered by the guarded oracle suite:
   - `scripts/codex_next.py` now has explicit `--status`, `--run-required-tests`, and `--chain` modes.
   - `make codex-next` still runs preflight, prints the milestone summary, checks recorded required tests, runs postflight and the report, and fails clearly if required validations are missing.
   - The runner refuses recursive required-test execution instead of fabricating test results.
+  - `milestone_results/M005.json` records the validation commands and points to commit `aa12ad4d1c028c08f3bd1b69424d20ec6ca9a23a`.
 - M130 Stats core:
   - `pairs-rs stats` computes stable pairtools-compatible count fields on small `.pairs`/`.pairsam` inputs.
   - Oracle tests compare total, mapped/unmapped/single-sided, duplicate/nodup, cis/trans, pair-type, cis-threshold, fraction, chromosome-frequency, and `--with-chromsizes` fields against installed Python pairtools.
@@ -178,7 +179,7 @@ The script reported `dedup production command shape validation passed`. Pairtool
 
 ## Cargo required
 
-No for M005. This task changes docs, milestones, scripts, and milestone result scaffolding only; no Rust source, Cargo, Pixi, test, bench, or example files are changed.
+No for M005. That task changed docs, milestones, scripts, and milestone result scaffolding only; no Rust source, Cargo, Pixi, test, bench, or example files were changed.
 
 ## External real-data oracle status
 
@@ -192,6 +193,6 @@ Recommended sequence after M007 completion:
 M005 -> M006 -> M140 -> M141 -> M160 -> M161 -> M300
 ```
 
-M005 is active. Tighten the autonomous runner next, add result-ledger enforcement in M006, and return to M140 split implementation.
+M006 is active. Add result-ledger enforcement next, then return to M140 split implementation.
 
 Optimization remains blocked until M161 real-data oracle validation passes. Full pairtools parity is not claimed.
