@@ -259,4 +259,6 @@ bash tests/scripts/test_all_rust_pipeline_real_oracle.sh
 
 Do not claim all-Rust pipeline parity until M161 real-data oracle validation passes.
 
+M300 full-pipeline benchmarking is blocked. The prerequisite `milestone_results/M161.json` exists, but it records `"passed": false`, and `milestones/ACTIVE_MILESTONE` remains `M161`. No benchmark was run for this reason.
+
 Optimization remains blocked until M161 real-data oracle validation passes. Full pairtools parity is not claimed.

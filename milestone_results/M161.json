@@ -6,7 +6,8 @@
     "docs/REAL_DATA_ORACLE_TESTING.md"
   ],
   "blockers": [
-    "External real-data oracle set is incomplete: /mnt/d/pairtools_RS_test is missing merged.sorted.pairsam.gz, merged.nodups.pairsam.gz, merged.dups.pairsam.gz, merged.unmapped.pairsam.gz, merged.valid.pairsam.gz, merged.valid.pairs.gz, merged.valid.stats.txt, and a BWA index prefix with index files. The harness now prints exact oracle-generation and candidate-pipeline commands before exiting."
+    "External real-data oracle set is incomplete: /mnt/d/pairtools_RS_test is missing merged.sorted.pairsam.gz, merged.nodups.pairsam.gz, merged.dups.pairsam.gz, merged.unmapped.pairsam.gz, merged.valid.pairsam.gz, merged.valid.pairs.gz, merged.valid.stats.txt, and a BWA index prefix with index files. The harness now prints exact oracle-generation and candidate-pipeline commands before exiting.",
+    "M300 full-pipeline benchmarking is blocked because M161 has not passed; no benchmark was run."
   ],
   "commands_run": [
     {
@@ -31,7 +32,7 @@
       "status": "pass"
     }
   ],
-  "commit": "UNKNOWN",
+  "commit": "892740f87c42c89d2d434945145d3d97f3bac12d",
   "milestone": "M161",
   "passed": false
 }
