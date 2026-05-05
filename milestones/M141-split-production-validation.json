@@ -1,7 +1,7 @@
 {
   "id": "M141",
   "name": "Split production validation",
-  "status": "planned",
+  "status": "active",
   "summary": "Validate the production-shaped `pairs-rs split` command after M140 implements split core.",
   "goal": "Prove the split output contract needed by the Hi-C pipeline on small pipeline-style pairsam fixtures.",
   "explicit_non_goals": [

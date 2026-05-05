@@ -1,0 +1,50 @@
+{
+  "milestone": "M140",
+  "commit": "ae4a341d2a0413a6c2408b73717c1f96403a0ce6",
+  "commands_run": [
+    {
+      "command": "python3 scripts/milestone_gate.py pre --milestone M140",
+      "status": "pass",
+      "log": "target/codex_task_state/M140.pre.json"
+    },
+    {
+      "command": "scripts/cargo_guard.sh check",
+      "status": "pass",
+      "log": "target/codex_logs/cargo_check_20260505T013247Z.log"
+    },
+    {
+      "command": "scripts/cargo_guard.sh test",
+      "status": "pass",
+      "log": "target/codex_logs/cargo_test_20260505T013259Z.log"
+    },
+    {
+      "command": "python3 scripts/milestone_gate.py post --milestone M140",
+      "status": "pass",
+      "log": "target/codex_task_state/M140.post.json"
+    },
+    {
+      "command": "python3 scripts/codex_report.py --milestone M140",
+      "status": "pass",
+      "log": null
+    },
+    {
+      "command": "git diff --check",
+      "status": "pass",
+      "log": null
+    }
+  ],
+  "passed": true,
+  "artifacts": [
+    "src/split.rs",
+    "src/cli.rs",
+    "src/main.rs",
+    "tests/compat_oracle.rs",
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md",
+    "target/codex_task_state/M140.pre.json",
+    "target/codex_task_state/M140.post.json",
+    "target/codex_logs/cargo_check_20260505T013247Z.log",
+    "target/codex_logs/cargo_test_20260505T013259Z.log"
+  ],
+  "blockers": []
+}

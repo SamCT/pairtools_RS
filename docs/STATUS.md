@@ -4,9 +4,9 @@ Last reconciled: 2026-05-05
 
 ## Active milestone
 
-M140: split core.
+M141: split production validation.
 
-M006 is complete. It adds result-ledger validation and makes postflight/reporting aware of `milestone_results/<MILESTONE>.json`. M140 split core is now active as the next functional command milestone.
+M140 is complete. It implements scoped `pairs-rs split` for small pairsam inputs and records the result in `milestone_results/M140.json`. M141 is now active for production-shaped split validation.
 
 ## Current branch
 
@@ -14,7 +14,7 @@ M006 is complete. It adds result-ledger validation and makes postflight/reportin
 
 ## Current commit
 
-`8e0ecfaca12a665a9dd3917b3f6600d1acefa7c3` contains the M006 result-ledger validation change. The final task response must report the committed SHA for the transition/result-ledger commit.
+`ae4a341d2a0413a6c2408b73717c1f96403a0ce6` contains the M140 split implementation. The final task response must report the committed SHA for the transition/result-ledger commit.
 
 ## Implemented behavior
 
@@ -110,6 +110,7 @@ Completed parse milestones are covered by the guarded oracle suite:
   - SAM output restores `sam1` and `sam2` records from pairsam unit separators into tab-delimited SAM records.
   - Pairs `.gz` output and `.gz` input use HTSlib BGZF helpers; `.lz4`, custom compression commands, nproc I/O controls, and BAM output fail loudly.
   - Oracle tests compare split pairs and SAM output against Python pairtools on a committed small pairsam fixture after normalizing volatile split `@PG` command text.
+  - `milestone_results/M140.json` records the validation commands and points to commit `ae4a341d2a0413a6c2408b73717c1f96403a0ce6`.
 - M130 Stats core:
   - `pairs-rs stats` computes stable pairtools-compatible count fields on small `.pairs`/`.pairsam` inputs.
   - Oracle tests compare total, mapped/unmapped/single-sided, duplicate/nodup, cis/trans, pair-type, cis-threshold, fraction, chromosome-frequency, and `--with-chromsizes` fields against installed Python pairtools.
@@ -190,7 +191,7 @@ The script reported `dedup production command shape validation passed`. Pairtool
 
 ## Cargo required
 
-M140 changes Rust source and tests, so guarded Cargo validation is required through `scripts/cargo_guard.sh`.
+M141 changes validation scripts/tests only unless the production-shaped validation exposes a direct M140 bug. Guarded Cargo is required only if Rust source or tests change.
 
 ## External real-data oracle status
 
@@ -204,6 +205,6 @@ Recommended sequence after M007 completion:
 M005 -> M006 -> M140 -> M141 -> M160 -> M161 -> M300
 ```
 
-M140 is active. Implement scoped split core next, then run M141 production-shaped split validation.
+M141 is active. Add production-shaped split validation next and stop after M141 passes.
 
 Optimization remains blocked until M161 real-data oracle validation passes. Full pairtools parity is not claimed.
