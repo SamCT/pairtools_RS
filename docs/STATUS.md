@@ -129,6 +129,7 @@ Completed parse milestones are covered by the guarded oracle suite:
   - Available artifact validation found that pairs-rs parse stats match pairtools parse stats after allowing only the known `summary/complexity_naive` `nan`/`inf` representation difference.
   - Available artifact validation found a real dedup count blocker: pairtools reports `total_dups=29706` and `total_nodups=5733319`, while the available pairs-rs dedup stats report `total_dups=29690` and `total_nodups=5733335`.
   - Available duplicate-output readID routing also differs: 6,953 duplicate readIDs are only in the pairtools duplicate output and 6,937 duplicate readIDs are only in the pairs-rs duplicate output.
+  - User-reported split compression observation: adding `.gz` to the split pairs output failed on the real run, while plain `.pairs` output was produced as `rs_s01.outpairs.split.pairs`. The exact failing command/stderr is not captured in the repo yet, so this is recorded as an M161 observation and future M140/M194 regression target rather than a proven root cause.
   - M161 remains active and blocked; no all-Rust real-data parity claim is made.
 - M162 Cross-tool threading validation:
   - `tests/scripts/test_cross_tool_threading_contract.sh` validates the current thread-option contract across implemented tools without benchmarking.
@@ -274,6 +275,8 @@ The M161 real-data oracle harness stopped before running the all-Rust pipeline b
 The harness prints the exact `pairtools` oracle-generation command and the exact all-Rust candidate command before exiting nonzero.
 
 With `RUN_AVAILABLE_STAGE_COMPARISONS=1`, the harness also consumed the newly provided stage artifacts. The parse stats comparisons passed against `parse_stats_STANDARD_s01_pairtools.txt` for both `s01.RS.parse.stats.txt` and `parse_RS.stats.txt`, allowing only the `summary/complexity_naive` `nan`/`inf` representation difference. The dedup stage comparison did not pass: pairtools reported 29,706 duplicate pairs and 5,733,319 nodup pairs, while pairs-rs reported 29,690 duplicate pairs and 5,733,335 nodup pairs. Duplicate-output readID routing also differs, with 6,953 readIDs only in the pairtools duplicate output and 6,937 readIDs only in the pairs-rs duplicate output.
+
+The same artifact pass now reports the user-observed split compression issue: `rs_s01.outpairs.split.pairs` exists, while the analogous `.pairs.gz` artifact is absent after a reported failed `.gz` run.
 
 ## Validation not performed and why
 

@@ -189,6 +189,7 @@ artifacts = {
     "pairs-rs unmapped pairsam.gz": root / "s01.RS.merged.unmapped.pairsam.gz",
     "pairs-rs selected valid pairsam.gz": root / "s01.RS.merged.valid.pairsam.gz",
     "pairs-rs split valid pairs": root / "rs_s01.outpairs.split.pairs",
+    "pairs-rs split valid pairs.gz": root / "rs_s01.outpairs.split.pairs.gz",
     "pairs-rs split valid SAM": root / "rs_s01_split_out.sam",
     "pairs-rs valid stats": root / "rs_s01.merged.valid.stats.txt",
 }
@@ -354,6 +355,12 @@ compare_duplicate_read_ids(
     artifacts["pairs-rs dups pairsam.gz"],
     artifacts["pairtools dups pairsam.gz"],
 )
+
+if artifacts["pairs-rs split valid pairs"].exists() and not artifacts["pairs-rs split valid pairs.gz"].exists():
+    print(
+        "  split compressed-output observation: plain rs_s01.outpairs.split.pairs is present, but rs_s01.outpairs.split.pairs.gz is absent; user reported the .gz form failed while plain .pairs was produced.",
+        file=sys.stderr,
+    )
 
 print(
     "  note: available artifact checks do not complete M161; canonical merged.* pairtools oracle files are still required.",

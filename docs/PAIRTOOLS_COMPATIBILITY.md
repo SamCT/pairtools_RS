@@ -112,6 +112,7 @@ The same directory now contains useful non-canonical stage artifacts. Running th
 - `s01.RS.parse.stats.txt` and `parse_RS.stats.txt` match `parse_stats_STANDARD_s01_pairtools.txt` after allowing only the known `summary/complexity_naive` `nan`/`inf` representation difference.
 - The available dedup stats expose a blocker: pairtools reports `total_dups=29706` and `total_nodups=5733319`, while the available pairs-rs stats report `total_dups=29690` and `total_nodups=5733335`.
 - The available duplicate-output readID sets also differ: 6,953 duplicate readIDs appear only in the pairtools duplicate output and 6,937 appear only in the pairs-rs duplicate output.
+- The external artifacts include plain split pairs output `rs_s01.outpairs.split.pairs`; the user reported that adding `.gz` to that split pairs output failed while plain `.pairs` was produced. The exact command/stderr is not yet captured, so compressed split output on real data remains an observation to reproduce rather than a resolved compatibility claim.
 
 These stage-artifact checks do not complete M161. Canonical `merged.*` pairtools oracle files and a full semantic all-Rust output comparison remain required.
 
