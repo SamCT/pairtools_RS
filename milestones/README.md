@@ -50,4 +50,5 @@ Current registry:
 - `M151-dedup-production-validation.json`: production-shaped dedup validation.
 - `M160-all-rust-hic-pipeline.json`: all-Rust pipeline shell orchestration.
 - `M161-real-data-oracle-validation.json`: external real-data oracle validation.
+- `M162-threading-validation.json`: cross-tool threading option and determinism validation.
 - `M300-full-pipeline-benchmark.json`: full-pipeline benchmark after real-data validation.

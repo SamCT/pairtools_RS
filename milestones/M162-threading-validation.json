@@ -1,0 +1,109 @@
+{
+  "id": "M162",
+  "name": "Cross-tool threading validation",
+  "status": "complete",
+  "summary": "Validate the current multithreading option contract across implemented pairs-rs tools without making performance claims.",
+  "goal": "Add cross-tool tests proving deterministic output for implemented threaded paths, BGZF validity, all-Rust pipeline thread propagation, and loud failures for unsupported threaded I/O options.",
+  "explicit_non_goals": [
+    "Do not tune performance.",
+    "Do not run benchmarks.",
+    "Do not implement new threaded I/O behavior.",
+    "Do not change parse, sort, merge, dedup, select, split, or stats runtime behavior.",
+    "Do not claim speedup or full pairtools parity."
+  ],
+  "allowed_paths": [
+    "docs/**",
+    "milestone_results/**",
+    "milestones/ACTIVE_MILESTONE",
+    "milestones/README.md",
+    "milestones/M161-real-data-oracle-validation.json",
+    "milestones/M162-threading-validation.json",
+    "tests/scripts/**"
+  ],
+  "forbidden_paths": [
+    "src/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "allowed_commands": [
+    "scripts/cargo_guard.sh build",
+    "bash tests/scripts/test_cross_tool_threading_contract.sh",
+    "python3 scripts/milestone_gate.py pre --milestone M162",
+    "python3 scripts/milestone_gate.py post --milestone M162",
+    "python3 scripts/codex_report.py --milestone M162",
+    "git diff --check"
+  ],
+  "forbidden_commands": [
+    "cargo check",
+    "cargo test",
+    "cargo build",
+    "pixi run cargo check",
+    "pixi run cargo test",
+    "pixi run cargo build"
+  ],
+  "allowed_pairtools_commands": [],
+  "forbidden_pairtools_commands": [
+    "pairtools parse",
+    "pairtools sort",
+    "pairtools merge",
+    "pairtools dedup",
+    "pairtools select",
+    "pairtools split",
+    "pairtools stats"
+  ],
+  "oracle_commands": [
+    "Not applicable; M162 validates pairs-rs thread-option behavior and deterministic equivalence across thread counts."
+  ],
+  "candidate_commands": [
+    "bash tests/scripts/test_cross_tool_threading_contract.sh"
+  ],
+  "required_tests": [
+    "scripts/cargo_guard.sh build",
+    "bash tests/scripts/test_cross_tool_threading_contract.sh"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/*.rs",
+    "benches/**",
+    "examples/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Current branch",
+    "Current commit",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Validation not performed and why",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "Sort output is identical after decompression for `--nproc 1` and a higher `--nproc` on a fixture large enough to exercise chunk sorting.",
+    "Stats output is identical after decompression for single-threaded and threaded BGZF input/output settings.",
+    "The all-Rust pipeline dry-run propagates `SORT_THREADS` to pairs-rs sort and samtools commands.",
+    "Parse, merge, dedup, select, and split threaded options that are not implemented fail loudly instead of being silently accepted.",
+    "No benchmark or speedup claim is made."
+  ],
+  "known_risks": [
+    "The test validates thread-option contracts and deterministic outputs, not CPU utilization or speedup.",
+    "Some implemented commands still intentionally reject `--nproc-in` and `--nproc-out`; this milestone records that contract instead of expanding behavior."
+  ],
+  "next_milestone_candidates": [
+    "M161",
+    "M300"
+  ]
+}

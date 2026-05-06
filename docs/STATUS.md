@@ -6,7 +6,7 @@ Last reconciled: 2026-05-05
 
 M161: real-data oracle validation.
 
-M160 is complete. It adds all-Rust pipeline orchestration and dry-run validation only, recorded in `milestone_results/M160.json`. Production parity remains blocked on M161 real-data oracle validation.
+M162 is complete and recorded in `milestone_results/M162.json`. It added cross-tool threading contract validation only; production parity remains blocked on M161 real-data oracle validation.
 
 ## Current branch
 
@@ -14,7 +14,7 @@ M160 is complete. It adds all-Rust pipeline orchestration and dry-run validation
 
 ## Current commit
 
-`8b59725b12bde1f0ae21cfc86f07e0e5f13cbd98` records the M160 result and activates M161.
+`M162 commit recorded in git history; see final report or git log for the exact SHA.`
 
 ## Implemented behavior
 
@@ -126,6 +126,13 @@ Completed parse milestones are covered by the guarded oracle suite:
   - The harness now prints the expected external input directory, expected pairtools oracle files, expected all-Rust candidate output paths, a copy-pasteable command block to generate missing pairtools oracle outputs, and a copy-pasteable all-Rust candidate command block.
   - The current external directory `/mnt/d/pairtools_RS_test` is incomplete for M161. It contains FASTQs, an aligned BAM, chrom sizes, provenance files, and older parse/sort artifacts, but it is missing the exact pairtools-generated `merged.*` oracle outputs and a usable BWA index prefix.
   - M161 remains active and blocked; no all-Rust real-data parity claim is made.
+- M162 Cross-tool threading validation:
+  - `tests/scripts/test_cross_tool_threading_contract.sh` validates the current thread-option contract across implemented tools without benchmarking.
+  - Sort is checked for identical decompressed output with `--nproc 1` and `--nproc 4` on a generated fixture large enough to exercise chunk sorting.
+  - Stats is checked for identical decompressed output with single-threaded and threaded BGZF input/output settings.
+  - The all-Rust pipeline dry-run is checked for `SORT_THREADS` propagation into `pairs-rs sort` and `samtools` commands.
+  - Parse, merge, dedup, select, split, sort, and stats unsupported or invalid threaded options are checked for loud failure rather than silent acceptance.
+  - M162 makes no CPU utilization, throughput, or speedup claim.
 - M130 Stats core:
   - `pairs-rs stats` computes stable pairtools-compatible count fields on small `.pairs`/`.pairsam` inputs.
   - Oracle tests compare total, mapped/unmapped/single-sided, duplicate/nodup, cis/trans, pair-type, cis-threshold, fraction, chromosome-frequency, and `--with-chromsizes` fields against installed Python pairtools.
@@ -206,6 +213,16 @@ bash tests/scripts/test_all_rust_hic_pipeline_dry_run.sh
 
 M160 dry-run validation passed and reported `all-Rust Hi-C pipeline dry-run validation passed`.
 
+Validation commands for M162:
+
+```bash
+python3 scripts/milestone_gate.py pre --milestone M162
+scripts/cargo_guard.sh build
+bash tests/scripts/test_cross_tool_threading_contract.sh
+```
+
+M162 threading contract validation passed locally with `cross-tool threading contract validation passed`.
+
 Validation commands for M161 setup:
 
 ```bash
@@ -228,7 +245,7 @@ The harness prints the exact `pairtools` oracle-generation command and the exact
 
 ## Validation not performed and why
 
-- Benchmarks were not run because M160 is an orchestration milestone and M161 real-data oracle validation has not passed.
+- Benchmarks were not run because M162 is a validation-contract milestone and M161 real-data oracle validation has not passed.
 - Real full-size production data was not run by this script; it validates the exact production command shape on a small pipeline-style sorted pairsam fixture and compares routing against Python pairtools.
 - M161 full external validation was not run because `/mnt/d/pairtools_RS_test` is missing the exact all-Rust pipeline oracle outputs and BWA index files listed above.
 - The requested next-milestone planning and automation scaffolding was not added under M140 because the active milestone allows only `src/cli.rs`, `src/main.rs`, `src/split.rs`, `tests/**`, `docs/**`, `milestones/ACTIVE_MILESTONE`, and `milestones/M140-split-core.json`.

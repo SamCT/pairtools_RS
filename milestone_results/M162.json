@@ -1,0 +1,27 @@
+{
+  "artifacts": [
+    "tests/scripts/test_cross_tool_threading_contract.sh"
+  ],
+  "blockers": [],
+  "commands_run": [
+    {
+      "command": "python3 scripts/milestone_gate.py pre --milestone M162",
+      "status": "pass"
+    },
+    {
+      "command": "scripts/cargo_guard.sh build",
+      "status": "pass"
+    },
+    {
+      "command": "bash tests/scripts/test_cross_tool_threading_contract.sh",
+      "status": "pass"
+    },
+    {
+      "command": "python3 scripts/milestone_gate.py post --milestone M162",
+      "status": "pass"
+    }
+  ],
+  "commit": "UNKNOWN",
+  "milestone": "M162",
+  "passed": true
+}

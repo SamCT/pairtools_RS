@@ -96,6 +96,11 @@ M160 adds `scripts/run_hic_all_rust_pairs_rs_pipeline.sh`, a shell orchestration
 
 `tests/scripts/test_all_rust_hic_pipeline_dry_run.sh` validates the one-lane and two-lane dry-run command graph and confirms that Python pairtools is not present in the planned commands. This is dry-run orchestration coverage only. Production parity and final-output equivalence remain blocked on M161 real-data oracle validation.
 
+
+## M162 Cross-Tool Threading Validation Note
+
+M162 adds `tests/scripts/test_cross_tool_threading_contract.sh`, a behavioral validation of the current threading option contract. The test checks that `pairs-rs sort --nproc 1` and `--nproc 4` produce identical decompressed BGZF output on a generated fixture large enough to exercise chunk sorting, that `pairs-rs stats --nproc-in/--nproc-out` produces identical decompressed output for single-threaded and threaded BGZF paths, and that the all-Rust pipeline dry-run propagates `SORT_THREADS` to `pairs-rs sort` and `samtools` command lines. It also checks that unsupported threaded options for parse, merge, dedup, select, and split fail loudly. M162 does not add runtime behavior and does not claim CPU utilization, throughput, or speedup.
+
 ## M161 Real-Data Oracle Status
 
 M161 adds `tests/scripts/test_all_rust_pipeline_real_oracle.sh` as the all-Rust real-data validation harness. The harness discovers the external fixture directory, required FASTQs, chrom sizes, assembly/MAPQ provenance, BWA index prefix, and exact pairtools-generated `merged.*` oracle outputs before running the all-Rust pipeline. When the oracle set is incomplete, it prints expected inputs, expected oracle files, expected candidate outputs, a pairtools oracle-generation command, and an all-Rust candidate command before exiting nonzero.
