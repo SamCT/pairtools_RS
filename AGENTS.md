@@ -70,6 +70,7 @@ Before the final response:
 
 - `milestones/ACTIVE_MILESTONE` is authoritative.
 - Future work must fit the active milestone or explicitly change `ACTIVE_MILESTONE` in the same commit with justification.
+- If a validation milestone is deliberately deferred, record the blocker in `docs/STATUS.md` and `milestone_results/<MILESTONE>.json` before activating the next command milestone.
 - Downstream commands are non-goals unless the active milestone explicitly lists them.
 - Do not implement broad feature surface in one task.
 - Keep `milestones/README.md` synchronized with milestone JSON files.

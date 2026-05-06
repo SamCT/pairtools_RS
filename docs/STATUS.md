@@ -4,9 +4,9 @@ Last reconciled: 2026-05-05
 
 ## Active milestone
 
-M161: real-data oracle validation.
+M170: flip core.
 
-M162 is complete and recorded in `milestone_results/M162.json`. It added cross-tool threading contract validation only; production parity remains blocked on M161 real-data oracle validation.
+M161 is deferred as nearly validated but not complete: parse stats match on available real-data artifacts, while dedup routing still differs and canonical `merged.*` oracle outputs/BWA index files are still missing. M162 is complete and recorded in `milestone_results/M162.json`.
 
 ## Current branch
 
@@ -177,7 +177,7 @@ M250 phase core
 M260 scaling core
 ```
 
-M161 remains the active milestone. These planned milestones should not start until M161 real-data validation is either completed or deliberately deferred with a blocker note.
+M170 is now the active command milestone. M161 remains deferred with blocker notes in `milestone_results/M161.json`; M300 benchmarking remains blocked until real-data validation passes.
 
 ## Intentionally unsupported behavior
 
@@ -304,7 +304,7 @@ Recommended sequence after M007 completion:
 M005 -> M006 -> M140 -> M141 -> M160 -> M161 -> M300
 ```
 
-M161 remains active. After M161, recommended implementation sequence is M170 -> M171 -> M180 -> M190 -> M191 -> M192 -> M193 -> M194 -> M200 -> M210 -> M220 -> M230 -> M240 -> M250 -> M260, with M300 benchmarking only after real-data validation. Add the exact pairtools-generated `merged.*` oracle outputs and BWA index prefix to `/mnt/d/pairtools_RS_test`, then rerun:
+M170 is active. Recommended implementation sequence is M170 -> M171 -> M180 -> M190 -> M191 -> M192 -> M193 -> M194 -> M200 -> M210 -> M220 -> M230 -> M240 -> M250 -> M260, with M300 benchmarking only after real-data validation. Add the exact pairtools-generated `merged.*` oracle outputs and BWA index prefix to `/mnt/d/pairtools_RS_test`, then rerun:
 
 ```bash
 bash tests/scripts/test_all_rust_pipeline_real_oracle.sh

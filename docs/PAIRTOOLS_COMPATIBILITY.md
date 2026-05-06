@@ -114,7 +114,7 @@ The same directory now contains useful non-canonical stage artifacts. Running th
 - The available duplicate-output readID sets also differ: 6,953 duplicate readIDs appear only in the pairtools duplicate output and 6,937 appear only in the pairs-rs duplicate output.
 - The external artifacts include split pairs output `rs_s01.outpairs.split.pairs` as a plain pairs text table. Treat it as the available split pairs artifact for diagnostics; it is the same semantic table as the production `.pairs.gz` output after decompression.
 
-These stage-artifact checks do not complete M161. Canonical `merged.*` pairtools oracle files and a full semantic all-Rust output comparison remain required.
+These stage-artifact checks do not complete M161. Canonical `merged.*` pairtools oracle files and a full semantic all-Rust output comparison remain required. M161 is deferred while the next command module, M170 `flip`, proceeds; this is not a benchmark or full-pipeline parity claim.
 
 ## M020 Parse I/O Note
 

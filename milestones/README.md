@@ -19,7 +19,7 @@ python3 scripts/codex_report.py --milestone <ID>
 
 The JSON files define goals, non-goals, allowed paths, forbidden paths, allowed commands, forbidden commands, oracle and candidate commands, required validation, required docs, and status fields. Prose documentation may explain the milestone workflow, but the JSON registry plus `scripts/milestone_gate.py` enforce it.
 
-Registry documentation must stay synchronized with milestone JSON files. Any commit that adds, removes, renames, or changes milestone status must update this README in the same task.
+Registry documentation must stay synchronized with milestone JSON files. Any commit that adds, removes, renames, changes milestone status, or deliberately defers an active validation milestone must update this README in the same task.
 
 Current registry:
 
@@ -49,9 +49,9 @@ Current registry:
 - `M150-dedup-core.json`: scoped sorted-input `dedup` implementation.
 - `M151-dedup-production-validation.json`: production-shaped dedup validation.
 - `M160-all-rust-hic-pipeline.json`: all-Rust pipeline shell orchestration.
-- `M161-real-data-oracle-validation.json`: external real-data oracle validation.
+- `M161-real-data-oracle-validation.json`: external real-data oracle validation, deferred with recorded blockers while command-module work proceeds.
 - `M162-threading-validation.json`: cross-tool threading option and determinism validation.
-- `M170-flip-core.json`: scoped `flip` implementation.
+- `M170-flip-core.json`: scoped `flip` implementation; current active command milestone.
 - `M171-markasdup-core.json`: scoped `markasdup` implementation.
 - `M180-select-expression-engine.json`: expanded safe select expression engine.
 - `M190-advanced-merge.json`: advanced merge options and temp planning.
