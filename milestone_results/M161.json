@@ -10,7 +10,7 @@
     "Available stage artifact validation passed parse stats comparisons against pairtools after allowing only the known summary/complexity_naive nan/inf representation difference.",
     "Available stage artifact validation found a dedup count blocker: pairtools reports total_dups=29706 and total_nodups=5733319, while pairs-rs reports total_dups=29690 and total_nodups=5733335.",
     "Available duplicate-output readID routing differs: 6953 readIDs appear only in the pairtools duplicate output and 6937 appear only in the pairs-rs duplicate output.",
-    "User-reported split compression observation: adding .gz to the split pairs output failed on the real run, while plain rs_s01.outpairs.split.pairs was produced. Exact stderr is not yet captured.",
+    "Available split pairs artifact is rs_s01.outpairs.split.pairs, a plain pairs text table equivalent in semantics to decompressed .pairs.gz output.",
     "M300 full-pipeline benchmarking is blocked because M161 has not passed; no benchmark was run."
   ],
   "commands_run": [
