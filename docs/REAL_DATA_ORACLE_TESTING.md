@@ -125,3 +125,22 @@ When the oracle set is incomplete, the M161 harness prints:
 - a copy-pasteable command block to run the all-Rust candidate pipeline
 
 This makes the blocker actionable on local or HPC storage without committing external data.
+
+## Available Artifact Checks
+
+If `/mnt/d/pairtools_RS_test` contains non-canonical stage outputs, the M161 harness can inspect them without treating them as a full M161 pass:
+
+```bash
+RUN_AVAILABLE_STAGE_COMPARISONS=1 bash tests/scripts/test_all_rust_pipeline_real_oracle.sh
+```
+
+This mode currently recognizes the added stage artifacts:
+
+- pairtools parse stats: `parse_stats_STANDARD_s01_pairtools.txt`
+- pairs-rs parse stats: `s01.RS.parse.stats.txt`, `parse_RS.stats.txt`
+- pairtools dedup stats/outputs: `merged.dedup.s01.pairtoolsDEF.stats.txt`, `nodups.parse_standard_s01.sorted.pairsam`, `merged.dups.pairsam.s01.pairtoolsDEF.gz`, `merged.unmapped.pairsam.s01.pairtoolsDEF.gz`
+- pairs-rs dedup/select/split/stats outputs: `s01.RS.merged.*`, `rs_s01.outpairs.split.pairs`, `rs_s01_split_out.sam`, `rs_s01.merged.valid.stats.txt`
+
+The available artifact checks compare parse stats against the pairtools stats file while allowing only the known `summary/complexity_naive` `nan`/`inf` representation difference. They also compare core dedup count fields where the currently scoped Rust stats can be interpreted against pairtools stats. These checks are diagnostic only; canonical `merged.*` pairtools oracle outputs are still required before M161 can pass.
+
+Set `RUN_AVAILABLE_STAGE_GZIP_TESTS=1` together with `RUN_AVAILABLE_STAGE_COMPARISONS=1` to read all recognized compressed artifacts through the gzip decoder. This can take time on large files.

@@ -155,6 +155,183 @@ if c != o:
 PY
 }
 
+run_available_stage_comparisons() {
+  if [[ "${RUN_AVAILABLE_STAGE_COMPARISONS:-0}" != "1" ]]; then
+    log ""
+    log "Available stage artifact checks: skipped."
+    log "  Set RUN_AVAILABLE_STAGE_COMPARISONS=1 to compare the non-canonical files currently present in TEST_DATA_DIR."
+    return 0
+  fi
+
+  log ""
+  log "Available stage artifact checks:"
+  if ! python3 - "$TEST_DATA_DIR" <<'PY'
+import gzip
+import math
+import os
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+failures = []
+
+artifacts = {
+    "pairtools parse stats": root / "parse_stats_STANDARD_s01_pairtools.txt",
+    "pairs-rs parse stats": root / "s01.RS.parse.stats.txt",
+    "pairs-rs alternate parse stats": root / "parse_RS.stats.txt",
+    "pairtools dedup stats": root / "merged.dedup.s01.pairtoolsDEF.stats.txt",
+    "pairs-rs dedup stats": root / "s01.RS.merged.dedup.stats.txt",
+    "pairtools nodups pairsam": root / "nodups.parse_standard_s01.sorted.pairsam",
+    "pairs-rs nodups pairsam.gz": root / "s01.RS.merged.nodups.pairsam.gz",
+    "pairtools dups pairsam.gz": root / "merged.dups.pairsam.s01.pairtoolsDEF.gz",
+    "pairs-rs dups pairsam.gz": root / "s01.RS.merged.dups.pairsam.gz",
+    "pairtools unmapped pairsam.gz": root / "merged.unmapped.pairsam.s01.pairtoolsDEF.gz",
+    "pairs-rs unmapped pairsam.gz": root / "s01.RS.merged.unmapped.pairsam.gz",
+    "pairs-rs selected valid pairsam.gz": root / "s01.RS.merged.valid.pairsam.gz",
+    "pairs-rs split valid pairs": root / "rs_s01.outpairs.split.pairs",
+    "pairs-rs split valid SAM": root / "rs_s01_split_out.sam",
+    "pairs-rs valid stats": root / "rs_s01.merged.valid.stats.txt",
+}
+
+for label, path in artifacts.items():
+    status = "present" if path.exists() else "missing"
+    print(f"  {label}: {status}: {path}", file=sys.stderr)
+
+def read_stats(path):
+    data = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#"):
+            continue
+        parts = line.split("\t")
+        if len(parts) >= 2:
+            data[parts[0]] = parts[1:]
+    return data
+
+def compare_parse_stats(candidate, oracle, label):
+    if not candidate.exists() or not oracle.exists():
+        print(f"  {label}: skipped; missing input", file=sys.stderr)
+        return
+    c = read_stats(candidate)
+    o = read_stats(oracle)
+    diffs = []
+    for key in sorted(set(c) | set(o)):
+        if c.get(key) == o.get(key):
+            continue
+        if key == "summary/complexity_naive":
+            c_val = c.get(key, [""])[0]
+            o_val = o.get(key, [""])[0]
+            if {c_val, o_val} <= {"nan", "inf", "-inf"}:
+                continue
+            try:
+                if math.isclose(float(c_val), float(o_val), rel_tol=1e-9, abs_tol=1e-9):
+                    continue
+            except ValueError:
+                pass
+        diffs.append((key, o.get(key), c.get(key)))
+    if diffs:
+        print(f"  {label}: FAIL", file=sys.stderr)
+        for key, oracle_value, candidate_value in diffs[:20]:
+            print(
+                f"    {key}: oracle={oracle_value} candidate={candidate_value}",
+                file=sys.stderr,
+            )
+        failures.append(f"{label} has {len(diffs)} differing stats fields")
+    else:
+        print(f"  {label}: PASS", file=sys.stderr)
+
+def first_number(stats, key, default=None):
+    if key not in stats:
+        return default
+    try:
+        return int(float(stats[key][0]))
+    except (ValueError, IndexError):
+        return default
+
+def compare_dedup_stats(candidate, oracle):
+    if not candidate.exists() or not oracle.exists():
+        print("  dedup stats core comparison: skipped; missing input", file=sys.stderr)
+        return
+    c = read_stats(candidate)
+    o = read_stats(oracle)
+    expected = {
+        "total": first_number(o, "total"),
+        "total_mapped": first_number(o, "total_mapped"),
+        "total_unmapped": (
+            first_number(o, "total_unmapped", 0)
+            + first_number(o, "total_single_sided_mapped", 0)
+        ),
+        "total_dups": first_number(o, "total_dups"),
+        "total_nodups": first_number(o, "total_nodups"),
+    }
+    observed = {key: first_number(c, key) for key in expected}
+    diffs = [
+        (key, expected[key], observed[key])
+        for key in expected
+        if expected[key] != observed[key]
+    ]
+    if diffs:
+        print("  dedup stats core comparison: FAIL", file=sys.stderr)
+        for key, expected_value, observed_value in diffs:
+            print(
+                f"    {key}: pairtools_expected={expected_value} pairs_rs={observed_value}",
+                file=sys.stderr,
+            )
+        failures.append("dedup stats core counts differ for available real-data artifacts")
+    else:
+        print("  dedup stats core comparison: PASS", file=sys.stderr)
+
+def validate_gzip(path):
+    with gzip.open(path, "rb") as handle:
+        while handle.read(1024 * 1024):
+            pass
+
+if os.environ.get("RUN_AVAILABLE_STAGE_GZIP_TESTS") == "1":
+    for label, path in artifacts.items():
+        if path.suffix != ".gz" or not path.exists():
+            continue
+        try:
+            validate_gzip(path)
+            print(f"  gzip integrity {label}: PASS", file=sys.stderr)
+        except Exception as exc:
+            print(f"  gzip integrity {label}: FAIL: {exc}", file=sys.stderr)
+            failures.append(f"gzip validation failed for {path}")
+else:
+    print(
+        "  gzip integrity checks: skipped; set RUN_AVAILABLE_STAGE_GZIP_TESTS=1 to read all compressed artifacts",
+        file=sys.stderr,
+    )
+
+compare_parse_stats(
+    artifacts["pairs-rs parse stats"],
+    artifacts["pairtools parse stats"],
+    "parse stats pairs-rs vs pairtools",
+)
+compare_parse_stats(
+    artifacts["pairs-rs alternate parse stats"],
+    artifacts["pairtools parse stats"],
+    "alternate parse stats pairs-rs vs pairtools",
+)
+compare_dedup_stats(
+    artifacts["pairs-rs dedup stats"],
+    artifacts["pairtools dedup stats"],
+)
+
+print(
+    "  note: available artifact checks do not complete M161; canonical merged.* pairtools oracle files are still required.",
+    file=sys.stderr,
+)
+
+if failures:
+    print("  available artifact blockers:", file=sys.stderr)
+    for failure in failures:
+        print(f"    - {failure}", file=sys.stderr)
+    raise SystemExit(1)
+PY
+  then
+    log "Available stage artifact checks reported blockers."
+  fi
+}
+
 discover() {
   [[ -d "$TEST_DATA_DIR" ]] || die "TEST_DATA_DIR does not exist: $TEST_DATA_DIR"
 
@@ -374,6 +551,7 @@ discover
 print_expected_layout
 print_oracle_generation_command
 print_candidate_command
+run_available_stage_comparisons
 report_missing_oracles
 run_candidate_pipeline
 compare_outputs

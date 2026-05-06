@@ -124,7 +124,10 @@ Completed parse milestones are covered by the guarded oracle suite:
 - M161 Real-data oracle setup:
   - `tests/scripts/test_all_rust_pipeline_real_oracle.sh` deterministically discovers the external real-data directory, FASTQs, chrom sizes, assembly, MAPQ, BWA index prefix, and exact `merged.*` oracle files needed for all-Rust pipeline validation.
   - The harness now prints the expected external input directory, expected pairtools oracle files, expected all-Rust candidate output paths, a copy-pasteable command block to generate missing pairtools oracle outputs, and a copy-pasteable all-Rust candidate command block.
-  - The current external directory `/mnt/d/pairtools_RS_test` is incomplete for M161. It contains FASTQs, an aligned BAM, chrom sizes, provenance files, and older parse/sort artifacts, but it is missing the exact pairtools-generated `merged.*` oracle outputs and a usable BWA index prefix.
+  - The harness can also inspect available non-canonical stage artifacts with `RUN_AVAILABLE_STAGE_COMPARISONS=1` without treating them as a full M161 pass.
+  - The current external directory `/mnt/d/pairtools_RS_test` is incomplete for M161. It contains FASTQs, an aligned BAM, chrom sizes, provenance files, pairtools parse/dedup artifacts, and pairs-rs dedup/select/split/stats artifacts, but it is missing the exact pairtools-generated `merged.*` oracle outputs and a usable BWA index prefix.
+  - Available artifact validation found that pairs-rs parse stats match pairtools parse stats after allowing only the known `summary/complexity_naive` `nan`/`inf` representation difference.
+  - Available artifact validation found a real dedup count blocker: pairtools reports `total_dups=29706` and `total_nodups=5733319`, while the available pairs-rs dedup stats report `total_dups=29690` and `total_nodups=5733335`.
   - M161 remains active and blocked; no all-Rust real-data parity claim is made.
 - M162 Cross-tool threading validation:
   - `tests/scripts/test_cross_tool_threading_contract.sh` validates the current thread-option contract across implemented tools without benchmarking.
@@ -253,6 +256,7 @@ Validation commands for M161 setup:
 ```bash
 python3 scripts/milestone_gate.py pre --milestone M161
 bash tests/scripts/test_all_rust_pipeline_real_oracle.sh
+RUN_AVAILABLE_STAGE_COMPARISONS=1 bash tests/scripts/test_all_rust_pipeline_real_oracle.sh
 ```
 
 The M161 real-data oracle harness stopped before running the all-Rust pipeline because required external oracle files are missing:
@@ -268,11 +272,14 @@ The M161 real-data oracle harness stopped before running the all-Rust pipeline b
 
 The harness prints the exact `pairtools` oracle-generation command and the exact all-Rust candidate command before exiting nonzero.
 
+With `RUN_AVAILABLE_STAGE_COMPARISONS=1`, the harness also consumed the newly provided stage artifacts. The parse stats comparisons passed against `parse_stats_STANDARD_s01_pairtools.txt` for both `s01.RS.parse.stats.txt` and `parse_RS.stats.txt`, allowing only the `summary/complexity_naive` `nan`/`inf` representation difference. The dedup stage comparison did not pass: pairtools reported 29,706 duplicate pairs and 5,733,319 nodup pairs, while pairs-rs reported 29,690 duplicate pairs and 5,733,335 nodup pairs.
+
 ## Validation not performed and why
 
 - Benchmarks were not run because M162 is a validation-contract milestone and M161 real-data oracle validation has not passed.
 - Real full-size production data was not run by this script; it validates the exact production command shape on a small pipeline-style sorted pairsam fixture and compares routing against Python pairtools.
 - M161 full external validation was not run because `/mnt/d/pairtools_RS_test` is missing the exact all-Rust pipeline oracle outputs and BWA index files listed above.
+- Full dedup readID routing comparison on the full external artifacts was not run in this pass; the available stats already expose a duplicate/nodup count mismatch that must be investigated before claiming M161 parity.
 - The requested next-milestone planning and automation scaffolding was not added under M140 because the active milestone allows only `src/cli.rs`, `src/main.rs`, `src/split.rs`, `tests/**`, `docs/**`, `milestones/ACTIVE_MILESTONE`, and `milestones/M140-split-core.json`.
 - M140 does not allow the required planning files: `milestones/README.md`, new milestone registry JSON files, `Makefile`, `milestone_results/**`, or new automation scripts. A planning/governance milestone such as M007 registry sync or M005 autonomous runner must become active before those files can be changed.
 - That previous stop was correct: M140 forbids governance and automation files. The current task intentionally uses M000 with `--allow-nonactive` to bootstrap the governance files and then makes M007 active.

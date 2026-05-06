@@ -107,6 +107,13 @@ M161 adds `tests/scripts/test_all_rust_pipeline_real_oracle.sh` as the all-Rust 
 
 The current external directory `/mnt/d/pairtools_RS_test` is not sufficient for M161 validation. It is missing the exact `merged.sorted.pairsam.gz`, `merged.nodups.pairsam.gz`, `merged.dups.pairsam.gz`, `merged.unmapped.pairsam.gz`, `merged.valid.pairsam.gz`, `merged.valid.pairs.gz`, `merged.valid.stats.txt`, and BWA index prefix required for final-output comparison. No all-Rust real-data parity claim is made.
 
+The same directory now contains useful non-canonical stage artifacts. Running the M161 harness with `RUN_AVAILABLE_STAGE_COMPARISONS=1` validates those files diagnostically:
+
+- `s01.RS.parse.stats.txt` and `parse_RS.stats.txt` match `parse_stats_STANDARD_s01_pairtools.txt` after allowing only the known `summary/complexity_naive` `nan`/`inf` representation difference.
+- The available dedup stats expose a blocker: pairtools reports `total_dups=29706` and `total_nodups=5733319`, while the available pairs-rs stats report `total_dups=29690` and `total_nodups=5733335`.
+
+These stage-artifact checks do not complete M161. Canonical `merged.*` pairtools oracle files and a full semantic all-Rust output comparison remain required.
+
 ## M020 Parse I/O Note
 
 M020 adds tests for parse input and writer plumbing without changing pair formation semantics. The tested parse I/O baseline is:
