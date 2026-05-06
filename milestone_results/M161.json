@@ -9,6 +9,7 @@
     "External real-data oracle set is incomplete: /mnt/d/pairtools_RS_test is missing merged.sorted.pairsam.gz, merged.nodups.pairsam.gz, merged.dups.pairsam.gz, merged.unmapped.pairsam.gz, merged.valid.pairsam.gz, merged.valid.pairs.gz, merged.valid.stats.txt, and a BWA index prefix with index files. The harness prints exact oracle-generation and candidate-pipeline commands before exiting.",
     "Available stage artifact validation passed parse stats comparisons against pairtools after allowing only the known summary/complexity_naive nan/inf representation difference.",
     "Available stage artifact validation found a dedup count blocker: pairtools reports total_dups=29706 and total_nodups=5733319, while pairs-rs reports total_dups=29690 and total_nodups=5733335.",
+    "Available duplicate-output readID routing differs: 6953 readIDs appear only in the pairtools duplicate output and 6937 appear only in the pairs-rs duplicate output.",
     "M300 full-pipeline benchmarking is blocked because M161 has not passed; no benchmark was run."
   ],
   "commands_run": [
@@ -24,7 +25,7 @@
     {
       "command": "RUN_AVAILABLE_STAGE_COMPARISONS=1 bash tests/scripts/test_all_rust_pipeline_real_oracle.sh",
       "status": "fail",
-      "reason": "Diagnostic stage-artifact validation passed parse stats comparisons but exposed a dedup count mismatch and still stopped because the exact M161 oracle files and BWA index are missing."
+      "reason": "Diagnostic stage-artifact validation passed parse stats comparisons but exposed dedup count and duplicate readID routing mismatches, then stopped because the exact M161 oracle files and BWA index are missing."
     },
     {
       "command": "python3 scripts/milestone_gate.py post --milestone M161",

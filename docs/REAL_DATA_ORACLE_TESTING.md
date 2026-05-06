@@ -141,6 +141,6 @@ This mode currently recognizes the added stage artifacts:
 - pairtools dedup stats/outputs: `merged.dedup.s01.pairtoolsDEF.stats.txt`, `nodups.parse_standard_s01.sorted.pairsam`, `merged.dups.pairsam.s01.pairtoolsDEF.gz`, `merged.unmapped.pairsam.s01.pairtoolsDEF.gz`
 - pairs-rs dedup/select/split/stats outputs: `s01.RS.merged.*`, `rs_s01.outpairs.split.pairs`, `rs_s01_split_out.sam`, `rs_s01.merged.valid.stats.txt`
 
-The available artifact checks compare parse stats against the pairtools stats file while allowing only the known `summary/complexity_naive` `nan`/`inf` representation difference. They also compare core dedup count fields where the currently scoped Rust stats can be interpreted against pairtools stats. These checks are diagnostic only; canonical `merged.*` pairtools oracle outputs are still required before M161 can pass.
+The available artifact checks compare parse stats against the pairtools stats file while allowing only the known `summary/complexity_naive` `nan`/`inf` representation difference. They also compare core dedup count fields where the currently scoped Rust stats can be interpreted against pairtools stats, and they compare duplicate-output readID routing between the available pairtools and pairs-rs duplicate files. These checks are diagnostic only; canonical `merged.*` pairtools oracle outputs are still required before M161 can pass.
 
 Set `RUN_AVAILABLE_STAGE_GZIP_TESTS=1` together with `RUN_AVAILABLE_STAGE_COMPARISONS=1` to read all recognized compressed artifacts through the gzip decoder. This can take time on large files.

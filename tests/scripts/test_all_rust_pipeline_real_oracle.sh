@@ -280,6 +280,41 @@ def compare_dedup_stats(candidate, oracle):
     else:
         print("  dedup stats core comparison: PASS", file=sys.stderr)
 
+def read_body_read_ids(path):
+    ids = []
+    opener = gzip.open if path.suffix == ".gz" else open
+    with opener(path, "rt", encoding="utf-8", errors="replace") as handle:
+        for line in handle:
+            if not line or line.startswith("#"):
+                continue
+            ids.append(line.split("\t", 1)[0])
+    return ids
+
+def compare_duplicate_read_ids(candidate, oracle):
+    if not candidate.exists() or not oracle.exists():
+        print("  duplicate readID routing comparison: skipped; missing input", file=sys.stderr)
+        return
+    c = set(read_body_read_ids(candidate))
+    o = set(read_body_read_ids(oracle))
+    only_oracle = sorted(o - c)
+    only_candidate = sorted(c - o)
+    if only_oracle or only_candidate:
+        print("  duplicate readID routing comparison: FAIL", file=sys.stderr)
+        print(
+            f"    pairtools_duplicate_readIDs={len(o)} pairs_rs_duplicate_readIDs={len(c)}",
+            file=sys.stderr,
+        )
+        print(
+            f"    only_pairtools={len(only_oracle)} only_pairs_rs={len(only_candidate)}",
+            file=sys.stderr,
+        )
+        for label, values in (("only_pairtools", only_oracle), ("only_pairs_rs", only_candidate)):
+            for value in values[:20]:
+                print(f"    {label}: {value}", file=sys.stderr)
+        failures.append("duplicate readID routing differs for available real-data artifacts")
+    else:
+        print("  duplicate readID routing comparison: PASS", file=sys.stderr)
+
 def validate_gzip(path):
     with gzip.open(path, "rb") as handle:
         while handle.read(1024 * 1024):
@@ -314,6 +349,10 @@ compare_parse_stats(
 compare_dedup_stats(
     artifacts["pairs-rs dedup stats"],
     artifacts["pairtools dedup stats"],
+)
+compare_duplicate_read_ids(
+    artifacts["pairs-rs dups pairsam.gz"],
+    artifacts["pairtools dups pairsam.gz"],
 )
 
 print(
