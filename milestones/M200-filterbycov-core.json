@@ -1,0 +1,111 @@
+{
+  "id": "M200",
+  "name": "Filterbycov core",
+  "status": "planned",
+  "summary": "Implement scoped filterbycov command.",
+  "goal": "Implement `pairs-rs filterbycov` for pairtools-compatible high-coverage filtering on sorted pairs input with explicit output streams and stats.",
+  "explicit_non_goals": [
+    "Do not broaden unrelated commands.",
+    "Do not claim full pairtools parity beyond committed oracle fixtures.",
+    "Do not run benchmarks or claim speedup.",
+    "Pairtools may be used only as a test oracle."
+  ],
+  "allowed_paths": [
+    "src/cli.rs",
+    "src/main.rs",
+    "src/filterbycov.rs",
+    "tests/**",
+    "docs/**",
+    "milestone_results/**",
+    "milestones/ACTIVE_MILESTONE",
+    "milestones/M200-filterbycov-core.json"
+  ],
+  "forbidden_paths": [
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "allowed_commands": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "forbidden_commands": [
+    "cargo check",
+    "cargo test",
+    "cargo build",
+    "pixi run cargo check",
+    "pixi run cargo test",
+    "pixi run cargo build"
+  ],
+  "allowed_pairtools_commands": [
+    "pairtools filterbycov"
+  ],
+  "forbidden_pairtools_commands": [
+    "pairtools parse",
+    "pairtools sort",
+    "pairtools merge",
+    "pairtools dedup",
+    "pairtools select",
+    "pairtools split",
+    "pairtools stats",
+    "pairtools flip",
+    "pairtools markasdup",
+    "pairtools restrict",
+    "pairtools sample",
+    "pairtools header",
+    "pairtools parse2",
+    "pairtools phase",
+    "pairtools scaling"
+  ],
+  "oracle_commands": [
+    "pixi run pairtools filterbycov <fixture-specific arguments>"
+  ],
+  "candidate_commands": [
+    "target/debug/pairs-rs filterbycov <fixture-specific arguments>"
+  ],
+  "required_tests": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "benches/**",
+    "examples/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Current branch",
+    "Current commit",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Validation not performed and why",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "Oracle tests compare pass/highcov/unmapped routing and stats on small fixtures.",
+    "`--max-cov`, `--max-dist`, method, and core column selectors are covered or fail loudly.",
+    "Compressed output is validated where supported by shared I/O helpers."
+  ],
+  "known_risks": [
+    "Coverage filtering can be memory-sensitive; initial milestone should prefer small deterministic fixtures."
+  ],
+  "next_milestone_candidates": [
+    "M210",
+    "M220"
+  ]
+}

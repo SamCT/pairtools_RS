@@ -51,4 +51,19 @@ Current registry:
 - `M160-all-rust-hic-pipeline.json`: all-Rust pipeline shell orchestration.
 - `M161-real-data-oracle-validation.json`: external real-data oracle validation.
 - `M162-threading-validation.json`: cross-tool threading option and determinism validation.
+- `M170-flip-core.json`: scoped `flip` implementation.
+- `M171-markasdup-core.json`: scoped `markasdup` implementation.
+- `M180-select-expression-engine.json`: expanded safe select expression engine.
+- `M190-advanced-merge.json`: advanced merge options and temp planning.
+- `M191-dedup-parity-expansion.json`: dedup parent IDs, extra-column matching, and richer stats.
+- `M192-stats-filters-bytile-chrom-subsets.json`: stats filters, by-tile, type casts, and chrom subsets.
+- `M193-sort-custom-columns-memory-semantics.json`: sort custom columns and memory semantics.
+- `M194-cross-command-threaded-io.json`: threaded BGZF I/O expansion across eligible commands.
+- `M200-filterbycov-core.json`: scoped `filterbycov` implementation.
+- `M210-restrict-core.json`: scoped restriction-fragment annotation.
+- `M220-sample-core.json`: deterministic `sample` implementation.
+- `M230-header-subcommands.json`: scoped `header` subcommands.
+- `M240-parse2-core.json`: scoped `parse2` implementation.
+- `M250-phase-core.json`: scoped `phase` implementation.
+- `M260-scaling-core.json`: scoped `scaling` implementation.
 - `M300-full-pipeline-benchmark.json`: full-pipeline benchmark after real-data validation.

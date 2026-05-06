@@ -156,6 +156,31 @@ The discovered sorted oracle is not an exact M080 `.pairsam.gz` oracle. The docu
 
 If an exact pairtools `.sorted.pairsam.gz` oracle and downstream `merged.*` outputs are added to `/mnt/d/pairtools_RS_test`, `tests/scripts/test_hic_exact_pipeline_real_oracle.sh` can compare semantic decompressed pairsam content and optional downstream outputs. Until then, M080 claims only the exact shell pipeline contract and dry-run/validation coverage, not final all-output oracle parity.
 
+
+## Planned Compatibility Expansion Milestones
+
+The following milestones are planned only; they do not expand current compatibility claims until implemented and oracle-tested:
+
+| Milestone | Planned scope |
+|---|---|
+| M170 | `flip` core |
+| M171 | `markasdup` core |
+| M180 | broader safe `select` expression engine |
+| M190 | advanced `merge` options and header/temp behavior |
+| M191 | dedup parent IDs, extra-column matching, and richer stats |
+| M192 | stats filters, by-tile reports, type casts, and chrom subsets |
+| M193 | sort custom columns and memory semantics |
+| M194 | cross-command threaded BGZF I/O expansion |
+| M200 | `filterbycov` core |
+| M210 | `restrict` core |
+| M220 | `sample` core |
+| M230 | `header` subcommands |
+| M240 | `parse2` core |
+| M250 | `phase` core |
+| M260 | `scaling` core |
+
+These entries are roadmap items, not implemented behavior. Pairtools remains an oracle-only dependency for the corresponding future tests.
+
 ## Top-Level Options
 
 | Option | Rust status |

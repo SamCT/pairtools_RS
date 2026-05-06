@@ -1,0 +1,111 @@
+{
+  "id": "M260",
+  "name": "Scaling core",
+  "status": "planned",
+  "summary": "Implement scoped scaling summaries.",
+  "goal": "Implement `pairs-rs scaling` for pairtools-compatible scaling summaries over pairs inputs on small deterministic fixtures.",
+  "explicit_non_goals": [
+    "Do not broaden unrelated commands.",
+    "Do not claim full pairtools parity beyond committed oracle fixtures.",
+    "Do not run benchmarks or claim speedup.",
+    "Pairtools may be used only as a test oracle.",
+    "Do not make performance claims from scaling output generation."
+  ],
+  "allowed_paths": [
+    "src/cli.rs",
+    "src/main.rs",
+    "src/scaling.rs",
+    "tests/**",
+    "docs/**",
+    "milestone_results/**",
+    "milestones/ACTIVE_MILESTONE",
+    "milestones/M260-scaling-core.json"
+  ],
+  "forbidden_paths": [
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "allowed_commands": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "forbidden_commands": [
+    "cargo check",
+    "cargo test",
+    "cargo build",
+    "pixi run cargo check",
+    "pixi run cargo test",
+    "pixi run cargo build"
+  ],
+  "allowed_pairtools_commands": [
+    "pairtools scaling"
+  ],
+  "forbidden_pairtools_commands": [
+    "pairtools parse",
+    "pairtools sort",
+    "pairtools merge",
+    "pairtools dedup",
+    "pairtools select",
+    "pairtools split",
+    "pairtools stats",
+    "pairtools flip",
+    "pairtools markasdup",
+    "pairtools filterbycov",
+    "pairtools restrict",
+    "pairtools sample",
+    "pairtools header",
+    "pairtools parse2",
+    "pairtools phase"
+  ],
+  "oracle_commands": [
+    "pixi run pairtools scaling <fixture-specific arguments>"
+  ],
+  "candidate_commands": [
+    "target/debug/pairs-rs scaling <fixture-specific arguments>"
+  ],
+  "required_tests": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "benches/**",
+    "examples/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Current branch",
+    "Current commit",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Validation not performed and why",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "Oracle tests compare scaling bins/counts for simple cis/trans fixtures.",
+    "Region/view and distance-range options are covered where implemented or fail loudly.",
+    "Output is deterministic and documented."
+  ],
+  "known_risks": [
+    "Scaling can overlap with stats internals; shared computation should be tested carefully."
+  ],
+  "next_milestone_candidates": [
+    "M300"
+  ]
+}

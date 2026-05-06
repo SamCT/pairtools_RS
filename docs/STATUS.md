@@ -14,7 +14,7 @@ M162 is complete and recorded in `milestone_results/M162.json`. It added cross-t
 
 ## Current commit
 
-`M162 commit recorded in git history; see final report or git log for the exact SHA.`
+`uncommitted` milestone roadmap expansion changes are in progress.
 
 ## Implemented behavior
 
@@ -149,6 +149,31 @@ Completed parse milestones are covered by the guarded oracle suite:
   - `--nproc-in` and `--nproc-out` control HTSlib BGZF threading for `.gz` stats input and output.
   - `--cmd-in`, `--cmd-out`, `--merge --yaml`, filters, by-tile stats, chrom subsets, type casts, and custom shell compression remain loud non-goals.
 
+
+## Planned implementation milestones
+
+Additional planned milestones now cover the remaining pairtools command surface and parity expansions without changing runtime behavior in this planning task:
+
+```text
+M170 flip core
+M171 markasdup core
+M180 select expression engine
+M190 advanced merge
+M191 dedup parity expansion
+M192 stats filters/bytile/chrom subsets
+M193 sort custom columns/memory semantics
+M194 cross-command threaded I/O
+M200 filterbycov core
+M210 restrict core
+M220 sample core
+M230 header subcommands
+M240 parse2 core
+M250 phase core
+M260 scaling core
+```
+
+M161 remains the active milestone. These planned milestones should not start until M161 real-data validation is either completed or deliberately deferred with a blocker note.
+
 ## Intentionally unsupported behavior
 
 - Full pairtools `parse2` behavior is not implemented.
@@ -268,7 +293,7 @@ Recommended sequence after M007 completion:
 M005 -> M006 -> M140 -> M141 -> M160 -> M161 -> M300
 ```
 
-M161 remains active. Add the exact pairtools-generated `merged.*` oracle outputs and BWA index prefix to `/mnt/d/pairtools_RS_test`, then rerun:
+M161 remains active. After M161, recommended implementation sequence is M170 -> M171 -> M180 -> M190 -> M191 -> M192 -> M193 -> M194 -> M200 -> M210 -> M220 -> M230 -> M240 -> M250 -> M260, with M300 benchmarking only after real-data validation. Add the exact pairtools-generated `merged.*` oracle outputs and BWA index prefix to `/mnt/d/pairtools_RS_test`, then rerun:
 
 ```bash
 bash tests/scripts/test_all_rust_pipeline_real_oracle.sh

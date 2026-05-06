@@ -1,0 +1,112 @@
+{
+  "id": "M180",
+  "name": "Select expression engine",
+  "status": "planned",
+  "summary": "Expand select beyond exact pair_type equality.",
+  "goal": "Implement a bounded pairtools-compatible select expression engine covering boolean operators, column references, string equality, numeric comparisons, and parentheses on committed fixtures.",
+  "explicit_non_goals": [
+    "Do not broaden unrelated commands.",
+    "Do not claim full pairtools parity beyond committed oracle fixtures.",
+    "Do not run benchmarks or claim speedup.",
+    "Pairtools may be used only as a test oracle.",
+    "Do not implement arbitrary Python execution or startup-code behavior in Rust runtime."
+  ],
+  "allowed_paths": [
+    "src/cli.rs",
+    "src/main.rs",
+    "src/select.rs",
+    "tests/**",
+    "docs/**",
+    "milestone_results/**",
+    "milestones/ACTIVE_MILESTONE",
+    "milestones/M180-select-expression-engine.json"
+  ],
+  "forbidden_paths": [
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "allowed_commands": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "forbidden_commands": [
+    "cargo check",
+    "cargo test",
+    "cargo build",
+    "pixi run cargo check",
+    "pixi run cargo test",
+    "pixi run cargo build"
+  ],
+  "allowed_pairtools_commands": [
+    "pairtools select"
+  ],
+  "forbidden_pairtools_commands": [
+    "pairtools parse",
+    "pairtools sort",
+    "pairtools merge",
+    "pairtools dedup",
+    "pairtools split",
+    "pairtools stats",
+    "pairtools flip",
+    "pairtools markasdup",
+    "pairtools filterbycov",
+    "pairtools restrict",
+    "pairtools sample",
+    "pairtools header",
+    "pairtools parse2",
+    "pairtools phase",
+    "pairtools scaling"
+  ],
+  "oracle_commands": [
+    "pixi run pairtools select <fixture-specific arguments>"
+  ],
+  "candidate_commands": [
+    "target/debug/pairs-rs select <expression> <fixture-specific input>"
+  ],
+  "required_tests": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "benches/**",
+    "examples/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Current branch",
+    "Current commit",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Validation not performed and why",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "Oracle tests compare selected and rest outputs for boolean, string, and numeric expressions.",
+    "Unsupported Python-specific expression features fail loudly.",
+    "Expression parser errors are clear and non-silent."
+  ],
+  "known_risks": [
+    "Pairtools select is Python-expression based; Rust must define a safe compatible subset before expanding."
+  ],
+  "next_milestone_candidates": [
+    "M190",
+    "M200"
+  ]
+}

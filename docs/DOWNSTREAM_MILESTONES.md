@@ -39,22 +39,25 @@ M100 is the planning boundary for replacing pairtools downstream shell steps wit
   - Benchmark only after M161 real-data validation passes.
   - Report exact commands, artifacts, wall time, CPU, memory, disk, output size, and throughput.
 
-## Post-Validation Parity Candidates
+## Post-Validation Implementation Roadmap
 
-- M170 flip core
-- M171 markasdup core
-- M180 select expression engine
-- M190 advanced merge
-- M191 dedup parity expansion
-- M192 stats filters/bytile/chrom subsets
-- M193 sort custom columns/memory semantics
-- M200 filterbycov core
-- M210 restrict core
-- M220 sample core
-- M230 header subcommands
-- M240 parse2 core
-- M250 phase core
-- M260 scaling core
+These milestones are now registered as planned JSON files. Each must remain a bounded, oracle-tested task.
+
+- M170 `flip` core: upper-triangle normalization for pairs/pairsam.
+- M171 `markasdup` core: standalone duplicate marking for pairs and pairsam SAM columns.
+- M180 `select` expression engine: safe Rust expression subset beyond exact `pair_type` equality.
+- M190 advanced `merge`: larger sorted inputs, header policies, and temp merge planning.
+- M191 `dedup` parity expansion: parent IDs, extra-column duplicate matching, and richer stats.
+- M192 `stats` filters/bytile/chrom subsets: filters, by-tile duplicate reports, type casts, and chrom subsets.
+- M193 `sort` custom columns/memory semantics: custom key columns and memory option behavior.
+- M194 cross-command threaded I/O: HTSlib BGZF threading for eligible commands that currently reject `--nproc-in/out`.
+- M200 `filterbycov` core: pass/highcov/unmapped routing and coverage stats.
+- M210 `restrict` core: restriction fragment annotation.
+- M220 `sample` core: deterministic fraction sampling with seed handling.
+- M230 `header` subcommands: generate, transfer, set-columns, validate-columns.
+- M240 `parse2` core: scoped parse2 behavior kept separate from existing parse.
+- M250 `phase` core: phase suffix/tag annotation.
+- M260 `scaling` core: scaling summaries over pairs inputs.
 
 ## Fixtures
 

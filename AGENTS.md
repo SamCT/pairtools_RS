@@ -73,6 +73,7 @@ Before the final response:
 - Downstream commands are non-goals unless the active milestone explicitly lists them.
 - Do not implement broad feature surface in one task.
 - Keep `milestones/README.md` synchronized with milestone JSON files.
+- Planned implementation milestones for remaining pairtools commands live in `milestones/M170` through `milestones/M260`; do not start them until the active milestone is deliberately changed.
 - Record completed milestone evidence in `milestone_results/<MILESTONE>.json` when the active milestone requires a result ledger.
 - Every Codex task must end by updating or explicitly confirming no content change is needed in:
   - `docs/PAIRTOOLS_COMPATIBILITY.md`

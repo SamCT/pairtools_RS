@@ -1,0 +1,111 @@
+{
+  "id": "M210",
+  "name": "Restrict core",
+  "status": "planned",
+  "summary": "Implement scoped restriction-fragment annotation.",
+  "goal": "Implement `pairs-rs restrict` for annotating pairs with restriction fragment information from BED-like fragment files on committed fixtures.",
+  "explicit_non_goals": [
+    "Do not broaden unrelated commands.",
+    "Do not claim full pairtools parity beyond committed oracle fixtures.",
+    "Do not run benchmarks or claim speedup.",
+    "Pairtools may be used only as a test oracle."
+  ],
+  "allowed_paths": [
+    "src/cli.rs",
+    "src/main.rs",
+    "src/restrict.rs",
+    "tests/**",
+    "docs/**",
+    "milestone_results/**",
+    "milestones/ACTIVE_MILESTONE",
+    "milestones/M210-restrict-core.json"
+  ],
+  "forbidden_paths": [
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "allowed_commands": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "forbidden_commands": [
+    "cargo check",
+    "cargo test",
+    "cargo build",
+    "pixi run cargo check",
+    "pixi run cargo test",
+    "pixi run cargo build"
+  ],
+  "allowed_pairtools_commands": [
+    "pairtools restrict"
+  ],
+  "forbidden_pairtools_commands": [
+    "pairtools parse",
+    "pairtools sort",
+    "pairtools merge",
+    "pairtools dedup",
+    "pairtools select",
+    "pairtools split",
+    "pairtools stats",
+    "pairtools flip",
+    "pairtools markasdup",
+    "pairtools filterbycov",
+    "pairtools sample",
+    "pairtools header",
+    "pairtools parse2",
+    "pairtools phase",
+    "pairtools scaling"
+  ],
+  "oracle_commands": [
+    "pixi run pairtools restrict <fixture-specific arguments>"
+  ],
+  "candidate_commands": [
+    "target/debug/pairs-rs restrict <fixture-specific arguments>"
+  ],
+  "required_tests": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "benches/**",
+    "examples/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Current branch",
+    "Current commit",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Validation not performed and why",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "Oracle tests compare fragment IDs/positions against pairtools.",
+    "Malformed fragment inputs fail clearly.",
+    "Unsupported restrict options fail loudly."
+  ],
+  "known_risks": [
+    "Restriction file formats and boundary conventions need careful fixture coverage."
+  ],
+  "next_milestone_candidates": [
+    "M220",
+    "M230"
+  ]
+}

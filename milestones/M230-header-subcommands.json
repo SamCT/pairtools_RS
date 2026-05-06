@@ -1,0 +1,111 @@
+{
+  "id": "M230",
+  "name": "Header subcommands",
+  "status": "planned",
+  "summary": "Implement scoped pairtools header subcommands.",
+  "goal": "Implement scoped `pairs-rs header` subcommands: generate, transfer, set-columns, and validate-columns with oracle tests for committed fixtures.",
+  "explicit_non_goals": [
+    "Do not broaden unrelated commands.",
+    "Do not claim full pairtools parity beyond committed oracle fixtures.",
+    "Do not run benchmarks or claim speedup.",
+    "Pairtools may be used only as a test oracle."
+  ],
+  "allowed_paths": [
+    "src/cli.rs",
+    "src/main.rs",
+    "src/header.rs",
+    "tests/**",
+    "docs/**",
+    "milestone_results/**",
+    "milestones/ACTIVE_MILESTONE",
+    "milestones/M230-header-subcommands.json"
+  ],
+  "forbidden_paths": [
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "allowed_commands": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "forbidden_commands": [
+    "cargo check",
+    "cargo test",
+    "cargo build",
+    "pixi run cargo check",
+    "pixi run cargo test",
+    "pixi run cargo build"
+  ],
+  "allowed_pairtools_commands": [
+    "pairtools header"
+  ],
+  "forbidden_pairtools_commands": [
+    "pairtools parse",
+    "pairtools sort",
+    "pairtools merge",
+    "pairtools dedup",
+    "pairtools select",
+    "pairtools split",
+    "pairtools stats",
+    "pairtools flip",
+    "pairtools markasdup",
+    "pairtools filterbycov",
+    "pairtools restrict",
+    "pairtools sample",
+    "pairtools parse2",
+    "pairtools phase",
+    "pairtools scaling"
+  ],
+  "oracle_commands": [
+    "pixi run pairtools header <fixture-specific arguments>"
+  ],
+  "candidate_commands": [
+    "target/debug/pairs-rs header <subcommand> <fixture-specific arguments>"
+  ],
+  "required_tests": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "benches/**",
+    "examples/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Current branch",
+    "Current commit",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Validation not performed and why",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "Oracle tests cover each implemented header subcommand.",
+    "Header generation preserves chromsizes, columns, assembly, and pairs/pairsam mode.",
+    "Unsupported header options fail loudly."
+  ],
+  "known_risks": [
+    "Header behavior is central to all commands; implementation should be conservative and fixture-heavy."
+  ],
+  "next_milestone_candidates": [
+    "M240",
+    "M250"
+  ]
+}

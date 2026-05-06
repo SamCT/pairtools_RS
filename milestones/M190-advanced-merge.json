@@ -1,0 +1,112 @@
+{
+  "id": "M190",
+  "name": "Advanced merge",
+  "status": "planned",
+  "summary": "Expand merge option parity and scale behavior.",
+  "goal": "Expand `pairs-rs merge` for larger sorted inputs, header edge cases, `--tmpdir`, `--max-nmerge`, and compatible merge planning without changing sorted-output semantics.",
+  "explicit_non_goals": [
+    "Do not broaden unrelated commands.",
+    "Do not claim full pairtools parity beyond committed oracle fixtures.",
+    "Do not run benchmarks or claim speedup.",
+    "Pairtools may be used only as a test oracle.",
+    "Do not implement approximate or unstable merge behavior."
+  ],
+  "allowed_paths": [
+    "src/cli.rs",
+    "src/main.rs",
+    "src/merge.rs",
+    "tests/**",
+    "docs/**",
+    "milestone_results/**",
+    "milestones/ACTIVE_MILESTONE",
+    "milestones/M190-advanced-merge.json"
+  ],
+  "forbidden_paths": [
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "allowed_commands": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "forbidden_commands": [
+    "cargo check",
+    "cargo test",
+    "cargo build",
+    "pixi run cargo check",
+    "pixi run cargo test",
+    "pixi run cargo build"
+  ],
+  "allowed_pairtools_commands": [
+    "pairtools merge"
+  ],
+  "forbidden_pairtools_commands": [
+    "pairtools parse",
+    "pairtools sort",
+    "pairtools dedup",
+    "pairtools select",
+    "pairtools split",
+    "pairtools stats",
+    "pairtools flip",
+    "pairtools markasdup",
+    "pairtools filterbycov",
+    "pairtools restrict",
+    "pairtools sample",
+    "pairtools header",
+    "pairtools parse2",
+    "pairtools phase",
+    "pairtools scaling"
+  ],
+  "oracle_commands": [
+    "pixi run pairtools merge <fixture-specific arguments>"
+  ],
+  "candidate_commands": [
+    "target/debug/pairs-rs merge <fixture-specific inputs>"
+  ],
+  "required_tests": [
+    "scripts/cargo_guard.sh check",
+    "scripts/cargo_guard.sh test"
+  ],
+  "optional_tests": [],
+  "required_benchmarks": [],
+  "cargo_required_if_paths_changed": [
+    "src/**",
+    "tests/**",
+    "benches/**",
+    "examples/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "pixi.toml",
+    "pixi.lock",
+    "build.rs"
+  ],
+  "docs_required": [
+    "docs/STATUS.md",
+    "docs/PAIRTOOLS_COMPATIBILITY.md"
+  ],
+  "status_fields_required": [
+    "Active milestone",
+    "Current branch",
+    "Current commit",
+    "Implemented behavior",
+    "Intentionally unsupported behavior",
+    "Validation performed",
+    "Validation not performed and why",
+    "Next recommended milestone"
+  ],
+  "acceptance_criteria": [
+    "Oracle tests cover multi-input merges, header policy cases, and deterministic output.",
+    "Large-ish synthetic fixtures exercise temp merge planning without benchmarking.",
+    "Unsupported merge options continue to fail loudly."
+  ],
+  "known_risks": [
+    "Advanced merge touches memory/tempfile behavior; correctness and determinism must stay ahead of speed."
+  ],
+  "next_milestone_candidates": [
+    "M191",
+    "M193"
+  ]
+}
