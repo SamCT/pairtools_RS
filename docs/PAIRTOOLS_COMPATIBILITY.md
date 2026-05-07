@@ -106,6 +106,10 @@ M162 adds `tests/scripts/test_cross_tool_threading_contract.sh`, a behavioral va
 
 M170 is complete for committed oracle fixtures and implements scoped `pairs-rs flip` behavior. The tested surface supports `-c/--chroms-path`, optional path/stdin input, `-o/--output`, plain output, and `.gz` BGZF output. Oracle tests compare normalized output against Python pairtools on `tests/data/mock.4flip.pairs`, covering listed chromosome order, unannotated chromosome lexicographic fallback, unmapped `!`, same-chromosome position flipping, side-specific column swaps, and `pair_type` reversal. `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out`, and `.lz4` remain explicitly unsupported.
 
+## M171 Markasdup Note
+
+M171 implements scoped `pairs-rs markasdup` behavior for committed `.pairs` and `.pairsam` fixtures. The tested surface supports optional path/stdin input, `-o`/`--output`, plain output, and `.gz` BGZF output. Body rows are marked with `pair_type` `DD`. When pairsam `sam1` and `sam2` columns are present, SAM duplicate flag `0x400` is set and `Yt:Z:DD` is added or replaced in each encoded SAM record. Oracle tests compare normalized output against Python pairtools on small `.pairs` and `.pairsam` fixtures and verify the SAM duplicate metadata. `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out`, and `.lz4` remain explicitly unsupported.
+
 ## M161 Real-Data Oracle Status
 
 M161 adds `tests/scripts/test_all_rust_pipeline_real_oracle.sh` as the all-Rust real-data validation harness. The harness discovers the external fixture directory, required FASTQs, chrom sizes, assembly/MAPQ provenance, BWA index prefix, and exact pairtools-generated `merged.*` oracle outputs before running the all-Rust pipeline. When the oracle set is incomplete, it prints expected inputs, expected oracle files, expected candidate outputs, a pairtools oracle-generation command, and an all-Rust candidate command before exiting nonzero.
@@ -171,7 +175,7 @@ The discovered sorted oracle is not an exact M080 `.pairsam.gz` oracle. The docu
 If an exact pairtools `.sorted.pairsam.gz` oracle and downstream `merged.*` outputs are added to `/mnt/d/pairtools_RS_test`, `tests/scripts/test_hic_exact_pipeline_real_oracle.sh` can compare semantic decompressed pairsam content and optional downstream outputs. Until then, M080 claims only the exact shell pipeline contract and dry-run/validation coverage, not final all-output oracle parity.
 
 
-M171 is the active next command milestone for scoped `markasdup`.
+M171 implements scoped `markasdup` duplicate marking for committed `.pairs` and `.pairsam` fixtures.
 
 ## Planned Compatibility Expansion Milestones
 
@@ -218,7 +222,7 @@ These entries are roadmap items, not implemented behavior. Pairtools remains an 
 | `filterbycov` | explicitly not implemented |
 | `flip` | partial, oracle-gated upper-triangle normalization |
 | `header` | explicitly not implemented |
-| `markasdup` | explicitly not implemented |
+| `markasdup` | partial, oracle-gated duplicate marking |
 | `merge` | partial, oracle-gated small sorted input merge |
 | `parse2` | explicitly not implemented |
 | `phase` | explicitly not implemented |
@@ -358,7 +362,7 @@ These commands are present so they fail loudly instead of looking absent. Their 
 |---|---|---|
 | `filterbycov` | optional `PAIRS_PATH` | `-o`/`--output`, `--output-highcov`, `--output-unmapped`, `--output-stats`, `--max-cov`, `--max-dist`, `--method`, `--sep`, `--comment-char`, `--send-header-to`, `--c1`, `--c2`, `--p1`, `--p2`, `--s1`, `--s2`, `--unmapped-chrom`, `--mark-multi`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
 | `flip` | optional `PAIRS_PATH` | `-c`/`--chroms-path` and `-o`/`--output` implemented for path/stdin and plain/`.gz` BGZF I/O; `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out`, and `.lz4` explicitly not implemented |
-| `markasdup` | optional `PAIRSAM_PATH` | `-o`/`--output`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
+| `markasdup` | optional `PAIRSAM_PATH` | `-o`/`--output` implemented for path/stdin and plain/`.gz` BGZF I/O; `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out`, and `.lz4` explicitly not implemented |
 | `merge` | zero or more `PAIRS_PATH` values | `-o`/`--output` implemented for small sorted `.pairs`/`.pairsam` inputs; `--max-nmerge`, `--tmpdir`, `--memory`, `--compress-program`, `--nproc`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out`, `--keep-first-header`/`--no-keep-first-header`, and `--concatenate`/`--no-concatenate` explicitly not implemented |
 | `parse2` | optional `SAM_PATH` | `-c`/`--chroms-path`, `-o`/`--output`, `--report-position`, `--report-orientation`, `--assembly`, `--min-mapq`, `--max-inter-align-gap`, `--max-insert-size`, `--dedup-max-mismatch`, `--single-end`, `--expand`/`--no-expand`, `--max-expansion-depth`, `--add-pair-index`, `--flip`/`--no-flip`, `--add-columns`, `--drop-readid`/`--keep-readid`, `--readid-transform`, `--drop-seq`/`--keep-seq`, `--drop-sam`/`--keep-sam`, `--output-parsed-alignments`, `--output-stats`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
 | `phase` | optional `PAIRS_PATH` | `-o`/`--output`, `--phase-suffixes`, `--clean-output`, `--tag-mode`, `--report-scores`/`--no-report-scores`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |

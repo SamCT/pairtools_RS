@@ -1,6 +1,7 @@
 mod cli;
 mod dedup;
 mod flip;
+mod markasdup;
 mod merge;
 mod parse;
 mod select;
@@ -27,7 +28,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::Restrict(_) => unsupported_command("restrict"),
         Commands::Filterbycov(_) => unsupported_command("filterbycov"),
         Commands::Phase(_) => unsupported_command("phase"),
-        Commands::Markasdup(_) => unsupported_command("markasdup"),
+        Commands::Markasdup(a) => markasdup::cmd_markasdup(a),
         Commands::Sample(_) => unsupported_command("sample"),
         Commands::Header(_) => unsupported_command("header"),
         Commands::Scaling(_) => unsupported_command("scaling"),

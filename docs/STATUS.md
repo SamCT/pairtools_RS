@@ -14,7 +14,7 @@ M161 is deferred as nearly validated but not complete: parse stats match on avai
 
 ## Current commit
 
-`uncommitted` milestone roadmap expansion changes are in progress.
+`uncommitted` M171 markasdup core changes are in progress.
 
 ## Implemented behavior
 
@@ -137,6 +137,12 @@ Completed parse milestones are covered by the guarded oracle suite:
   - Oracle tests compare the committed `tests/data/mock.4flip.pairs` fixture against Python pairtools, including listed chromosomes, unannotated chromosomes, unmapped `!`, same-chromosome position flips, strand swaps, and pair-type reversal.
   - stdin/path input, `-o/--output`, and `.gz` BGZF output are tested.
   - `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out`, and `.lz4` remain loud non-goals.
+- M171 Markasdup core:
+  - `pairs-rs markasdup` marks every `.pairs`/`.pairsam` body row as duplicate by setting `pair_type` to `DD`.
+  - Pairsam `sam1` and `sam2` columns are updated where present: SAM duplicate flag `0x400` is set and `Yt:Z:DD` is added or replaced.
+  - stdin/path input, `-o`/`--output`, plain output, and `.gz` BGZF output are tested.
+  - Oracle tests compare normalized output against Python pairtools on committed `.pairs` and `.pairsam` fixtures.
+  - `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out`, and `.lz4` remain loud non-goals.
 - M162 Cross-tool threading validation:
   - `tests/scripts/test_cross_tool_threading_contract.sh` validates the current thread-option contract across implemented tools without benchmarking.
   - Sort is checked for identical decompressed output with `--nproc 1` and `--nproc 4` on a generated fixture large enough to exercise chunk sorting.
@@ -183,7 +189,7 @@ M250 phase core
 M260 scaling core
 ```
 
-M170 is now the active command milestone. M161 remains deferred with blocker notes in `milestone_results/M161.json`; M300 benchmarking remains blocked until real-data validation passes.
+M171 is now the active command milestone. M161 remains deferred with blocker notes in `milestone_results/M161.json`; M300 benchmarking remains blocked until real-data validation passes.
 
 ## Intentionally unsupported behavior
 
@@ -193,7 +199,8 @@ M170 is now the active command milestone. M161 remains deferred with blocker not
 - `merge` supports small sorted inputs only. Broad pairtools merge options such as `--nproc`, `--tmpdir`, `--memory`, `--compress-program`, `--keep-first-header`, and `--concatenate` remain explicitly unsupported.
 - `dedup` does not yet implement full pairtools stats, by-tile stats, alternate backends, parent IDs, extra-column duplicate matching, filtering, YAML output, chrom subsets, type casts, custom input/output shell commands, optimization claims, or full pairtools parity beyond scoped sorted-input routing.
 - `stats` does not yet implement YAML merge mode, expression filters, chrom subsets, by-tile duplicate statistics, type casts, custom compression shell commands, or broad uncommitted-fixture parity beyond the tested report surface.
-- Rust split and other downstream commands remain unimplemented until their command-specific milestones land.
+- `markasdup` does not yet implement threaded input/output or custom shell compression commands.
+- Remaining downstream commands such as `filterbycov`, `restrict`, `sample`, `header`, `parse2`, `phase`, and `scaling` remain unimplemented until their command-specific milestones land.
 - The all-Rust pipeline is dry-run validated only until M161 real-data oracle validation passes.
 - Compressed parse output and compressed parse stats output are not implemented.
 - No benchmark or speedup is claimed by M056.
@@ -295,19 +302,31 @@ scripts/cargo_guard.sh test
 
 M170 validation passed locally. The full guarded Rust test suite reported 46 `compat_oracle` tests and 1 `walks_oracle` test passing.
 
+Validation commands for M171:
+
+```bash
+python3 scripts/milestone_gate.py pre --milestone M171
+scripts/cargo_guard.sh check
+scripts/cargo_guard.sh test
+```
+
+M171 validation passed locally. The full guarded Rust test suite reported 51 `compat_oracle` tests and 1 `walks_oracle` test passing.
+
 ## Validation not performed and why
 
 - Benchmarks were not run because M162 is a validation-contract milestone and M161 real-data oracle validation has not passed.
 - Real full-size production data was not run by this script; it validates the exact production command shape on a small pipeline-style sorted pairsam fixture and compares routing against Python pairtools.
 - M161 full external validation was not run because `/mnt/d/pairtools_RS_test` is missing the exact all-Rust pipeline oracle outputs and BWA index files listed above.
 - Full nodup/unmapped readID routing comparison on the full external artifacts was not run in this pass; duplicate-output readID routing already exposes a mismatch that must be investigated before claiming M161 parity.
+- Benchmarks were not run for M171 because markasdup core is a correctness milestone, not a performance milestone.
+- M171 was not validated on full production data; it is scoped to committed `.pairs` and `.pairsam` oracle fixtures.
 - The requested next-milestone planning and automation scaffolding was not added under M140 because the active milestone allows only `src/cli.rs`, `src/main.rs`, `src/split.rs`, `tests/**`, `docs/**`, `milestones/ACTIVE_MILESTONE`, and `milestones/M140-split-core.json`.
 - M140 does not allow the required planning files: `milestones/README.md`, new milestone registry JSON files, `Makefile`, `milestone_results/**`, or new automation scripts. A planning/governance milestone such as M007 registry sync or M005 autonomous runner must become active before those files can be changed.
 - That previous stop was correct: M140 forbids governance and automation files. The current task intentionally uses M000 with `--allow-nonactive` to bootstrap the governance files and then makes M007 active.
 
 ## Cargo required
 
-M161 setup changed shell/docs/result files only. Cargo was not required or run.
+M171 changed Rust source and tests. Cargo validation was required and run through `scripts/cargo_guard.sh check` and `scripts/cargo_guard.sh test`.
 
 ## External real-data oracle status
 
@@ -321,7 +340,7 @@ Recommended sequence after M007 completion:
 M005 -> M006 -> M140 -> M141 -> M160 -> M161 -> M300
 ```
 
-M171 is active. Recommended implementation sequence is M171 -> M180 -> M190 -> M191 -> M192 -> M193 -> M194 -> M200 -> M210 -> M220 -> M230 -> M240 -> M250 -> M260, with M300 benchmarking only after real-data validation. Add the exact pairtools-generated `merged.*` oracle outputs and BWA index prefix to `/mnt/d/pairtools_RS_test`, then rerun:
+M171 is active. After M171 is committed, recommended implementation sequence is M180 -> M190 -> M191 -> M192 -> M193 -> M194 -> M200 -> M210 -> M220 -> M230 -> M240 -> M250 -> M260, with M300 benchmarking only after real-data validation. Add the exact pairtools-generated `merged.*` oracle outputs and BWA index prefix to `/mnt/d/pairtools_RS_test`, then rerun:
 
 ```bash
 bash tests/scripts/test_all_rust_pipeline_real_oracle.sh

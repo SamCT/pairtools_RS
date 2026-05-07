@@ -180,6 +180,14 @@ fn normalize_flip_output(text: &str) -> String {
         + "\n"
 }
 
+fn normalize_markasdup_output(text: &str) -> String {
+    text.lines()
+        .filter(|line| !line.starts_with("#samheader: @PG\tID:pairtools_markasdup"))
+        .collect::<Vec<_>>()
+        .join("\n")
+        + "\n"
+}
+
 fn normalize_merge_output(text: &str) -> String {
     text.lines()
         .filter(|line| !line.starts_with("#samheader: @PG\tID:pairtools_merge"))
@@ -780,6 +788,98 @@ fn merge_rejects_unsupported_features_loudly() {
             "tests/oracle/sort_simple.expected.pairs",
         ],
         "not implemented: pairtools merge --concatenate",
+    );
+}
+
+#[test]
+fn markasdup_pairsam_matches_pairtools_1_1_3_oracle() {
+    let input = "tests/data/mock.pairsam";
+    let args = ["markasdup", input];
+    assert_eq!(
+        normalize_markasdup_output(&run_pairs_rs(&args)),
+        normalize_markasdup_output(&run_pairtools(&args))
+    );
+}
+
+#[test]
+fn markasdup_pairs_without_sam_matches_pairtools_1_1_3_oracle() {
+    let input = "tests/data/mock.4flip.pairs";
+    let args = ["markasdup", input];
+    assert_eq!(
+        normalize_markasdup_output(&run_pairs_rs(&args)),
+        normalize_markasdup_output(&run_pairtools(&args))
+    );
+}
+
+#[test]
+fn markasdup_sets_pairsam_sam_duplicate_flags_and_yt_tags() {
+    let output = run_pairs_rs(&["markasdup", "tests/data/mock.pairsam"]);
+    let first_body = output
+        .lines()
+        .find(|line| !line.starts_with('#') && !line.is_empty())
+        .unwrap();
+    let fields: Vec<&str> = first_body.split('\t').collect();
+    assert_eq!(fields[7], "DD");
+    for sam_col in [8, 9] {
+        let sam_fields: Vec<&str> = fields[sam_col].split('\x19').collect();
+        let flag: u16 = sam_fields[1].parse().unwrap();
+        assert!(flag & 0x400 != 0, "{sam_col} missing duplicate flag");
+        assert!(
+            sam_fields.contains(&"Yt:Z:DD"),
+            "{sam_col} missing Yt:Z:DD"
+        );
+    }
+}
+
+#[test]
+fn markasdup_supports_stdin_output_and_gz_output() {
+    let input = "tests/data/mock.pairsam";
+    let expected = run_pairs_rs(&["markasdup", input]);
+    let input_bytes = fs::read(input).unwrap();
+    let from_stdin = run_pairs_rs_with_stdin(&["markasdup"], &input_bytes);
+    assert_eq!(
+        normalize_markasdup_output(&from_stdin),
+        normalize_markasdup_output(&expected)
+    );
+
+    let tmp = TempDir::new().unwrap();
+    let plain = tmp.path().join("marked.pairsam");
+    let gz = tmp.path().join("marked.pairsam.gz");
+    let plain_s = plain.to_string_lossy();
+    let gz_s = gz.to_string_lossy();
+
+    run_pairs_rs_to_path(&["markasdup", "-o", plain_s.as_ref(), input]);
+    assert_eq!(
+        normalize_markasdup_output(&fs::read_to_string(&plain).unwrap()),
+        normalize_markasdup_output(&expected)
+    );
+
+    run_pairs_rs_to_path(&["markasdup", "-o", gz_s.as_ref(), input]);
+    assert_bgzip_compatible(&gz);
+    assert_eq!(
+        normalize_markasdup_output(&String::from_utf8(read_gzip_with_gzip(&gz)).unwrap()),
+        normalize_markasdup_output(&expected)
+    );
+}
+
+#[test]
+fn markasdup_rejects_unsupported_features_loudly() {
+    let input = "tests/data/mock.pairsam";
+    assert_pairs_rs_failure(
+        &["markasdup", "--nproc-in", "2", input],
+        "not implemented: pairtools markasdup --nproc-in",
+    );
+    assert_pairs_rs_failure(
+        &["markasdup", "--nproc-out", "2", input],
+        "not implemented: pairtools markasdup --nproc-out",
+    );
+    assert_pairs_rs_failure(
+        &["markasdup", "--cmd-in", "cat", input],
+        "not implemented: pairtools markasdup --cmd-in",
+    );
+    assert_pairs_rs_failure(
+        &["markasdup", "--cmd-out", "cat", input],
+        "not implemented: pairtools markasdup --cmd-out",
     );
 }
 
@@ -1634,7 +1734,6 @@ fn missing_pairtools_commands_exist_but_fail_loudly() {
         ("restrict", vec!["--frags", "frags.bed", "input.pairs"]),
         ("filterbycov", vec!["--max-cov", "3", "input.pairs"]),
         ("phase", vec!["--phase-suffixes", "PAT,MAT", "input.pairs"]),
-        ("markasdup", vec!["input.pairsam"]),
         ("sample", vec!["--seed", "1", "0.5", "input.pairs"]),
         ("header", vec!["generate", "input.pairs"]),
         ("scaling", vec!["input.pairs"]),
