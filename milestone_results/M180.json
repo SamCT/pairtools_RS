@@ -1,0 +1,29 @@
+{
+  "milestone": "M180",
+  "commit": "UNKNOWN",
+  "commands_run": [
+    {
+      "command": "python3 scripts/milestone_gate.py pre --milestone M180",
+      "status": "pass",
+      "log_path": "target/codex_task_state/M180.pre.json"
+    },
+    {
+      "command": "scripts/cargo_guard.sh check",
+      "status": "pass",
+      "log_path": "target/codex_logs/cargo_check_20260507T034826Z.log"
+    },
+    {
+      "command": "scripts/cargo_guard.sh test",
+      "status": "pass",
+      "log_path": "target/codex_logs/cargo_test_20260507T034902Z.log"
+    }
+  ],
+  "passed": true,
+  "artifacts": [
+    "src/select.rs",
+    "tests/compat_oracle.rs",
+    "target/codex_logs/cargo_check_20260507T034826Z.log",
+    "target/codex_logs/cargo_test_20260507T034902Z.log"
+  ],
+  "blockers": []
+}

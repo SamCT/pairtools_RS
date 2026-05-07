@@ -8,20 +8,28 @@ use std::path::Path;
 
 pub fn cmd_select(args: SelectArgs) -> Result<(), Box<dyn std::error::Error>> {
     reject_unsupported_select_options(&args)?;
-    let predicate = PairTypePredicate::parse(&args.condition)?;
     let mut reader = open_input(args.input.as_deref())?;
     let (headers, first_body_line) = read_header(reader.as_mut())?;
-    let pair_type_column = pair_type_column_from_header(&headers)?;
+    let columns = Columns::from_header(&headers)?;
+    let predicate = Expr::parse(&args.condition)?;
+    predicate.validate_columns(&columns)?;
     let command_line = std::env::args().collect::<Vec<_>>().join(" ");
     let headers = append_select_pg(&headers, &command_line);
     let headers = canonical_select_headers(&headers);
 
     let mut out = open_output(args.output.as_deref())?;
+    let mut rest = match args.output_rest.as_deref() {
+        Some(path) => Some(open_output(Some(path))?),
+        None => None,
+    };
     for header in &headers {
         writeln!(out, "{header}")?;
+        if let Some(rest) = rest.as_mut() {
+            writeln!(rest, "{header}")?;
+        }
     }
     if let Some(line) = first_body_line {
-        write_selected_line(&mut out, &line, pair_type_column, &predicate)?;
+        write_selected_line(&mut out, rest.as_mut(), &line, &columns, &predicate)?;
     }
     let mut line = String::new();
     loop {
@@ -30,18 +38,18 @@ pub fn cmd_select(args: SelectArgs) -> Result<(), Box<dyn std::error::Error>> {
             break;
         }
         let trimmed = trim_line_end(&line).to_string();
-        write_selected_line(&mut out, &trimmed, pair_type_column, &predicate)?;
+        write_selected_line(&mut out, rest.as_mut(), &trimmed, &columns, &predicate)?;
     }
     out.flush()?;
+    if let Some(rest) = rest.as_mut() {
+        rest.flush()?;
+    }
     Ok(())
 }
 
 fn reject_unsupported_select_options(
     args: &SelectArgs,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    if args.output_rest.is_some() {
-        return Err("not implemented: pairtools select --output-rest".into());
-    }
     if args.chrom_subset.is_some() {
         return Err("not implemented: pairtools select --chrom-subset".into());
     }
@@ -67,51 +75,6 @@ fn reject_unsupported_select_options(
         return Err("not implemented: pairtools select --cmd-out".into());
     }
     Ok(())
-}
-
-struct PairTypePredicate {
-    value: String,
-}
-
-impl PairTypePredicate {
-    fn parse(condition: &str) -> Result<Self, Box<dyn std::error::Error>> {
-        let mut text = condition.trim();
-        if text.starts_with('(') && text.ends_with(')') {
-            text = text[1..text.len() - 1].trim();
-        }
-        let Some((left, right)) = text.split_once("==") else {
-            return Err(format!("not implemented: pairtools select condition {condition}").into());
-        };
-        if left.trim() != "pair_type" {
-            return Err(format!("not implemented: pairtools select condition {condition}").into());
-        }
-        let value = parse_string_literal(right.trim())
-            .ok_or_else(|| format!("not implemented: pairtools select condition {condition}"))?;
-        Ok(Self { value })
-    }
-
-    fn matches(&self, pair_type: &str) -> bool {
-        pair_type == self.value
-    }
-}
-
-fn parse_string_literal(value: &str) -> Option<String> {
-    if value.len() < 2 {
-        return None;
-    }
-    let bytes = value.as_bytes();
-    let quote = bytes[0];
-    if quote != b'"' && quote != b'\'' {
-        return None;
-    }
-    if bytes[value.len() - 1] != quote {
-        return None;
-    }
-    let inner = &value[1..value.len() - 1];
-    if inner.contains('\\') {
-        return None;
-    }
-    Some(inner.to_string())
 }
 
 fn open_input(path: Option<&Path>) -> Result<Box<dyn BufRead>, Box<dyn std::error::Error>> {
@@ -165,39 +128,410 @@ fn read_header(
     }
 }
 
-fn pair_type_column_from_header(
-    headers: &[String],
-) -> Result<usize, Box<dyn std::error::Error>> {
-    let columns_line = headers
-        .iter()
-        .find(|line| line.starts_with("#columns:"))
-        .ok_or("Input .pairs/.pairsam header is missing #columns")?;
-    let columns: Vec<&str> = columns_line
-        .split_once(':')
-        .map(|(_, rest)| rest)
-        .unwrap_or("")
-        .split_whitespace()
-        .collect();
-    columns
-        .iter()
-        .position(|column| *column == "pair_type")
-        .ok_or_else(|| "Input .pairs/.pairsam header is missing pair_type column".into())
+struct Columns {
+    names: Vec<String>,
+}
+
+impl Columns {
+    fn from_header(headers: &[String]) -> Result<Self, Box<dyn std::error::Error>> {
+        let columns_line = headers
+            .iter()
+            .find(|line| line.starts_with("#columns:"))
+            .ok_or("Input .pairs/.pairsam header is missing #columns")?;
+        let names: Vec<String> = columns_line
+            .split_once(':')
+            .map(|(_, rest)| rest)
+            .unwrap_or("")
+            .split_whitespace()
+            .map(str::to_string)
+            .collect();
+        if names.is_empty() {
+            return Err("Input .pairs/.pairsam header has empty #columns".into());
+        }
+        Ok(Self { names })
+    }
+
+    fn index(&self, name: &str) -> Option<usize> {
+        self.names.iter().position(|column| column == name)
+    }
+
+    fn is_numeric(&self, name: &str) -> bool {
+        matches!(
+            name,
+            "pos1" | "pos2" | "mapq1" | "mapq2" | "read_len1" | "read_len2"
+        ) || name.starts_with("pos5")
+            || name.starts_with("pos3")
+            || name.starts_with("frag")
+    }
 }
 
 fn write_selected_line(
     out: &mut Box<dyn Write>,
+    rest: Option<&mut Box<dyn Write>>,
     line: &str,
-    pair_type_column: usize,
-    predicate: &PairTypePredicate,
-) -> io::Result<()> {
+    columns: &Columns,
+    predicate: &Expr,
+) -> Result<(), Box<dyn std::error::Error>> {
     if line.is_empty() {
         return Ok(());
     }
-    let pair_type = line.split('\t').nth(pair_type_column).unwrap_or("");
-    if predicate.matches(pair_type) {
+    let fields: Vec<&str> = line.split('\t').collect();
+    if predicate.eval(&fields, columns)? {
         writeln!(out, "{line}")?;
+    } else if let Some(rest) = rest {
+        writeln!(rest, "{line}")?;
     }
     Ok(())
+}
+
+#[derive(Clone, Debug)]
+enum Expr {
+    Compare(Operand, CmpOp, Operand),
+    And(Box<Expr>, Box<Expr>),
+    Or(Box<Expr>, Box<Expr>),
+    Not(Box<Expr>),
+}
+
+impl Expr {
+    fn parse(condition: &str) -> Result<Self, Box<dyn std::error::Error>> {
+        let tokens = tokenize(condition)?;
+        let mut parser = ParserState { tokens, pos: 0, condition };
+        let expr = parser.parse_or()?;
+        if !matches!(parser.peek(), Token::End) {
+            return Err(parser.error("unexpected trailing tokens").into());
+        }
+        Ok(expr)
+    }
+
+    fn validate_columns(&self, columns: &Columns) -> Result<(), Box<dyn std::error::Error>> {
+        match self {
+            Expr::Compare(left, _, right) => {
+                left.validate_columns(columns)?;
+                right.validate_columns(columns)?;
+            }
+            Expr::And(left, right) | Expr::Or(left, right) => {
+                left.validate_columns(columns)?;
+                right.validate_columns(columns)?;
+            }
+            Expr::Not(inner) => inner.validate_columns(columns)?,
+        }
+        Ok(())
+    }
+
+    fn eval(
+        &self,
+        fields: &[&str],
+        columns: &Columns,
+    ) -> Result<bool, Box<dyn std::error::Error>> {
+        match self {
+            Expr::Compare(left, op, right) => compare_values(
+                left.eval(fields, columns)?,
+                *op,
+                right.eval(fields, columns)?,
+            ),
+            Expr::And(left, right) => Ok(left.eval(fields, columns)? && right.eval(fields, columns)?),
+            Expr::Or(left, right) => Ok(left.eval(fields, columns)? || right.eval(fields, columns)?),
+            Expr::Not(inner) => Ok(!inner.eval(fields, columns)?),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+enum CmpOp {
+    Eq,
+    Ne,
+    Lt,
+    Le,
+    Gt,
+    Ge,
+}
+
+#[derive(Clone, Debug)]
+enum Operand {
+    Column(String),
+    String(String),
+    Number(f64),
+}
+
+impl Operand {
+    fn validate_columns(&self, columns: &Columns) -> Result<(), Box<dyn std::error::Error>> {
+        if let Operand::Column(name) = self {
+            if columns.index(name).is_none() {
+                return Err(format!("not implemented: pairtools select unknown column {name}").into());
+            }
+        }
+        Ok(())
+    }
+
+    fn eval(
+        &self,
+        fields: &[&str],
+        columns: &Columns,
+    ) -> Result<EvalValue, Box<dyn std::error::Error>> {
+        match self {
+            Operand::Column(name) => {
+                let Some(index) = columns.index(name) else {
+                    return Err(format!("not implemented: pairtools select unknown column {name}").into());
+                };
+                let value = fields.get(index).copied().unwrap_or("");
+                Ok(EvalValue {
+                    text: value.to_string(),
+                    number: value.parse::<f64>().ok(),
+                    prefer_numeric: columns.is_numeric(name),
+                })
+            }
+            Operand::String(value) => Ok(EvalValue {
+                text: value.clone(),
+                number: None,
+                prefer_numeric: false,
+            }),
+            Operand::Number(value) => Ok(EvalValue {
+                text: format_numeric(*value),
+                number: Some(*value),
+                prefer_numeric: true,
+            }),
+        }
+    }
+}
+
+struct EvalValue {
+    text: String,
+    number: Option<f64>,
+    prefer_numeric: bool,
+}
+
+fn compare_values(
+    left: EvalValue,
+    op: CmpOp,
+    right: EvalValue,
+) -> Result<bool, Box<dyn std::error::Error>> {
+    let numeric = left.prefer_numeric || right.prefer_numeric;
+    if numeric {
+        let Some(left) = left.number else {
+            return Ok(matches!(op, CmpOp::Ne));
+        };
+        let Some(right) = right.number else {
+            return Ok(matches!(op, CmpOp::Ne));
+        };
+        return Ok(match op {
+            CmpOp::Eq => left == right,
+            CmpOp::Ne => left != right,
+            CmpOp::Lt => left < right,
+            CmpOp::Le => left <= right,
+            CmpOp::Gt => left > right,
+            CmpOp::Ge => left >= right,
+        });
+    }
+
+    Ok(match op {
+        CmpOp::Eq => left.text == right.text,
+        CmpOp::Ne => left.text != right.text,
+        CmpOp::Lt => left.text < right.text,
+        CmpOp::Le => left.text <= right.text,
+        CmpOp::Gt => left.text > right.text,
+        CmpOp::Ge => left.text >= right.text,
+    })
+}
+
+fn format_numeric(value: f64) -> String {
+    if value.fract() == 0.0 {
+        format!("{}", value as i64)
+    } else {
+        value.to_string()
+    }
+}
+
+#[derive(Clone, Debug)]
+enum Token {
+    Ident(String),
+    String(String),
+    Number(f64),
+    And,
+    Or,
+    Not,
+    Eq,
+    Ne,
+    Lt,
+    Le,
+    Gt,
+    Ge,
+    LParen,
+    RParen,
+    End,
+}
+
+fn tokenize(condition: &str) -> Result<Vec<Token>, Box<dyn std::error::Error>> {
+    let bytes = condition.as_bytes();
+    let mut tokens = Vec::new();
+    let mut i = 0;
+    while i < bytes.len() {
+        let b = bytes[i];
+        if b.is_ascii_whitespace() {
+            i += 1;
+        } else if b == b'(' {
+            tokens.push(Token::LParen);
+            i += 1;
+        } else if b == b')' {
+            tokens.push(Token::RParen);
+            i += 1;
+        } else if b == b'=' && bytes.get(i + 1) == Some(&b'=') {
+            tokens.push(Token::Eq);
+            i += 2;
+        } else if b == b'!' && bytes.get(i + 1) == Some(&b'=') {
+            tokens.push(Token::Ne);
+            i += 2;
+        } else if b == b'<' && bytes.get(i + 1) == Some(&b'=') {
+            tokens.push(Token::Le);
+            i += 2;
+        } else if b == b'>' && bytes.get(i + 1) == Some(&b'=') {
+            tokens.push(Token::Ge);
+            i += 2;
+        } else if b == b'<' {
+            tokens.push(Token::Lt);
+            i += 1;
+        } else if b == b'>' {
+            tokens.push(Token::Gt);
+            i += 1;
+        } else if b == b'\'' || b == b'"' {
+            let quote = b;
+            i += 1;
+            let start = i;
+            while i < bytes.len() && bytes[i] != quote {
+                if bytes[i] == b'\\' {
+                    return Err(condition_error(condition, "escaped string literals are not supported").into());
+                }
+                i += 1;
+            }
+            if i == bytes.len() {
+                return Err(condition_error(condition, "unterminated string literal").into());
+            }
+            let value = std::str::from_utf8(&bytes[start..i])?.to_string();
+            tokens.push(Token::String(value));
+            i += 1;
+        } else if b.is_ascii_digit()
+            || (b == b'-' && bytes.get(i + 1).is_some_and(u8::is_ascii_digit))
+        {
+            let start = i;
+            i += 1;
+            while i < bytes.len() && (bytes[i].is_ascii_digit() || bytes[i] == b'.') {
+                i += 1;
+            }
+            let raw = std::str::from_utf8(&bytes[start..i])?;
+            let value = raw
+                .parse::<f64>()
+                .map_err(|_| condition_error(condition, "invalid numeric literal"))?;
+            tokens.push(Token::Number(value));
+        } else if b.is_ascii_alphabetic() || b == b'_' {
+            let start = i;
+            i += 1;
+            while i < bytes.len() && (bytes[i].is_ascii_alphanumeric() || bytes[i] == b'_') {
+                i += 1;
+            }
+            let ident = std::str::from_utf8(&bytes[start..i])?;
+            match ident {
+                "and" => tokens.push(Token::And),
+                "or" => tokens.push(Token::Or),
+                "not" => tokens.push(Token::Not),
+                _ => tokens.push(Token::Ident(ident.to_string())),
+            }
+        } else {
+            return Err(condition_error(condition, "unsupported expression syntax").into());
+        }
+    }
+    tokens.push(Token::End);
+    Ok(tokens)
+}
+
+struct ParserState<'a> {
+    tokens: Vec<Token>,
+    pos: usize,
+    condition: &'a str,
+}
+
+impl ParserState<'_> {
+    fn parse_or(&mut self) -> Result<Expr, Box<dyn std::error::Error>> {
+        let mut expr = self.parse_and()?;
+        while matches!(self.peek(), Token::Or) {
+            self.bump();
+            let rhs = self.parse_and()?;
+            expr = Expr::Or(Box::new(expr), Box::new(rhs));
+        }
+        Ok(expr)
+    }
+
+    fn parse_and(&mut self) -> Result<Expr, Box<dyn std::error::Error>> {
+        let mut expr = self.parse_not()?;
+        while matches!(self.peek(), Token::And) {
+            self.bump();
+            let rhs = self.parse_not()?;
+            expr = Expr::And(Box::new(expr), Box::new(rhs));
+        }
+        Ok(expr)
+    }
+
+    fn parse_not(&mut self) -> Result<Expr, Box<dyn std::error::Error>> {
+        if matches!(self.peek(), Token::Not) {
+            self.bump();
+            return Ok(Expr::Not(Box::new(self.parse_not()?)));
+        }
+        self.parse_atom_expr()
+    }
+
+    fn parse_atom_expr(&mut self) -> Result<Expr, Box<dyn std::error::Error>> {
+        if matches!(self.peek(), Token::LParen) {
+            self.bump();
+            let expr = self.parse_or()?;
+            if !matches!(self.peek(), Token::RParen) {
+                return Err(self.error("missing closing parenthesis").into());
+            }
+            self.bump();
+            return Ok(expr);
+        }
+
+        let left = self.parse_operand()?;
+        let op = self.parse_cmp_op()?;
+        let right = self.parse_operand()?;
+        Ok(Expr::Compare(left, op, right))
+    }
+
+    fn parse_operand(&mut self) -> Result<Operand, Box<dyn std::error::Error>> {
+        match self.bump() {
+            Token::Ident(name) => Ok(Operand::Column(name)),
+            Token::String(value) => Ok(Operand::String(value)),
+            Token::Number(value) => Ok(Operand::Number(value)),
+            _ => Err(self.error("expected column or literal").into()),
+        }
+    }
+
+    fn parse_cmp_op(&mut self) -> Result<CmpOp, Box<dyn std::error::Error>> {
+        match self.bump() {
+            Token::Eq => Ok(CmpOp::Eq),
+            Token::Ne => Ok(CmpOp::Ne),
+            Token::Lt => Ok(CmpOp::Lt),
+            Token::Le => Ok(CmpOp::Le),
+            Token::Gt => Ok(CmpOp::Gt),
+            Token::Ge => Ok(CmpOp::Ge),
+            _ => Err(self.error("expected comparison operator").into()),
+        }
+    }
+
+    fn peek(&self) -> &Token {
+        self.tokens.get(self.pos).unwrap_or(&Token::End)
+    }
+
+    fn bump(&mut self) -> Token {
+        let token = self.tokens.get(self.pos).cloned().unwrap_or(Token::End);
+        self.pos += 1;
+        token
+    }
+
+    fn error(&self, detail: &str) -> String {
+        condition_error(self.condition, detail)
+    }
+}
+
+fn condition_error(condition: &str, detail: &str) -> String {
+    format!("not implemented: pairtools select condition {condition}: {detail}")
 }
 
 fn append_select_pg(headers: &[String], command_line: &str) -> Vec<String> {

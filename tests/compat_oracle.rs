@@ -54,6 +54,21 @@ fn run_pairtools(args: &[&str]) -> String {
     String::from_utf8(output.stdout).unwrap()
 }
 
+fn assert_pairtools_success(args: &[&str]) {
+    let oracle_lock_guard = ORACLE_LOCK.lock().unwrap();
+    let output = Command::new("pixi")
+        .args(["run", "pairtools"])
+        .args(args)
+        .output()
+        .unwrap();
+    drop(oracle_lock_guard);
+    assert!(
+        output.status.success(),
+        "pairtools oracle failed:\n{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
 fn assert_pairs_rs_success(args: &[&str]) {
     let bin = env!("CARGO_BIN_EXE_pairs-rs");
     let output = Command::new(bin).args(args).output().unwrap();
@@ -584,6 +599,74 @@ fn select_pair_type_uu_matches_pairtools_1_1_3_oracle() {
 }
 
 #[test]
+fn select_expression_engine_matches_pairtools_1_1_3_oracle() {
+    for (condition, input) in [
+        (
+            "chrom1 == \"chr1\" and pos2 >= 20",
+            "tests/data/mock.4stats.pairs",
+        ),
+        (
+            "(pair_type == \"UU\" and pos1 <= 1) or (chrom1 == \"!\" and pair_type != \"WW\")",
+            "tests/data/mock.4stats.pairs",
+        ),
+        (
+            "not (pair_type == \"UU\") or pos1 > 100",
+            "tests/data/mock.pairsam",
+        ),
+    ] {
+        let args = ["select", condition, input];
+        assert_eq!(
+            normalize_select_output(&run_pairs_rs(&args)),
+            normalize_select_output(&run_pairtools(&args)),
+            "{condition} on {input}"
+        );
+    }
+}
+
+#[test]
+fn select_output_rest_matches_pairtools_1_1_3_oracle() {
+    let input = "tests/data/mock.4stats.pairs";
+    let condition = "pos1 > 1 or pair_type == \"NU\"";
+    let tmp = TempDir::new().unwrap();
+    let pairs_rs_selected = tmp.path().join("pairs-rs.selected.pairs");
+    let pairs_rs_rest = tmp.path().join("pairs-rs.rest.pairs");
+    let pairtools_selected = tmp.path().join("pairtools.selected.pairs");
+    let pairtools_rest = tmp.path().join("pairtools.rest.pairs");
+    let pairs_rs_selected_s = pairs_rs_selected.to_string_lossy();
+    let pairs_rs_rest_s = pairs_rs_rest.to_string_lossy();
+    let pairtools_selected_s = pairtools_selected.to_string_lossy();
+    let pairtools_rest_s = pairtools_rest.to_string_lossy();
+
+    run_pairs_rs_to_path(&[
+        "select",
+        condition,
+        "-o",
+        pairs_rs_selected_s.as_ref(),
+        "--output-rest",
+        pairs_rs_rest_s.as_ref(),
+        input,
+    ]);
+    assert_pairtools_success(&[
+        "select",
+        condition,
+        "-o",
+        pairtools_selected_s.as_ref(),
+        "--output-rest",
+        pairtools_rest_s.as_ref(),
+        input,
+    ]);
+
+    assert_eq!(
+        normalize_select_output(&fs::read_to_string(&pairs_rs_selected).unwrap()),
+        normalize_select_output(&fs::read_to_string(&pairtools_selected).unwrap())
+    );
+    assert_eq!(
+        normalize_select_output(&fs::read_to_string(&pairs_rs_rest).unwrap()),
+        normalize_select_output(&fs::read_to_string(&pairtools_rest).unwrap())
+    );
+}
+
+#[test]
 fn select_writes_output_and_gz_output() {
     let input = "tests/data/mock.4stats.pairs";
     let expected = run_pairs_rs(&["select", "(pair_type == \"UU\")", input]);
@@ -622,18 +705,22 @@ fn select_writes_output_and_gz_output() {
 #[test]
 fn select_rejects_unsupported_features_loudly() {
     assert_pairs_rs_failure(
-        &["select", "chrom1 == \"chr1\"", "tests/data/mock.4stats.pairs"],
+        &[
+            "select",
+            "readID.startswith(\"read\")",
+            "tests/data/mock.4stats.pairs",
+        ],
         "not implemented: pairtools select condition",
     );
     assert_pairs_rs_failure(
         &[
             "select",
             "(pair_type == \"UU\")",
-            "--output-rest",
-            "rest.pairs",
+            "--chrom-subset",
+            "chr1",
             "tests/data/mock.4stats.pairs",
         ],
-        "not implemented: pairtools select --output-rest",
+        "not implemented: pairtools select --chrom-subset",
     );
     assert_pairs_rs_failure(
         &[

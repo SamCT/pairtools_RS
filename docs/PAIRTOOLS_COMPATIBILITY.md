@@ -48,6 +48,10 @@ M100 defines the downstream command roadmap in `docs/DOWNSTREAM_MILESTONES.md` a
 
 M110 implements a scoped `select` command for exact `pair_type == "VALUE"` predicates. The oracle tests cover `pairs-rs select '(pair_type == "UU")'` on small `.pairs` and `.pairsam` fixtures, `-o/--output`, BGZF `.gz` output, and loud failures for unsupported predicates/options. M110 does not implement the full pairtools expression engine.
 
+## M180 Select Expression Note
+
+M180 expands `pairs-rs select` to a bounded safe expression subset on committed fixtures. Supported expression syntax includes column references from `#columns`, quoted string equality/inequality, numeric comparisons, `and`, `or`, `not`, and parentheses. `--output-rest` is implemented and oracle-tested against Python pairtools. This is not arbitrary Python expression support: method calls, imports, startup code, type-cast hooks, chrom subsets, remove-columns, threaded/custom I/O options, and `.lz4` remain explicitly unsupported.
+
 ## M120 Merge Note
 
 M120 implements a scoped `merge` command for small already sorted `.pairs` and `.pairsam` inputs. The oracle tests cover `pairs-rs merge` on committed sorted fixtures, compatible header handling for a small pairsam fixture, `-o/--output`, BGZF `.gz` output, and loud failures for unsupported merge options. M120 does not implement pairtools merge parallelism, temporary intermediate merging, concatenation mode, custom compression commands, or broad header edge cases.
@@ -177,7 +181,7 @@ If an exact pairtools `.sorted.pairsam.gz` oracle and downstream `merged.*` outp
 
 M171 implements scoped `markasdup` duplicate marking for committed `.pairs` and `.pairsam` fixtures.
 
-M180 is the active next compatibility milestone for expanding the safe `select` expression subset.
+M180 expands the safe `select` expression subset for committed oracle fixtures.
 
 ## Planned Compatibility Expansion Milestones
 
@@ -231,7 +235,7 @@ These entries are roadmap items, not implemented behavior. Pairtools remains an 
 | `restrict` | explicitly not implemented |
 | `sample` | explicitly not implemented |
 | `scaling` | explicitly not implemented |
-| `select` | partial, oracle-gated exact `pair_type` equality |
+| `select` | partial, oracle-gated safe expression subset |
 | `split` | partial, oracle-gated pairsam split |
 | `stats` | partial, oracle-gated report, merge, YAML, and BGZF I/O |
 
@@ -371,7 +375,7 @@ These commands are present so they fail loudly instead of looking absent. Their 
 | `restrict` | optional `PAIRS_PATH` | `-f`/`--frags`, `-o`/`--output`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
 | `sample` | required `FRACTION`, optional `PAIRS_PATH` | `-o`/`--output`, `-s`/`--seed`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
 | `scaling` | zero or more `INPUT_PATH` values | `-o`/`--output`, `--view`/`--regions`, `--chunksize`, `--dist-range`, `--n-dist-bins-decade`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
-| `select` | required `CONDITION`, optional `PAIRS_PATH` | `-o`/`--output` implemented for exact `pair_type == "VALUE"` predicates; `--output-rest`, `--chrom-subset`, `--startup-code`, `-t`/`--type-cast`, `-r`/`--remove-columns`, `--nproc-in`, `--nproc-out`, `--cmd-in`, and `--cmd-out` explicitly not implemented |
+| `select` | required `CONDITION`, optional `PAIRS_PATH` | `-o`/`--output` and `--output-rest` implemented for a bounded safe subset of column references, string equality/inequality, numeric comparisons, `and`, `or`, `not`, and parentheses; Python-specific expressions, `--chrom-subset`, `--startup-code`, `-t`/`--type-cast`, `-r`/`--remove-columns`, `--nproc-in`, `--nproc-out`, `--cmd-in`, and `--cmd-out` explicitly not implemented |
 | `split` | optional `PAIRSAM_PATH` | `--output-pairs` and `--output-sam` implemented for scoped pairsam splitting; `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out`, `.lz4`, and BAM output explicitly not implemented |
 
 ## `header` Subcommands

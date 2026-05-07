@@ -14,7 +14,7 @@ M161 is deferred as nearly validated but not complete: parse stats match on avai
 
 ## Current commit
 
-`uncommitted` M000 transition to M180 is in progress after M171 completion commit `d233d2d877e5b14f6ecae2b333545b2c5b07e60a`.
+`uncommitted` M180 select expression engine changes are in progress after M171 completion commit `d233d2d877e5b14f6ecae2b333545b2c5b07e60a` and M180 activation commit `bdd0ec21a579f662750dd9bd7975289aa4b788a4`.
 
 ## Implemented behavior
 
@@ -64,6 +64,11 @@ Completed parse milestones are covered by the guarded oracle suite:
   - `pairs-rs select '(pair_type == "UU")'` matches pairtools oracle output on small `.pairs` and `.pairsam` fixtures after normalizing volatile select `@PG` command text.
   - `-o/--output` writes selected output to plain files and `.gz` BGZF output.
   - Unsupported predicates and unsupported select options fail loudly with `not implemented`.
+- M180 Select expression engine:
+  - `pairs-rs select` now supports a bounded safe expression subset: column references, string equality/inequality, numeric comparisons, `and`, `or`, `not`, and parentheses.
+  - `--output-rest` writes rejected rows to a separate output while selected rows go to stdout or `-o`.
+  - Oracle tests compare selected and rest outputs against Python pairtools on committed `.pairs` and `.pairsam` fixtures.
+  - Python-specific expression features, startup code, chrom subsets, type casts, remove-columns, threaded/custom I/O options, and `.lz4` remain loud non-goals.
 - M120 Merge core:
   - `pairs-rs merge` matches pairtools oracle output on a small sorted `.pairs` fixture.
   - Scoped sorted `.pairsam` merge coverage compares body output and compatible header structure after normalizing volatile merge `@PG` command text.
@@ -195,7 +200,7 @@ M171 is complete for committed oracle fixtures and M180 is now the active comman
 
 - Full pairtools `parse2` behavior is not implemented.
 - Non-adjacent repeated read names remain unsupported and fail loudly.
-- `select` supports only exact `pair_type == "VALUE"` predicates. The broader pairtools expression language is not implemented.
+- `select` supports a bounded safe subset: column references, string equality/inequality, numeric comparisons, `and`, `or`, `not`, and parentheses. Arbitrary Python expression execution and Python-specific method calls are not implemented.
 - `merge` supports small sorted inputs only. Broad pairtools merge options such as `--nproc`, `--tmpdir`, `--memory`, `--compress-program`, `--keep-first-header`, and `--concatenate` remain explicitly unsupported.
 - `dedup` does not yet implement full pairtools stats, by-tile stats, alternate backends, parent IDs, extra-column duplicate matching, filtering, YAML output, chrom subsets, type casts, custom input/output shell commands, optimization claims, or full pairtools parity beyond scoped sorted-input routing.
 - `stats` does not yet implement YAML merge mode, expression filters, chrom subsets, by-tile duplicate statistics, type casts, custom compression shell commands, or broad uncommitted-fixture parity beyond the tested report surface.
@@ -324,6 +329,16 @@ python3 scripts/codex_report.py --milestone M000
 git diff --check
 ```
 
+Validation commands for M180:
+
+```bash
+python3 scripts/milestone_gate.py pre --milestone M180
+scripts/cargo_guard.sh check
+scripts/cargo_guard.sh test
+```
+
+M180 validation passed locally. The full guarded Rust test suite reported 53 `compat_oracle` tests and 1 `walks_oracle` test passing.
+
 ## Validation not performed and why
 
 - Benchmarks were not run because M162 is a validation-contract milestone and M161 real-data oracle validation has not passed.
@@ -332,13 +347,15 @@ git diff --check
 - Full nodup/unmapped readID routing comparison on the full external artifacts was not run in this pass; duplicate-output readID routing already exposes a mismatch that must be investigated before claiming M161 parity.
 - Benchmarks were not run for M171 because markasdup core is a correctness milestone, not a performance milestone.
 - M171 was not validated on full production data; it is scoped to committed `.pairs` and `.pairsam` oracle fixtures.
+- Benchmarks were not run for M180 because select expression expansion is a correctness milestone, not a performance milestone.
+- M180 was not validated on full production data; it is scoped to committed `.pairs` and `.pairsam` oracle fixtures.
 - The requested next-milestone planning and automation scaffolding was not added under M140 because the active milestone allows only `src/cli.rs`, `src/main.rs`, `src/split.rs`, `tests/**`, `docs/**`, `milestones/ACTIVE_MILESTONE`, and `milestones/M140-split-core.json`.
 - M140 does not allow the required planning files: `milestones/README.md`, new milestone registry JSON files, `Makefile`, `milestone_results/**`, or new automation scripts. A planning/governance milestone such as M007 registry sync or M005 autonomous runner must become active before those files can be changed.
 - That previous stop was correct: M140 forbids governance and automation files. The current task intentionally uses M000 with `--allow-nonactive` to bootstrap the governance files and then makes M007 active.
 
 ## Cargo required
 
-M171 changed Rust source and tests. Cargo validation was required and run through `scripts/cargo_guard.sh check` and `scripts/cargo_guard.sh test`.
+M180 changed Rust source and tests. Cargo validation was required and run through `scripts/cargo_guard.sh check` and `scripts/cargo_guard.sh test`.
 
 ## External real-data oracle status
 
