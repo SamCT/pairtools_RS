@@ -26,7 +26,7 @@ pub enum Commands {
     Stats(StatsArgs),
     Split(SplitArgs),
     Parse2(UnsupportedArgs),
-    Flip(UnsupportedArgs),
+    Flip(FlipArgs),
     Restrict(UnsupportedArgs),
     Filterbycov(UnsupportedArgs),
     Phase(UnsupportedArgs),
@@ -34,6 +34,23 @@ pub enum Commands {
     Sample(UnsupportedArgs),
     Header(UnsupportedArgs),
     Scaling(UnsupportedArgs),
+}
+
+#[derive(clap::Args, Clone)]
+pub struct FlipArgs {
+    #[arg(short = 'c', long = "chroms-path")]
+    pub chroms_path: PathBuf,
+    #[arg(short = 'o', long)]
+    pub output: Option<PathBuf>,
+    #[arg(long = "nproc-in")]
+    pub nproc_in: Option<usize>,
+    #[arg(long = "nproc-out")]
+    pub nproc_out: Option<usize>,
+    #[arg(long = "cmd-in")]
+    pub cmd_in: Option<String>,
+    #[arg(long = "cmd-out")]
+    pub cmd_out: Option<String>,
+    pub input: Option<PathBuf>,
 }
 
 #[derive(clap::Args, Clone)]

@@ -131,6 +131,12 @@ Completed parse milestones are covered by the guarded oracle suite:
   - Available duplicate-output readID routing also differs: 6,953 duplicate readIDs are only in the pairtools duplicate output and 6,937 duplicate readIDs are only in the pairs-rs duplicate output.
   - The available split output is `rs_s01.outpairs.split.pairs`, a plain pairs text table. Treat it as the available split pairs artifact for M161 diagnostics; the `.pairs.gz` production name denotes the same semantic pairs table under compression and is still required for canonical final-output comparison.
   - M161 remains active and blocked; no all-Rust real-data parity claim is made.
+
+- M170 Flip core:
+  - `pairs-rs flip` implements scoped upper-triangle normalization for `.pairs`/`.pairsam` streams using `-c/--chroms-path`.
+  - Oracle tests compare the committed `tests/data/mock.4flip.pairs` fixture against Python pairtools, including listed chromosomes, unannotated chromosomes, unmapped `!`, same-chromosome position flips, strand swaps, and pair-type reversal.
+  - stdin/path input, `-o/--output`, and `.gz` BGZF output are tested.
+  - `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out`, and `.lz4` remain loud non-goals.
 - M162 Cross-tool threading validation:
   - `tests/scripts/test_cross_tool_threading_contract.sh` validates the current thread-option contract across implemented tools without benchmarking.
   - Sort is checked for identical decompressed output with `--nproc 1` and `--nproc 4` on a generated fixture large enough to exercise chunk sorting.
@@ -278,6 +284,17 @@ With `RUN_AVAILABLE_STAGE_COMPARISONS=1`, the harness also consumed the newly pr
 
 The same artifact pass reports that `rs_s01.outpairs.split.pairs` exists as a plain pairs text table. That file should be treated as the available split pairs artifact; it is not a separate semantic format from the production `.pairs.gz` table.
 
+
+Validation commands for M170:
+
+```bash
+python3 scripts/milestone_gate.py pre --milestone M170
+scripts/cargo_guard.sh check
+scripts/cargo_guard.sh test
+```
+
+M170 validation passed locally. The full guarded Rust test suite reported 46 `compat_oracle` tests and 1 `walks_oracle` test passing.
+
 ## Validation not performed and why
 
 - Benchmarks were not run because M162 is a validation-contract milestone and M161 real-data oracle validation has not passed.
@@ -304,7 +321,7 @@ Recommended sequence after M007 completion:
 M005 -> M006 -> M140 -> M141 -> M160 -> M161 -> M300
 ```
 
-M170 is active. Recommended implementation sequence is M170 -> M171 -> M180 -> M190 -> M191 -> M192 -> M193 -> M194 -> M200 -> M210 -> M220 -> M230 -> M240 -> M250 -> M260, with M300 benchmarking only after real-data validation. Add the exact pairtools-generated `merged.*` oracle outputs and BWA index prefix to `/mnt/d/pairtools_RS_test`, then rerun:
+M170 is implemented and pending milestone transition. Recommended implementation sequence is M171 -> M180 -> M190 -> M191 -> M192 -> M193 -> M194 -> M200 -> M210 -> M220 -> M230 -> M240 -> M250 -> M260, with M300 benchmarking only after real-data validation. Add the exact pairtools-generated `merged.*` oracle outputs and BWA index prefix to `/mnt/d/pairtools_RS_test`, then rerun:
 
 ```bash
 bash tests/scripts/test_all_rust_pipeline_real_oracle.sh

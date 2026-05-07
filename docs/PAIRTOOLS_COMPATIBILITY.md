@@ -101,6 +101,11 @@ M160 adds `scripts/run_hic_all_rust_pairs_rs_pipeline.sh`, a shell orchestration
 
 M162 adds `tests/scripts/test_cross_tool_threading_contract.sh`, a behavioral validation of the current threading option contract. The test checks that `pairs-rs sort --nproc 1` and `--nproc 4` produce identical decompressed BGZF output on a generated fixture large enough to exercise chunk sorting, that `pairs-rs stats --nproc-in/--nproc-out` produces identical decompressed output for single-threaded and threaded BGZF paths, and that the all-Rust pipeline dry-run propagates `SORT_THREADS` to `pairs-rs sort` and `samtools` command lines. It also checks that unsupported threaded options for parse, merge, dedup, select, and split fail loudly. M162 does not add runtime behavior and does not claim CPU utilization, throughput, or speedup.
 
+
+## M170 Flip Note
+
+M170 implements scoped `pairs-rs flip` behavior. The tested surface supports `-c/--chroms-path`, optional path/stdin input, `-o/--output`, plain output, and `.gz` BGZF output. Oracle tests compare normalized output against Python pairtools on `tests/data/mock.4flip.pairs`, covering listed chromosome order, unannotated chromosome lexicographic fallback, unmapped `!`, same-chromosome position flipping, side-specific column swaps, and `pair_type` reversal. `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out`, and `.lz4` remain explicitly unsupported.
+
 ## M161 Real-Data Oracle Status
 
 M161 adds `tests/scripts/test_all_rust_pipeline_real_oracle.sh` as the all-Rust real-data validation harness. The harness discovers the external fixture directory, required FASTQs, chrom sizes, assembly/MAPQ provenance, BWA index prefix, and exact pairtools-generated `merged.*` oracle outputs before running the all-Rust pipeline. When the oracle set is incomplete, it prints expected inputs, expected oracle files, expected candidate outputs, a pairtools oracle-generation command, and an all-Rust candidate command before exiting nonzero.
@@ -209,7 +214,7 @@ These entries are roadmap items, not implemented behavior. Pairtools remains an 
 | `sort` | partial, oracle-gated multithreaded default sort |
 | `dedup` | partial, oracle-gated sorted input routing |
 | `filterbycov` | explicitly not implemented |
-| `flip` | explicitly not implemented |
+| `flip` | partial, oracle-gated upper-triangle normalization |
 | `header` | explicitly not implemented |
 | `markasdup` | explicitly not implemented |
 | `merge` | partial, oracle-gated small sorted input merge |
@@ -350,7 +355,7 @@ These commands are present so they fail loudly instead of looking absent. Their 
 | Command | Arguments | Options |
 |---|---|---|
 | `filterbycov` | optional `PAIRS_PATH` | `-o`/`--output`, `--output-highcov`, `--output-unmapped`, `--output-stats`, `--max-cov`, `--max-dist`, `--method`, `--sep`, `--comment-char`, `--send-header-to`, `--c1`, `--c2`, `--p1`, `--p2`, `--s1`, `--s2`, `--unmapped-chrom`, `--mark-multi`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
-| `flip` | optional `PAIRS_PATH` | `-c`/`--chroms-path`, `-o`/`--output`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
+| `flip` | optional `PAIRS_PATH` | `-c`/`--chroms-path` and `-o`/`--output` implemented for path/stdin and plain/`.gz` BGZF I/O; `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out`, and `.lz4` explicitly not implemented |
 | `markasdup` | optional `PAIRSAM_PATH` | `-o`/`--output`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |
 | `merge` | zero or more `PAIRS_PATH` values | `-o`/`--output` implemented for small sorted `.pairs`/`.pairsam` inputs; `--max-nmerge`, `--tmpdir`, `--memory`, `--compress-program`, `--nproc`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out`, `--keep-first-header`/`--no-keep-first-header`, and `--concatenate`/`--no-concatenate` explicitly not implemented |
 | `parse2` | optional `SAM_PATH` | `-c`/`--chroms-path`, `-o`/`--output`, `--report-position`, `--report-orientation`, `--assembly`, `--min-mapq`, `--max-inter-align-gap`, `--max-insert-size`, `--dedup-max-mismatch`, `--single-end`, `--expand`/`--no-expand`, `--max-expansion-depth`, `--add-pair-index`, `--flip`/`--no-flip`, `--add-columns`, `--drop-readid`/`--keep-readid`, `--readid-transform`, `--drop-seq`/`--keep-seq`, `--drop-sam`/`--keep-sam`, `--output-parsed-alignments`, `--output-stats`, `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out` |

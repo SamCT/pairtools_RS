@@ -172,6 +172,14 @@ fn normalize_select_output(text: &str) -> String {
         + "\n"
 }
 
+fn normalize_flip_output(text: &str) -> String {
+    text.lines()
+        .filter(|line| !line.starts_with("#samheader: @PG\tID:pairtools_flip"))
+        .collect::<Vec<_>>()
+        .join("\n")
+        + "\n"
+}
+
 fn normalize_merge_output(text: &str) -> String {
     text.lines()
         .filter(|line| !line.starts_with("#samheader: @PG\tID:pairtools_merge"))
@@ -628,6 +636,71 @@ fn select_rejects_unsupported_features_loudly() {
             "tests/data/mock.4stats.pairs",
         ],
         "not implemented: pairtools select --nproc-in",
+    );
+}
+
+#[test]
+fn flip_matches_pairtools_on_pairs_fixture() {
+    let input = "tests/data/mock.4flip.pairs";
+    let chroms = "tests/data/mock.chrom.sizes";
+    let args = ["flip", "-c", chroms, input];
+    assert_eq!(
+        normalize_flip_output(&run_pairs_rs(&args)),
+        normalize_flip_output(&run_pairtools(&args))
+    );
+}
+
+#[test]
+fn flip_supports_stdin_output_and_gz_output() {
+    let input = "tests/data/mock.4flip.pairs";
+    let chroms = "tests/data/mock.chrom.sizes";
+    let expected = run_pairs_rs(&["flip", "-c", chroms, input]);
+    let input_bytes = fs::read(input).unwrap();
+    let from_stdin = run_pairs_rs_with_stdin(&["flip", "-c", chroms], &input_bytes);
+    assert_eq!(
+        normalize_flip_output(&from_stdin),
+        normalize_flip_output(&expected)
+    );
+
+    let tmp = TempDir::new().unwrap();
+    let plain = tmp.path().join("flipped.pairs");
+    let gz = tmp.path().join("flipped.pairs.gz");
+    let plain_s = plain.to_string_lossy();
+    let gz_s = gz.to_string_lossy();
+
+    run_pairs_rs_to_path(&["flip", "-c", chroms, "-o", plain_s.as_ref(), input]);
+    assert_eq!(
+        normalize_flip_output(&fs::read_to_string(&plain).unwrap()),
+        normalize_flip_output(&expected)
+    );
+
+    run_pairs_rs_to_path(&["flip", "-c", chroms, "-o", gz_s.as_ref(), input]);
+    assert_bgzip_compatible(&gz);
+    assert_eq!(
+        normalize_flip_output(&String::from_utf8(read_gzip_with_gzip(&gz)).unwrap()),
+        normalize_flip_output(&expected)
+    );
+}
+
+#[test]
+fn flip_rejects_unsupported_features_loudly() {
+    let input = "tests/data/mock.4flip.pairs";
+    let chroms = "tests/data/mock.chrom.sizes";
+    assert_pairs_rs_failure(
+        &["flip", "-c", chroms, "--nproc-in", "2", input],
+        "not implemented: pairtools flip --nproc-in",
+    );
+    assert_pairs_rs_failure(
+        &["flip", "-c", chroms, "--nproc-out", "2", input],
+        "not implemented: pairtools flip --nproc-out",
+    );
+    assert_pairs_rs_failure(
+        &["flip", "-c", chroms, "--cmd-in", "cat", input],
+        "not implemented: pairtools flip --cmd-in",
+    );
+    assert_pairs_rs_failure(
+        &["flip", "-c", chroms, "--cmd-out", "cat", input],
+        "not implemented: pairtools flip --cmd-out",
     );
 }
 
@@ -1558,7 +1631,6 @@ fn sort_rejects_accepted_but_unimplemented_pairtools_options_loudly() {
 fn missing_pairtools_commands_exist_but_fail_loudly() {
     for (command, args) in [
         ("parse2", vec!["--single-end", "input.sam"]),
-        ("flip", vec!["--chroms-path", "chrom.sizes", "input.pairs"]),
         ("restrict", vec!["--frags", "frags.bed", "input.pairs"]),
         ("filterbycov", vec!["--max-cov", "3", "input.pairs"]),
         ("phase", vec!["--phase-suffixes", "PAT,MAT", "input.pairs"]),

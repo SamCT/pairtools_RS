@@ -1,5 +1,6 @@
 mod cli;
 mod dedup;
+mod flip;
 mod merge;
 mod parse;
 mod select;
@@ -22,7 +23,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::Stats(a) => stats::cmd_stats(a),
         Commands::Split(a) => split::cmd_split(a),
         Commands::Parse2(_) => unsupported_command("parse2"),
-        Commands::Flip(_) => unsupported_command("flip"),
+        Commands::Flip(a) => flip::cmd_flip(a),
         Commands::Restrict(_) => unsupported_command("restrict"),
         Commands::Filterbycov(_) => unsupported_command("filterbycov"),
         Commands::Phase(_) => unsupported_command("phase"),
