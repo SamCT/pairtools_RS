@@ -4,7 +4,7 @@ Last reconciled: 2026-05-05
 
 ## Active milestone
 
-M170: flip core.
+M171: markasdup core.
 
 M161 is deferred as nearly validated but not complete: parse stats match on available real-data artifacts, while dedup routing still differs and canonical `merged.*` oracle outputs/BWA index files are still missing. M162 is complete and recorded in `milestone_results/M162.json`.
 
@@ -321,7 +321,7 @@ Recommended sequence after M007 completion:
 M005 -> M006 -> M140 -> M141 -> M160 -> M161 -> M300
 ```
 
-M170 is implemented and pending milestone transition. Recommended implementation sequence is M171 -> M180 -> M190 -> M191 -> M192 -> M193 -> M194 -> M200 -> M210 -> M220 -> M230 -> M240 -> M250 -> M260, with M300 benchmarking only after real-data validation. Add the exact pairtools-generated `merged.*` oracle outputs and BWA index prefix to `/mnt/d/pairtools_RS_test`, then rerun:
+M171 is active. Recommended implementation sequence is M171 -> M180 -> M190 -> M191 -> M192 -> M193 -> M194 -> M200 -> M210 -> M220 -> M230 -> M240 -> M250 -> M260, with M300 benchmarking only after real-data validation. Add the exact pairtools-generated `merged.*` oracle outputs and BWA index prefix to `/mnt/d/pairtools_RS_test`, then rerun:
 
 ```bash
 bash tests/scripts/test_all_rust_pipeline_real_oracle.sh

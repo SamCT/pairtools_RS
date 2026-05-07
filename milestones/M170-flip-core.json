@@ -1,7 +1,7 @@
 {
   "id": "M170",
   "name": "Flip core",
-  "status": "active",
+  "status": "complete",
   "summary": "Implement scoped pairtools-compatible flip behavior.",
   "goal": "Implement `pairs-rs flip` for upper-triangle normalization on pairs/pairsam input with header preservation, chrom order support, and loud failures for unsupported options.",
   "explicit_non_goals": [

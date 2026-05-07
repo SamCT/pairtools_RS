@@ -104,7 +104,7 @@ M162 adds `tests/scripts/test_cross_tool_threading_contract.sh`, a behavioral va
 
 ## M170 Flip Note
 
-M170 implements scoped `pairs-rs flip` behavior. The tested surface supports `-c/--chroms-path`, optional path/stdin input, `-o/--output`, plain output, and `.gz` BGZF output. Oracle tests compare normalized output against Python pairtools on `tests/data/mock.4flip.pairs`, covering listed chromosome order, unannotated chromosome lexicographic fallback, unmapped `!`, same-chromosome position flipping, side-specific column swaps, and `pair_type` reversal. `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out`, and `.lz4` remain explicitly unsupported.
+M170 is complete for committed oracle fixtures and implements scoped `pairs-rs flip` behavior. The tested surface supports `-c/--chroms-path`, optional path/stdin input, `-o/--output`, plain output, and `.gz` BGZF output. Oracle tests compare normalized output against Python pairtools on `tests/data/mock.4flip.pairs`, covering listed chromosome order, unannotated chromosome lexicographic fallback, unmapped `!`, same-chromosome position flipping, side-specific column swaps, and `pair_type` reversal. `--nproc-in`, `--nproc-out`, `--cmd-in`, `--cmd-out`, and `.lz4` remain explicitly unsupported.
 
 ## M161 Real-Data Oracle Status
 
@@ -170,6 +170,8 @@ The discovered sorted oracle is not an exact M080 `.pairsam.gz` oracle. The docu
 
 If an exact pairtools `.sorted.pairsam.gz` oracle and downstream `merged.*` outputs are added to `/mnt/d/pairtools_RS_test`, `tests/scripts/test_hic_exact_pipeline_real_oracle.sh` can compare semantic decompressed pairsam content and optional downstream outputs. Until then, M080 claims only the exact shell pipeline contract and dry-run/validation coverage, not final all-output oracle parity.
 
+
+M171 is the active next command milestone for scoped `markasdup`.
 
 ## Planned Compatibility Expansion Milestones
 

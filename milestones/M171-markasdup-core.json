@@ -1,7 +1,7 @@
 {
   "id": "M171",
   "name": "Markasdup core",
-  "status": "planned",
+  "status": "active",
   "summary": "Implement scoped duplicate marking as a standalone command.",
   "goal": "Implement `pairs-rs markasdup` for pairs/pairsam streams, marking pair_type `DD` and SAM duplicate metadata where pairsam SAM columns exist.",
   "explicit_non_goals": [

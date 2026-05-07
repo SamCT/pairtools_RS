@@ -51,8 +51,8 @@ Current registry:
 - `M160-all-rust-hic-pipeline.json`: all-Rust pipeline shell orchestration.
 - `M161-real-data-oracle-validation.json`: external real-data oracle validation, deferred with recorded blockers while command-module work proceeds.
 - `M162-threading-validation.json`: cross-tool threading option and determinism validation.
-- `M170-flip-core.json`: scoped `flip` implementation; current active command milestone.
-- `M171-markasdup-core.json`: scoped `markasdup` implementation.
+- `M170-flip-core.json`: scoped `flip` implementation, complete for committed oracle fixtures.
+- `M171-markasdup-core.json`: scoped `markasdup` implementation; current active command milestone.
 - `M180-select-expression-engine.json`: expanded safe select expression engine.
 - `M190-advanced-merge.json`: advanced merge options and temp planning.
 - `M191-dedup-parity-expansion.json`: dedup parent IDs, extra-column matching, and richer stats.
