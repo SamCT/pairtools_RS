@@ -177,6 +177,8 @@ If an exact pairtools `.sorted.pairsam.gz` oracle and downstream `merged.*` outp
 
 M171 implements scoped `markasdup` duplicate marking for committed `.pairs` and `.pairsam` fixtures.
 
+M180 is the active next compatibility milestone for expanding the safe `select` expression subset.
+
 ## Planned Compatibility Expansion Milestones
 
 The following milestones are planned only; they do not expand current compatibility claims until implemented and oracle-tested:
