@@ -1,7 +1,7 @@
 {
   "id": "M190",
   "name": "Advanced merge",
-  "status": "planned",
+  "status": "active",
   "summary": "Expand merge option parity and scale behavior.",
   "goal": "Expand `pairs-rs merge` for larger sorted inputs, header edge cases, `--tmpdir`, `--max-nmerge`, and compatible merge planning without changing sorted-output semantics.",
   "explicit_non_goals": [

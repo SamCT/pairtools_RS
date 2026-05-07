@@ -4,7 +4,7 @@ Last reconciled: 2026-05-05
 
 ## Active milestone
 
-M180: select expression engine.
+M190: advanced merge.
 
 M161 is deferred as nearly validated but not complete: parse stats match on available real-data artifacts, while dedup routing still differs and canonical `merged.*` oracle outputs/BWA index files are still missing. M162 is complete and recorded in `milestone_results/M162.json`.
 
@@ -14,7 +14,7 @@ M161 is deferred as nearly validated but not complete: parse stats match on avai
 
 ## Current commit
 
-`uncommitted` M180 select expression engine changes are in progress after M171 completion commit `d233d2d877e5b14f6ecae2b333545b2c5b07e60a` and M180 activation commit `bdd0ec21a579f662750dd9bd7975289aa4b788a4`.
+`uncommitted` M000 transition to M190 is in progress after M180 completion commit `95d8457990cb9fba8f02fa5ee33b3650b90076e0`.
 
 ## Implemented behavior
 
@@ -194,7 +194,7 @@ M250 phase core
 M260 scaling core
 ```
 
-M171 is complete for committed oracle fixtures and M180 is now the active command milestone. M161 remains deferred with blocker notes in `milestone_results/M161.json`; M300 benchmarking remains blocked until real-data validation passes.
+M180 is complete for committed oracle fixtures and M190 is now the active command milestone. M161 remains deferred with blocker notes in `milestone_results/M161.json`; M300 benchmarking remains blocked until real-data validation passes.
 
 ## Intentionally unsupported behavior
 
@@ -339,6 +339,18 @@ scripts/cargo_guard.sh test
 
 M180 validation passed locally. The full guarded Rust test suite reported 53 `compat_oracle` tests and 1 `walks_oracle` test passing.
 
+Validation commands for the M000 transition from M180 to M190:
+
+```bash
+python3 scripts/milestone_gate.py pre --milestone M000 --allow-nonactive
+python3 scripts/check_milestone_schema.py
+python3 scripts/check_docs_sync.py --milestone M000
+python3 scripts/check_cargo_needed.py --milestone M000
+python3 scripts/milestone_gate.py post --milestone M000 --allow-nonactive
+python3 scripts/codex_report.py --milestone M000
+git diff --check
+```
+
 ## Validation not performed and why
 
 - Benchmarks were not run because M162 is a validation-contract milestone and M161 real-data oracle validation has not passed.
@@ -369,7 +381,7 @@ Recommended sequence after M007 completion:
 M005 -> M006 -> M140 -> M141 -> M160 -> M161 -> M300
 ```
 
-M180 is active. Recommended implementation sequence is M180 -> M190 -> M191 -> M192 -> M193 -> M194 -> M200 -> M210 -> M220 -> M230 -> M240 -> M250 -> M260, with M300 benchmarking only after real-data validation. Add the exact pairtools-generated `merged.*` oracle outputs and BWA index prefix to `/mnt/d/pairtools_RS_test`, then rerun:
+M190 is active. Recommended implementation sequence is M190 -> M191 -> M192 -> M193 -> M194 -> M200 -> M210 -> M220 -> M230 -> M240 -> M250 -> M260, with M300 benchmarking only after real-data validation. Add the exact pairtools-generated `merged.*` oracle outputs and BWA index prefix to `/mnt/d/pairtools_RS_test`, then rerun:
 
 ```bash
 bash tests/scripts/test_all_rust_pipeline_real_oracle.sh

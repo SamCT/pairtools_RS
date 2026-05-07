@@ -53,8 +53,8 @@ Current registry:
 - `M162-threading-validation.json`: cross-tool threading option and determinism validation.
 - `M170-flip-core.json`: scoped `flip` implementation, complete for committed oracle fixtures.
 - `M171-markasdup-core.json`: scoped `markasdup` implementation, complete for committed oracle fixtures.
-- `M180-select-expression-engine.json`: expanded safe select expression engine; current active command milestone.
-- `M190-advanced-merge.json`: advanced merge options and temp planning.
+- `M180-select-expression-engine.json`: expanded safe select expression engine, complete for committed oracle fixtures.
+- `M190-advanced-merge.json`: advanced merge options and temp planning; current active command milestone.
 - `M191-dedup-parity-expansion.json`: dedup parent IDs, extra-column matching, and richer stats.
 - `M192-stats-filters-bytile-chrom-subsets.json`: stats filters, by-tile, type casts, and chrom subsets.
 - `M193-sort-custom-columns-memory-semantics.json`: sort custom columns and memory semantics.

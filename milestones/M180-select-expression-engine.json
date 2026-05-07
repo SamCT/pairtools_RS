@@ -1,7 +1,7 @@
 {
   "id": "M180",
   "name": "Select expression engine",
-  "status": "active",
+  "status": "complete",
   "summary": "Expand select beyond exact pair_type equality.",
   "goal": "Implement a bounded pairtools-compatible select expression engine covering boolean operators, column references, string equality, numeric comparisons, and parentheses on committed fixtures.",
   "explicit_non_goals": [
