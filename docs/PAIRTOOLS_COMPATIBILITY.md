@@ -116,9 +116,11 @@ M171 implements scoped `pairs-rs markasdup` behavior for committed `.pairs` and 
 
 ## M161 Real-Data Oracle Status
 
-M161 adds `tests/scripts/test_all_rust_pipeline_real_oracle.sh` as the all-Rust real-data validation harness. The harness discovers the external fixture directory, required FASTQs, chrom sizes, assembly/MAPQ provenance, BWA index prefix, and exact pairtools-generated `merged.*` oracle outputs before running the all-Rust pipeline. When the oracle set is incomplete, it prints expected inputs, expected oracle files, expected candidate outputs, a pairtools oracle-generation command, and an all-Rust candidate command before exiting nonzero.
+M161 adds `tests/scripts/test_all_rust_pipeline_real_oracle.sh` as the all-Rust real-data validation harness. The harness discovers the external fixture directory, required FASTQs, chrom sizes, assembly/MAPQ provenance, BWA index prefix, and exact PT01 pairtools-generated oracle outputs before running the all-Rust pipeline. It now reads explicit oracle paths from `oracle_baseline_paths.env` and `oracle_metadata.json`; symlinked local `merged.*` filenames are not required. When the oracle set is incomplete, it prints expected inputs, expected oracle files, expected candidate outputs, a pairtools oracle-generation command, and an all-Rust candidate command before exiting nonzero.
 
-The current external directory `/mnt/d/pairtools_RS_test` is not sufficient for M161 validation. It is missing the exact `merged.sorted.pairsam.gz`, `merged.nodups.pairsam.gz`, `merged.dups.pairsam.gz`, `merged.unmapped.pairsam.gz`, `merged.valid.pairsam.gz`, `merged.valid.pairs.gz`, `merged.valid.stats.txt`, and BWA index prefix required for final-output comparison. No all-Rust real-data parity claim is made.
+The uploaded PT01 metadata bundle `Test_ou1.txt` was read successfully and points to explicit `/nfs7/.../20260510T085819/...` oracle outputs, including sorted pairsam, nodups, duplicates, unmapped, valid pairsam, valid pairs, parse/dedup/valid stats, and valid BAM/BAI paths. Those large HPC oracle files are not readable from local WSL, and a matching BWA index prefix is not available locally. No all-Rust real-data parity claim is made.
+
+The uploaded parse matrix metadata bundle `Test_out2.txt` was also discovered. It records PT02 parse option-surface outputs and is reserved for later parse/parse2 diagnostics; it is not used to pass M161.
 
 The same directory now contains useful non-canonical stage artifacts. Running the M161 harness with `RUN_AVAILABLE_STAGE_COMPARISONS=1` validates those files diagnostically:
 
@@ -127,7 +129,7 @@ The same directory now contains useful non-canonical stage artifacts. Running th
 - The available duplicate-output readID sets also differ: 6,953 duplicate readIDs appear only in the pairtools duplicate output and 6,937 appear only in the pairs-rs duplicate output.
 - The external artifacts include split pairs output `rs_s01.outpairs.split.pairs` as a plain pairs text table. Treat it as the available split pairs artifact for diagnostics; it is the same semantic table as the production `.pairs.gz` output after decompression.
 
-These stage-artifact checks do not complete M161. Canonical `merged.*` pairtools oracle files and a full semantic all-Rust output comparison remain required. M161 is deferred while the next command module, M170 `flip`, proceeds; this is not a benchmark or full-pipeline parity claim.
+These stage-artifact checks do not complete M161. The explicit PT01 oracle paths from the metadata bundle must be readable, and a full semantic all-Rust output comparison must pass before M161 can complete. This is not a benchmark or full-pipeline parity claim.
 
 ## M020 Parse I/O Note
 

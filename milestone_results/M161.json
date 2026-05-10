@@ -6,11 +6,10 @@
     "docs/REAL_DATA_ORACLE_TESTING.md"
   ],
   "blockers": [
-    "External real-data oracle set is incomplete: /mnt/d/pairtools_RS_test is missing merged.sorted.pairsam.gz, merged.nodups.pairsam.gz, merged.dups.pairsam.gz, merged.unmapped.pairsam.gz, merged.valid.pairsam.gz, merged.valid.pairs.gz, merged.valid.stats.txt, and a BWA index prefix with index files. The harness prints exact oracle-generation and candidate-pipeline commands before exiting.",
-    "Available stage artifact validation passed parse stats comparisons against pairtools after allowing only the known summary/complexity_naive nan/inf representation difference.",
-    "Available stage artifact validation found a dedup count blocker: pairtools reports total_dups=29706 and total_nodups=5733319, while pairs-rs reports total_dups=29690 and total_nodups=5733335.",
-    "Available duplicate-output readID routing differs: 6953 readIDs appear only in the pairtools duplicate output and 6937 appear only in the pairs-rs duplicate output.",
-    "Available split pairs artifact is rs_s01.outpairs.split.pairs, a plain pairs text table equivalent in semantics to decompressed .pairs.gz output.",
+    "PT01 oracle metadata bundle Test_ou1.txt was loaded, and oracle_baseline_paths.env provides explicit /nfs7/.../20260510T085819/... baseline paths. Those large HPC oracle files are not readable from local WSL.",
+    "BWA_INDEX is not set to a usable BWA-MEM2 index prefix in the local WSL environment.",
+    "Parse matrix metadata bundle Test_out2.txt was discovered and reported as diagnostic-only inventory for later parse/parse2 option-surface work; it is not used to pass M161.",
+    "The harness no longer requires symlinked local merged.* oracle files; it reads explicit PT01 ORACLE_* paths from oracle_baseline_paths.env.",
     "M300 full-pipeline benchmarking is blocked because M161 has not passed; no benchmark was run."
   ],
   "commands_run": [
@@ -19,14 +18,38 @@
       "status": "pass"
     },
     {
-      "command": "bash tests/scripts/test_all_rust_pipeline_real_oracle.sh",
-      "status": "fail",
-      "reason": "The harness stopped before running the all-Rust pipeline because exact external oracle files and BWA index files are missing; it printed expected paths plus oracle-generation and candidate commands."
+      "command": "bash -n tests/scripts/test_all_rust_pipeline_real_oracle.sh",
+      "status": "pass"
     },
     {
-      "command": "RUN_AVAILABLE_STAGE_COMPARISONS=1 bash tests/scripts/test_all_rust_pipeline_real_oracle.sh",
+      "command": "bash tests/scripts/test_all_rust_pipeline_real_oracle.sh",
       "status": "fail",
-      "reason": "Diagnostic stage-artifact validation passed parse stats comparisons but exposed dedup count and duplicate readID routing mismatches, then stopped because the exact M161 oracle files and BWA index are missing."
+      "reason": "The harness loaded PT01 metadata and parse matrix metadata, then stopped before running the all-Rust pipeline because the explicit /nfs7 oracle paths and BWA index are not readable locally."
+    },
+    {
+      "command": "python3 scripts/check_milestone_schema.py",
+      "status": "pass"
+    },
+    {
+      "command": "python3 scripts/check_docs_sync.py --milestone M161",
+      "status": "pass"
+    },
+    {
+      "command": "python3 scripts/check_no_runtime_pairtools.py --milestone M161",
+      "status": "pass"
+    },
+    {
+      "command": "python3 scripts/check_no_noop_flags.py --milestone M161",
+      "status": "pass"
+    },
+    {
+      "command": "python3 scripts/check_parse_lite_drift.py --milestone M161",
+      "status": "pass"
+    },
+    {
+      "command": "python3 scripts/check_cargo_needed.py --milestone M161",
+      "status": "pass",
+      "reason": "cargo_required=false; no Rust/Cargo/Pixi files changed."
     },
     {
       "command": "python3 scripts/milestone_gate.py post --milestone M161",
@@ -41,7 +64,7 @@
       "status": "pass"
     }
   ],
-  "commit": "8f2320ab9dbe8d82634dbe0e337ec3c7340b3788",
+  "commit": "UNKNOWN",
   "milestone": "M161",
   "passed": false
 }

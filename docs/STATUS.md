@@ -6,7 +6,7 @@ Last reconciled: 2026-05-05
 
 M161: real-data oracle validation with PT01 metadata bundle.
 
-M161 is deferred as nearly validated but not complete: parse stats match on available real-data artifacts, while dedup routing still differs and canonical `merged.*` oracle outputs/BWA index files are still missing. M162 is complete and recorded in `milestone_results/M162.json`.
+M161 is active and blocked locally: the supplied PT01 oracle metadata bundle is now readable and provides explicit `/nfs7/...` baseline paths, but those large HPC oracle files and the BWA index prefix are not readable from local WSL. M162 is complete and recorded in `milestone_results/M162.json`.
 
 ## Current branch
 
@@ -14,7 +14,7 @@ M161 is deferred as nearly validated but not complete: parse stats match on avai
 
 ## Current commit
 
-`uncommitted` M000 transition back to M161 is in progress after PT01 oracle metadata was supplied.
+`uncommitted` M161 PT01 metadata harness update in progress on top of `733bae3`.
 
 ## Implemented behavior
 
@@ -127,10 +127,12 @@ Completed parse milestones are covered by the guarded oracle suite:
   - `tests/scripts/test_all_rust_hic_pipeline_dry_run.sh` validates the full dry-run command graph for one-lane and two-lane inputs and checks that pairtools-equivalent stages use `pairs-rs` rather than Python pairtools.
   - M160 does not run real data and does not claim production parity.
 - M161 Real-data oracle setup:
-  - `tests/scripts/test_all_rust_pipeline_real_oracle.sh` deterministically discovers the external real-data directory, FASTQs, chrom sizes, assembly, MAPQ, BWA index prefix, and exact `merged.*` oracle files needed for all-Rust pipeline validation.
-  - The harness now prints the expected external input directory, expected pairtools oracle files, expected all-Rust candidate output paths, a copy-pasteable command block to generate missing pairtools oracle outputs, and a copy-pasteable all-Rust candidate command block.
+  - `tests/scripts/test_all_rust_pipeline_real_oracle.sh` deterministically discovers the external real-data directory, FASTQs, chrom sizes, assembly, MAPQ, BWA index prefix, and exact PT01 pairtools oracle files needed for all-Rust pipeline validation.
+  - The harness reads `oracle_baseline_paths.env` and `oracle_metadata.json` from the supplied PT01 metadata bundle instead of requiring symlinked local `merged.*` oracle names.
+  - The harness now prints the expected external input directory, PT01 oracle metadata directory, expected pairtools oracle paths, expected all-Rust candidate output paths, a copy-pasteable command block to generate missing pairtools oracle outputs, and a copy-pasteable all-Rust candidate command block.
+  - The uploaded parse matrix metadata bundle is discovered and printed as diagnostic inventory only; it is reserved for later parse/parse2 option-surface diagnostics and is not used to pass M161.
   - The harness can also inspect available non-canonical stage artifacts with `RUN_AVAILABLE_STAGE_COMPARISONS=1` without treating them as a full M161 pass.
-  - The current external directory `/mnt/d/pairtools_RS_test` is incomplete for M161. It contains FASTQs, an aligned BAM, chrom sizes, provenance files, pairtools parse/dedup artifacts, and pairs-rs dedup/select/split/stats artifacts, but it is missing the exact pairtools-generated `merged.*` oracle outputs and a usable BWA index prefix.
+  - The current local WSL environment is incomplete for M161. The PT01 metadata bundle resolves oracle paths under `/nfs7/.../20260510T085819/...`, but those files are not mounted locally, and a usable BWA index prefix is not available.
   - Available artifact validation found that pairs-rs parse stats match pairtools parse stats after allowing only the known `summary/complexity_naive` `nan`/`inf` representation difference.
   - Available artifact validation found a real dedup count blocker: pairtools reports `total_dups=29706` and `total_nodups=5733319`, while the available pairs-rs dedup stats report `total_dups=29690` and `total_nodups=5733335`.
   - Available duplicate-output readID routing also differs: 6,953 duplicate readIDs are only in the pairtools duplicate output and 6,937 duplicate readIDs are only in the pairs-rs duplicate output.
@@ -279,18 +281,24 @@ bash tests/scripts/test_all_rust_pipeline_real_oracle.sh
 RUN_AVAILABLE_STAGE_COMPARISONS=1 bash tests/scripts/test_all_rust_pipeline_real_oracle.sh
 ```
 
-The M161 real-data oracle harness stopped before running the all-Rust pipeline because required external oracle files are missing:
+The updated M161 real-data oracle harness found the uploaded PT01 baseline metadata bundle in `Test_ou1.txt` and read explicit oracle paths from `oracle_baseline_paths.env`. It also found the uploaded parse matrix metadata bundle in `Test_out2.txt` and reported it as diagnostic-only for later parse/parse2 option-surface work.
 
-- `/mnt/d/pairtools_RS_test/merged.sorted.pairsam.gz`
-- `/mnt/d/pairtools_RS_test/merged.nodups.pairsam.gz`
-- `/mnt/d/pairtools_RS_test/merged.dups.pairsam.gz`
-- `/mnt/d/pairtools_RS_test/merged.unmapped.pairsam.gz`
-- `/mnt/d/pairtools_RS_test/merged.valid.pairsam.gz`
-- `/mnt/d/pairtools_RS_test/merged.valid.pairs.gz`
-- `/mnt/d/pairtools_RS_test/merged.valid.stats.txt`
+The harness stopped before running the all-Rust pipeline locally because the PT01 oracle files are explicit HPC paths that are not readable from this WSL environment, and because `BWA_INDEX` is not set to a usable BWA-MEM2 index prefix. The missing paths reported locally are:
+
+- `ORACLE_SORTED_PAIRSAM=/nfs7/HORT/Vining_Lab/Users/talbots/bin/pairtools_RUST/pairtools_RS_test_latest/PT_TEST2/pairtools_oracle_test_suite/pairtools_oracle_runs/20260510T085819/PT01_BASELINE_20260510T085819.sorted.pairsam.gz`
+- `ORACLE_NODUPS_PAIRSAM=/nfs7/HORT/Vining_Lab/Users/talbots/bin/pairtools_RUST/pairtools_RS_test_latest/PT_TEST2/pairtools_oracle_test_suite/pairtools_oracle_runs/20260510T085819/PT01_BASELINE_20260510T085819.merged.nodups.pairsam.gz`
+- `ORACLE_DUPS_PAIRSAM=/nfs7/HORT/Vining_Lab/Users/talbots/bin/pairtools_RUST/pairtools_RS_test_latest/PT_TEST2/pairtools_oracle_test_suite/pairtools_oracle_runs/20260510T085819/PT01_BASELINE_20260510T085819.merged.dups.pairsam.gz`
+- `ORACLE_UNMAPPED_PAIRSAM=/nfs7/HORT/Vining_Lab/Users/talbots/bin/pairtools_RUST/pairtools_RS_test_latest/PT_TEST2/pairtools_oracle_test_suite/pairtools_oracle_runs/20260510T085819/PT01_BASELINE_20260510T085819.merged.unmapped.pairsam.gz`
+- `ORACLE_VALID_PAIRSAM=/nfs7/HORT/Vining_Lab/Users/talbots/bin/pairtools_RUST/pairtools_RS_test_latest/PT_TEST2/pairtools_oracle_test_suite/pairtools_oracle_runs/20260510T085819/PT01_BASELINE_20260510T085819.merged.valid.pairsam.gz`
+- `ORACLE_VALID_PAIRS=/nfs7/HORT/Vining_Lab/Users/talbots/bin/pairtools_RUST/pairtools_RS_test_latest/PT_TEST2/pairtools_oracle_test_suite/pairtools_oracle_runs/20260510T085819/PT01_BASELINE_20260510T085819.merged.valid.pairs.gz`
+- `ORACLE_VALID_STATS=/nfs7/HORT/Vining_Lab/Users/talbots/bin/pairtools_RUST/pairtools_RS_test_latest/PT_TEST2/pairtools_oracle_test_suite/pairtools_oracle_runs/20260510T085819/PT01_BASELINE_20260510T085819.merged.valid.stats.txt`
+- `ORACLE_DEDUP_STATS=/nfs7/HORT/Vining_Lab/Users/talbots/bin/pairtools_RUST/pairtools_RS_test_latest/PT_TEST2/pairtools_oracle_test_suite/pairtools_oracle_runs/20260510T085819/PT01_BASELINE_20260510T085819.merged.dedup.stats.txt`
+- `ORACLE_PARSE_STATS=/nfs7/HORT/Vining_Lab/Users/talbots/bin/pairtools_RUST/pairtools_RS_test_latest/PT_TEST2/pairtools_oracle_test_suite/pairtools_oracle_runs/20260510T085819/PT01_BASELINE_20260510T085819.parse.stats.txt`
+- `ORACLE_VALID_BAM=/nfs7/HORT/Vining_Lab/Users/talbots/bin/pairtools_RUST/pairtools_RS_test_latest/PT_TEST2/pairtools_oracle_test_suite/pairtools_oracle_runs/20260510T085819/PT01_BASELINE_20260510T085819.merged.valid.coord.bam`
+- `ORACLE_VALID_BAI=/nfs7/HORT/Vining_Lab/Users/talbots/bin/pairtools_RUST/pairtools_RS_test_latest/PT_TEST2/pairtools_oracle_test_suite/pairtools_oracle_runs/20260510T085819/PT01_BASELINE_20260510T085819.merged.valid.coord.bam.bai`
 - a BWA index prefix with index files
 
-The harness prints the exact `pairtools` oracle-generation command and the exact all-Rust candidate command before exiting nonzero.
+The harness prints the exact `pairtools` oracle-generation command without requiring symlinked `merged.*` names, and the exact all-Rust candidate command before exiting nonzero.
 
 With `RUN_AVAILABLE_STAGE_COMPARISONS=1`, the harness also consumed the newly provided stage artifacts. The parse stats comparisons passed against `parse_stats_STANDARD_s01_pairtools.txt` for both `s01.RS.parse.stats.txt` and `parse_RS.stats.txt`, allowing only the `summary/complexity_naive` `nan`/`inf` representation difference. The dedup stage comparison did not pass: pairtools reported 29,706 duplicate pairs and 5,733,319 nodup pairs, while pairs-rs reported 29,690 duplicate pairs and 5,733,335 nodup pairs. Duplicate-output readID routing also differs, with 6,953 readIDs only in the pairtools duplicate output and 6,937 readIDs only in the pairs-rs duplicate output.
 
@@ -367,7 +375,7 @@ git diff --check
 
 - Benchmarks were not run because M162 is a validation-contract milestone and M161 real-data oracle validation has not passed.
 - Real full-size production data was not run by this script; it validates the exact production command shape on a small pipeline-style sorted pairsam fixture and compares routing against Python pairtools.
-- M161 full external validation was not run because `/mnt/d/pairtools_RS_test` is missing the exact all-Rust pipeline oracle outputs and BWA index files listed above.
+- M161 full external validation was not run locally because the PT01 metadata bundle points to large `/nfs7/...` oracle files that are not readable from local WSL, and `BWA_INDEX` is not set to a usable BWA-MEM2 index prefix. Symlinked local `merged.*` files are no longer required by the harness.
 - Full nodup/unmapped readID routing comparison on the full external artifacts was not run in this pass; duplicate-output readID routing already exposes a mismatch that must be investigated before claiming M161 parity.
 - Benchmarks were not run for M171 because markasdup core is a correctness milestone, not a performance milestone.
 - M171 was not validated on full production data; it is scoped to committed `.pairs` and `.pairsam` oracle fixtures.
@@ -393,7 +401,7 @@ Recommended sequence after M007 completion:
 M005 -> M006 -> M140 -> M141 -> M160 -> M161 -> M300
 ```
 
-M161 is active. First update and run the real-data oracle harness against the PT01 baseline paths from the uploaded metadata bundle. After M161 passes or records a concrete blocker, recommended implementation sequence is M190 -> M191 -> M192 -> M193 -> M194 -> M200 -> M210 -> M220 -> M230 -> M240 -> M250 -> M260, with M300 benchmarking only after real-data validation.
+M161 is active. Run the real-data oracle harness on a host where the PT01 `/nfs7/...` baseline paths from the uploaded metadata bundle are readable and `BWA_INDEX` points to the matching BWA-MEM2 index prefix. After M161 passes or records a concrete blocker, recommended implementation sequence is M190 -> M191 -> M192 -> M193 -> M194 -> M200 -> M210 -> M220 -> M230 -> M240 -> M250 -> M260, with M300 benchmarking only after real-data validation.
 
 ```bash
 bash tests/scripts/test_all_rust_pipeline_real_oracle.sh

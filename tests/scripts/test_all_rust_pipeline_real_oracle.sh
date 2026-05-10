@@ -9,6 +9,10 @@ TMPROOT="$(mktemp -d)"
 trap 'rm -rf "$TMPROOT"' EXIT
 CANDIDATE_DIR="${CANDIDATE_DIR:-$TMPROOT/candidate}"
 CANDIDATE_PREFIX="${CANDIDATE_PREFIX:-$CANDIDATE_DIR/candidate}"
+ORACLE_METADATA_DIR="${ORACLE_METADATA_DIR:-}"
+ORACLE_METADATA_TARBALL="${ORACLE_METADATA_TARBALL:-}"
+PARSE_MATRIX_METADATA_DIR="${PARSE_MATRIX_METADATA_DIR:-}"
+PARSE_MATRIX_METADATA_TARBALL="${PARSE_MATRIX_METADATA_TARBALL:-}"
 
 die() {
   echo "error: $*" >&2
@@ -100,6 +104,169 @@ require_file() {
   local path="$1" label="$2"
   [[ -n "$path" ]] || die "$label is empty"
   [[ -r "$path" ]] || die "$label is not readable: $path"
+}
+
+metadata_dir_has_baseline() {
+  local dir="$1"
+  [[ -r "$dir/oracle_baseline_paths.env" && -r "$dir/oracle_metadata.json" ]] || return 1
+  grep -Eq '^ORACLE_SORTED_PAIRSAM=.' "$dir/oracle_baseline_paths.env"
+}
+
+metadata_dir_has_parse_matrix() {
+  local dir="$1"
+  [[ -r "$dir/oracle_baseline_paths.env" && -r "$dir/oracle_metadata.json" ]] || return 1
+  [[ -s "$dir/oracle_parse_matrix_summary.tsv" ]] || return 1
+  grep -q 'PT02_PARSE_MATRIX' "$dir/oracle_parse_matrix_summary.tsv"
+}
+
+extract_metadata_tarball() {
+  local tarball="$1" dest="$2"
+  [[ -r "$tarball" ]] || die "metadata tarball is not readable: $tarball"
+  mkdir -p "$dest"
+  tar -xzf "$tarball" -C "$dest"
+  find "$dest" -maxdepth 2 -type f -name oracle_metadata.json -printf '%h\n' | head -1
+}
+
+resolve_oracle_metadata_dir() {
+  local extracted candidate
+  if [[ -n "$ORACLE_METADATA_TARBALL" ]]; then
+    extracted="$(extract_metadata_tarball "$ORACLE_METADATA_TARBALL" "$TMPROOT/oracle_metadata_tar")"
+    [[ -n "$extracted" ]] || die "metadata tarball did not contain oracle_metadata.json: $ORACLE_METADATA_TARBALL"
+    ORACLE_METADATA_DIR="$extracted"
+  fi
+
+  local candidates=()
+  [[ -n "$ORACLE_METADATA_DIR" ]] && candidates+=("$ORACLE_METADATA_DIR")
+  candidates+=(
+    "$TEST_DATA_DIR/Test_ou1.txt"
+    "$TEST_DATA_DIR/metadata"
+    "$REPO_ROOT/Test_ou1.txt"
+    "$REPO_ROOT/metadata"
+  )
+
+  for candidate in "${candidates[@]}"; do
+    if [[ -d "$candidate" ]] && metadata_dir_has_baseline "$candidate"; then
+      ORACLE_METADATA_DIR="$candidate"
+      return 0
+    fi
+  done
+
+  for candidate in "$TEST_DATA_DIR/Test_ou1.txt.tar.gz" "$REPO_ROOT/Test_ou1.txt.tar.gz"; do
+    if [[ -r "$candidate" ]]; then
+      extracted="$(extract_metadata_tarball "$candidate" "$TMPROOT/oracle_metadata_tar_auto")"
+      if [[ -n "$extracted" ]] && metadata_dir_has_baseline "$extracted"; then
+        ORACLE_METADATA_DIR="$extracted"
+        return 0
+      fi
+    fi
+  done
+
+  die "PT01 oracle metadata bundle not found; set ORACLE_METADATA_DIR or ORACLE_METADATA_TARBALL"
+}
+
+resolve_parse_matrix_metadata_dir() {
+  local extracted candidate
+  if [[ -n "$PARSE_MATRIX_METADATA_TARBALL" ]]; then
+    extracted="$(extract_metadata_tarball "$PARSE_MATRIX_METADATA_TARBALL" "$TMPROOT/parse_matrix_metadata_tar")"
+    [[ -n "$extracted" ]] || die "parse-matrix metadata tarball did not contain oracle_metadata.json: $PARSE_MATRIX_METADATA_TARBALL"
+    PARSE_MATRIX_METADATA_DIR="$extracted"
+  fi
+
+  local candidates=()
+  [[ -n "$PARSE_MATRIX_METADATA_DIR" ]] && candidates+=("$PARSE_MATRIX_METADATA_DIR")
+  candidates+=(
+    "$TEST_DATA_DIR/Test_out2.txt"
+    "$TEST_DATA_DIR/Test_ou2.txt"
+    "$REPO_ROOT/Test_out2.txt"
+    "$REPO_ROOT/Test_ou2.txt"
+  )
+
+  for candidate in "${candidates[@]}"; do
+    if [[ -d "$candidate" ]] && metadata_dir_has_parse_matrix "$candidate"; then
+      PARSE_MATRIX_METADATA_DIR="$candidate"
+      return 0
+    fi
+  done
+
+  for candidate in \
+    "$TEST_DATA_DIR/Test_out2.txt.tar.gz" \
+    "$TEST_DATA_DIR/Test_ou2.txt.tar.gz" \
+    "$REPO_ROOT/Test_out2.txt.tar.gz" \
+    "$REPO_ROOT/Test_ou2.txt.tar.gz"; do
+    if [[ -r "$candidate" ]]; then
+      extracted="$(extract_metadata_tarball "$candidate" "$TMPROOT/parse_matrix_metadata_tar_auto")"
+      if [[ -n "$extracted" ]] && metadata_dir_has_parse_matrix "$extracted"; then
+        PARSE_MATRIX_METADATA_DIR="$extracted"
+        return 0
+      fi
+    fi
+  done
+
+  PARSE_MATRIX_METADATA_DIR=""
+}
+
+load_env_assignments() {
+  local file="$1" key value
+  [[ -r "$file" ]] || die "metadata env file is not readable: $file"
+  while IFS='=' read -r key value; do
+    [[ "$key" =~ ^ORACLE_[A-Z0-9_]+$ ]] || continue
+    printf -v "$key" '%s' "$value"
+  done < "$file"
+}
+
+print_metadata_summary() {
+  local dir="$1" label="$2"
+  python3 - "$dir/oracle_metadata.json" "$label" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+label = sys.argv[2]
+data = json.loads(path.read_text(encoding="utf-8"))
+print(f"{label} metadata:", file=sys.stderr)
+print(f"  metadata_dir: {path.parent}", file=sys.stderr)
+print(f"  created_at: {data.get('created_at', 'UNKNOWN')}", file=sys.stderr)
+print(f"  hostname: {data.get('hostname', 'UNKNOWN')}", file=sys.stderr)
+print(f"  roots: {', '.join(data.get('roots', [])) or 'UNKNOWN'}", file=sys.stderr)
+print(f"  file_count: {data.get('file_count', 'UNKNOWN')}", file=sys.stderr)
+print(f"  total_bytes: {data.get('total_bytes', 'UNKNOWN')}", file=sys.stderr)
+baseline = data.get("baseline_paths", {})
+if baseline:
+    print("  baseline paths:", file=sys.stderr)
+    for key in sorted(baseline):
+        print(f"    {key}={baseline[key]}", file=sys.stderr)
+else:
+    print("  baseline paths: none", file=sys.stderr)
+PY
+}
+
+print_parse_matrix_summary() {
+  [[ -n "$PARSE_MATRIX_METADATA_DIR" ]] || {
+    log ""
+    log "Parse matrix metadata: not found; this is optional for M161 and reserved for later parse/parse2 diagnostics."
+    return 0
+  }
+  print_metadata_summary "$PARSE_MATRIX_METADATA_DIR" "Parse matrix"
+  python3 - "$PARSE_MATRIX_METADATA_DIR/oracle_parse_matrix_summary.tsv" <<'PY'
+import csv
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+variants = []
+with path.open(newline="", encoding="utf-8") as handle:
+    reader = csv.DictReader(handle, delimiter="\t")
+    for row in reader:
+        if row.get("family") == "PT02_PARSE_MATRIX":
+            variants.append(row.get("variant", ""))
+print("  parse matrix variants:", file=sys.stderr)
+for variant in variants[:40]:
+    print(f"    - {variant}", file=sys.stderr)
+if len(variants) > 40:
+    print(f"    ... {len(variants) - 40} more", file=sys.stderr)
+print("  note: parse matrix metadata is not used to pass M161; keep it for later parse/parse2 option-surface diagnostics.", file=sys.stderr)
+PY
 }
 
 normalize_text_gz() {
@@ -379,9 +546,15 @@ PY
 
 discover() {
   [[ -d "$TEST_DATA_DIR" ]] || die "TEST_DATA_DIR does not exist: $TEST_DATA_DIR"
+  resolve_oracle_metadata_dir
+  resolve_parse_matrix_metadata_dir
+  load_env_assignments "$ORACLE_METADATA_DIR/oracle_baseline_paths.env"
 
   log "Discovering external real-data files under $TEST_DATA_DIR"
   find "$TEST_DATA_DIR" -maxdepth 3 -type f | sort >&2
+  log ""
+  print_metadata_summary "$ORACLE_METADATA_DIR" "PT01 baseline"
+  print_parse_matrix_summary
 
   mapfile -t r1_candidates < <(find "$TEST_DATA_DIR" -maxdepth 3 -type f \( -name "*R1*.fastq.gz" -o -name "*_1*.fastq.gz" \) | sort)
   mapfile -t r2_candidates < <(find "$TEST_DATA_DIR" -maxdepth 3 -type f \( -name "*R2*.fastq.gz" -o -name "*_2*.fastq.gz" \) | sort)
@@ -409,14 +582,31 @@ discover() {
     fi
   fi
 
+  REQUIRED_ORACLE_KEYS=(
+    ORACLE_SORTED_PAIRSAM
+    ORACLE_NODUPS_PAIRSAM
+    ORACLE_DUPS_PAIRSAM
+    ORACLE_UNMAPPED_PAIRSAM
+    ORACLE_VALID_PAIRSAM
+    ORACLE_VALID_PAIRS
+    ORACLE_VALID_STATS
+    ORACLE_DEDUP_STATS
+    ORACLE_PARSE_STATS
+    ORACLE_VALID_BAM
+    ORACLE_VALID_BAI
+  )
   REQUIRED_ORACLES=(
-    "$TEST_DATA_DIR/merged.sorted.pairsam.gz"
-    "$TEST_DATA_DIR/merged.nodups.pairsam.gz"
-    "$TEST_DATA_DIR/merged.dups.pairsam.gz"
-    "$TEST_DATA_DIR/merged.unmapped.pairsam.gz"
-    "$TEST_DATA_DIR/merged.valid.pairsam.gz"
-    "$TEST_DATA_DIR/merged.valid.pairs.gz"
-    "$TEST_DATA_DIR/merged.valid.stats.txt"
+    "${ORACLE_SORTED_PAIRSAM:-}"
+    "${ORACLE_NODUPS_PAIRSAM:-}"
+    "${ORACLE_DUPS_PAIRSAM:-}"
+    "${ORACLE_UNMAPPED_PAIRSAM:-}"
+    "${ORACLE_VALID_PAIRSAM:-}"
+    "${ORACLE_VALID_PAIRS:-}"
+    "${ORACLE_VALID_STATS:-}"
+    "${ORACLE_DEDUP_STATS:-}"
+    "${ORACLE_PARSE_STATS:-}"
+    "${ORACLE_VALID_BAM:-}"
+    "${ORACLE_VALID_BAI:-}"
   )
   CANDIDATE_OUTPUTS=(
     "$CANDIDATE_PREFIX.sorted.pairsam.gz"
@@ -438,6 +628,12 @@ print_expected_layout() {
   log ""
   log "M161 expected external input directory:"
   log "  $TEST_DATA_DIR"
+  log "PT01 oracle metadata directory:"
+  log "  $ORACLE_METADATA_DIR"
+  if [[ -n "$PARSE_MATRIX_METADATA_DIR" ]]; then
+    log "Parse matrix metadata directory (diagnostic only):"
+    log "  $PARSE_MATRIX_METADATA_DIR"
+  fi
   log ""
   log "Discovered required inputs:"
   log "  R1: $R1"
@@ -448,7 +644,11 @@ print_expected_layout() {
   log "  BWA_INDEX: ${BWA_INDEX:-unset}"
   log ""
   log "Expected pairtools oracle files:"
-  printf '  - %s\n' "${REQUIRED_ORACLES[@]}" >&2
+  local idx key
+  for idx in "${!REQUIRED_ORACLE_KEYS[@]}"; do
+    key="${REQUIRED_ORACLE_KEYS[$idx]}"
+    printf '  - %s=%s\n' "$key" "${REQUIRED_ORACLES[$idx]}" >&2
+  done
   log ""
   log "Expected all-Rust candidate output paths:"
   printf '  - %s\n' "${CANDIDATE_OUTPUTS[@]}" >&2
@@ -459,7 +659,7 @@ print_oracle_generation_command() {
   pairtools_cmd="$(display_command PAIRTOOLS pairtools)"
   bwa_cmd="$(display_command BWA_MEM2 bwa-mem2)"
   samtools_cmd="$(display_command SAMTOOLS samtools)"
-  oracle_prefix="$TEST_DATA_DIR/pairtools_oracle"
+  oracle_prefix="$TEST_DATA_DIR/PT01_BASELINE_$(date -u +%Y%m%dT%H%M%S)"
   tmp_for_oracle="${ORACLE_TMPDIR:-$TEST_DATA_DIR/tmp_pairtools_oracle}"
   bwa_index_for_print="${BWA_INDEX:-SET_BWA_INDEX_PREFIX}"
 
@@ -468,7 +668,7 @@ print_oracle_generation_command() {
   split_command "$samtools_cmd" ORACLE_SAMTOOLS_CMD
 
   log ""
-  log "Command to generate missing pairtools oracle outputs:"
+  log "Command to generate missing pairtools oracle outputs without requiring merged.* symlinks:"
   log "  # Run from the repository or shell environment where pairtools, bwa-mem2, and samtools are available."
   if [[ "$bwa_index_for_print" == "SET_BWA_INDEX_PREFIX" ]]; then
     log "  # Replace SET_BWA_INDEX_PREFIX with the real BWA-MEM2 index prefix before running."
@@ -478,15 +678,14 @@ print_oracle_generation_command() {
   printf '  %s | \\\n' "$(quote_cmd "${ORACLE_BWA_CMD[@]}" mem -5SPM -T 30 -t "$THREADS" "$bwa_index_for_print" "$R1" "$R2")" >&2
   printf '    %s | \\\n' "$(quote_cmd "${ORACLE_PAIRTOOLS_CMD[@]}" parse --chroms-path "$CHROMS" --assembly "$ASM" --min-mapq "$MAPQ" --walks-policy 5unique --max-inter-align-gap 30 --report-alignment-end 5 --add-columns mapq,pos5,pos3,cigar,read_len --output-stats "$oracle_prefix.parse.stats.txt")" >&2
   printf '    %s\n' "$(quote_cmd "${ORACLE_PAIRTOOLS_CMD[@]}" sort --nproc "$SORT_THREADS" --tmpdir "$tmp_for_oracle" -o "$oracle_prefix.sorted.pairsam.gz")" >&2
-  printf '  rm -f merged.sorted.pairsam.gz\n' >&2
-  printf '  ln -s %q merged.sorted.pairsam.gz\n' "$(basename "$oracle_prefix.sorted.pairsam.gz")" >&2
-  printf '  %s\n' "$(quote_cmd "${ORACLE_PAIRTOOLS_CMD[@]}" dedup --mark-dups --output-stats merged.dedup.stats.txt --output-dups merged.dups.pairsam.gz --output-unmapped merged.unmapped.pairsam.gz -o merged.nodups.pairsam.gz merged.sorted.pairsam.gz)" >&2
-  printf '  %s\n' "$(quote_cmd "${ORACLE_PAIRTOOLS_CMD[@]}" select '(pair_type == "UU")' -o merged.valid.pairsam.gz merged.nodups.pairsam.gz)" >&2
-  printf '  %s | \\\n' "$(quote_cmd "${ORACLE_PAIRTOOLS_CMD[@]}" split --output-pairs merged.valid.pairs.gz --output-sam - merged.valid.pairsam.gz)" >&2
+  printf '  %s\n' "$(quote_cmd "${ORACLE_PAIRTOOLS_CMD[@]}" dedup --mark-dups --output-stats "$oracle_prefix.merged.dedup.stats.txt" --output-dups "$oracle_prefix.merged.dups.pairsam.gz" --output-unmapped "$oracle_prefix.merged.unmapped.pairsam.gz" -o "$oracle_prefix.merged.nodups.pairsam.gz" "$oracle_prefix.sorted.pairsam.gz")" >&2
+  printf '  %s\n' "$(quote_cmd "${ORACLE_PAIRTOOLS_CMD[@]}" select '(pair_type == "UU")' -o "$oracle_prefix.merged.valid.pairsam.gz" "$oracle_prefix.merged.nodups.pairsam.gz")" >&2
+  printf '  %s | \\\n' "$(quote_cmd "${ORACLE_PAIRTOOLS_CMD[@]}" split --output-pairs "$oracle_prefix.merged.valid.pairs.gz" --output-sam - "$oracle_prefix.merged.valid.pairsam.gz")" >&2
   printf '    %s | \\\n' "$(quote_cmd "${ORACLE_SAMTOOLS_CMD[@]}" view -@ "$SORT_THREADS" -b -)" >&2
-  printf '    %s\n' "$(quote_cmd "${ORACLE_SAMTOOLS_CMD[@]}" sort -@ "$SORT_THREADS" -o merged.valid.coord.bam -)" >&2
-  printf '  %s\n' "$(quote_cmd "${ORACLE_SAMTOOLS_CMD[@]}" index merged.valid.coord.bam)" >&2
-  printf '  %s\n' "$(quote_cmd "${ORACLE_PAIRTOOLS_CMD[@]}" stats --with-chromsizes -o merged.valid.stats.txt merged.valid.pairs.gz)" >&2
+  printf '    %s\n' "$(quote_cmd "${ORACLE_SAMTOOLS_CMD[@]}" sort -@ "$SORT_THREADS" -o "$oracle_prefix.merged.valid.coord.bam" -)" >&2
+  printf '  %s\n' "$(quote_cmd "${ORACLE_SAMTOOLS_CMD[@]}" index "$oracle_prefix.merged.valid.coord.bam")" >&2
+  printf '  %s\n' "$(quote_cmd "${ORACLE_PAIRTOOLS_CMD[@]}" stats --with-chromsizes -o "$oracle_prefix.merged.valid.stats.txt" "$oracle_prefix.merged.valid.pairs.gz")" >&2
+  log "  # After generation, point ORACLE_METADATA_DIR at a refreshed metadata bundle containing these PT01 paths."
 }
 
 print_candidate_command() {
@@ -522,9 +721,15 @@ print_candidate_command() {
 
 report_missing_oracles() {
   local missing=()
-  local path
-  for path in "${REQUIRED_ORACLES[@]}"; do
-    [[ -r "$path" ]] || missing+=("$path")
+  local idx key path
+  for idx in "${!REQUIRED_ORACLES[@]}"; do
+    key="${REQUIRED_ORACLE_KEYS[$idx]}"
+    path="${REQUIRED_ORACLES[$idx]}"
+    if [[ -z "$path" ]]; then
+      missing+=("$key is empty in $ORACLE_METADATA_DIR/oracle_baseline_paths.env")
+    elif [[ ! -r "$path" ]]; then
+      missing+=("$key is not readable: $path")
+    fi
   done
   if [[ -z "$BWA_INDEX" ]]; then
     missing+=("BWA_INDEX prefix with index files")
@@ -534,6 +739,7 @@ report_missing_oracles() {
 
   if (( ${#missing[@]} > 0 )); then
     log "M161 blocker: required exact all-Rust pipeline oracle inputs are missing."
+    log "The harness reads explicit PT01 paths from: $ORACLE_METADATA_DIR/oracle_baseline_paths.env"
     log "Missing:"
     printf '  - %s\n' "${missing[@]}" >&2
     die "external real-data oracle set is incomplete"
@@ -576,19 +782,21 @@ run_candidate_pipeline() {
 }
 
 compare_outputs() {
-  compare_gz_text "$CANDIDATE_DIR/merged.sorted.pairsam.gz" "$TEST_DATA_DIR/merged.sorted.pairsam.gz" "merged.sorted.pairsam"
-  compare_gz_text "$CANDIDATE_DIR/merged.nodups.pairsam.gz" "$TEST_DATA_DIR/merged.nodups.pairsam.gz" "merged.nodups.pairsam"
-  compare_gz_text "$CANDIDATE_DIR/merged.dups.pairsam.gz" "$TEST_DATA_DIR/merged.dups.pairsam.gz" "merged.dups.pairsam"
-  compare_gz_text "$CANDIDATE_DIR/merged.unmapped.pairsam.gz" "$TEST_DATA_DIR/merged.unmapped.pairsam.gz" "merged.unmapped.pairsam"
-  compare_gz_text "$CANDIDATE_DIR/merged.valid.pairsam.gz" "$TEST_DATA_DIR/merged.valid.pairsam.gz" "merged.valid.pairsam"
-  compare_gz_text "$CANDIDATE_DIR/merged.valid.pairs.gz" "$TEST_DATA_DIR/merged.valid.pairs.gz" "merged.valid.pairs"
-  compare_stats "$CANDIDATE_DIR/merged.valid.stats.txt" "$TEST_DATA_DIR/merged.valid.stats.txt"
+  compare_gz_text "$CANDIDATE_DIR/merged.sorted.pairsam.gz" "$ORACLE_SORTED_PAIRSAM" "merged.sorted.pairsam"
+  compare_stats "$CANDIDATE_PREFIX.parse.stats.txt" "$ORACLE_PARSE_STATS"
+  compare_gz_text "$CANDIDATE_DIR/merged.nodups.pairsam.gz" "$ORACLE_NODUPS_PAIRSAM" "merged.nodups.pairsam"
+  compare_gz_text "$CANDIDATE_DIR/merged.dups.pairsam.gz" "$ORACLE_DUPS_PAIRSAM" "merged.dups.pairsam"
+  compare_gz_text "$CANDIDATE_DIR/merged.unmapped.pairsam.gz" "$ORACLE_UNMAPPED_PAIRSAM" "merged.unmapped.pairsam"
+  compare_stats "$CANDIDATE_DIR/merged.dedup.stats.txt" "$ORACLE_DEDUP_STATS"
+  compare_gz_text "$CANDIDATE_DIR/merged.valid.pairsam.gz" "$ORACLE_VALID_PAIRSAM" "merged.valid.pairsam"
+  compare_gz_text "$CANDIDATE_DIR/merged.valid.pairs.gz" "$ORACLE_VALID_PAIRS" "merged.valid.pairs"
+  compare_stats "$CANDIDATE_DIR/merged.valid.stats.txt" "$ORACLE_VALID_STATS"
 
-  if [[ -r "$TEST_DATA_DIR/merged.valid.coord.bam" ]]; then
+  if [[ -r "$ORACLE_VALID_BAM" ]]; then
     split_command "${SAMTOOLS:-$(command_or_pixi samtools)}" SAMTOOLS_CMD
     "${SAMTOOLS_CMD[@]}" quickcheck "$CANDIDATE_DIR/merged.valid.coord.bam"
-    "${SAMTOOLS_CMD[@]}" quickcheck "$TEST_DATA_DIR/merged.valid.coord.bam"
-    diff -u <("${SAMTOOLS_CMD[@]}" flagstat "$TEST_DATA_DIR/merged.valid.coord.bam") <("${SAMTOOLS_CMD[@]}" flagstat "$CANDIDATE_DIR/merged.valid.coord.bam")
+    "${SAMTOOLS_CMD[@]}" quickcheck "$ORACLE_VALID_BAM"
+    diff -u <("${SAMTOOLS_CMD[@]}" flagstat "$ORACLE_VALID_BAM") <("${SAMTOOLS_CMD[@]}" flagstat "$CANDIDATE_DIR/merged.valid.coord.bam")
   fi
 }
 

@@ -102,29 +102,71 @@ M161 uses:
 bash tests/scripts/test_all_rust_pipeline_real_oracle.sh
 ```
 
-The harness expects the external directory to contain the exact pairtools-generated outputs for the all-Rust pipeline contract:
+The harness reads explicit PT01 baseline paths from an oracle metadata bundle instead of assuming symlinked `merged.*` files exist beside the test inputs. Provide the bundle with one of:
 
-- `merged.sorted.pairsam.gz`
-- `merged.nodups.pairsam.gz`
-- `merged.dups.pairsam.gz`
-- `merged.unmapped.pairsam.gz`
-- `merged.valid.pairsam.gz`
-- `merged.valid.pairs.gz`
-- `merged.valid.stats.txt`
-- a BWA index prefix with index files, or `BWA_INDEX` set explicitly
+```bash
+ORACLE_METADATA_DIR=/path/to/Test_ou1.txt
+ORACLE_METADATA_TARBALL=/path/to/Test_ou1.txt.tar.gz
+```
 
-The current `/mnt/d/pairtools_RS_test` directory does not contain those exact oracle files. M161 therefore remains blocked and does not claim final all-Rust pipeline parity.
+If neither variable is set, the harness looks for `Test_ou1.txt` or `Test_ou1.txt.tar.gz` in `TEST_DATA_DIR` and in the repository root. The bundle must contain:
+
+- `oracle_baseline_paths.env`
+- `oracle_metadata.json`
+
+`oracle_baseline_paths.env` supplies the canonical PT01 paths:
+
+- `ORACLE_SORTED_PAIRSAM`
+- `ORACLE_NODUPS_PAIRSAM`
+- `ORACLE_DUPS_PAIRSAM`
+- `ORACLE_UNMAPPED_PAIRSAM`
+- `ORACLE_VALID_PAIRSAM`
+- `ORACLE_VALID_PAIRS`
+- `ORACLE_VALID_STATS`
+- `ORACLE_DEDUP_STATS`
+- `ORACLE_PARSE_STATS`
+- `ORACLE_VALID_BAM`
+- `ORACLE_VALID_BAI`
+
+Those files may remain on the HPC filesystem. They must be readable where the harness runs, and the BWA index prefix must be supplied through `BWA_INDEX` or discoverable in `TEST_DATA_DIR`.
+
+The uploaded PT01 bundle `Test_ou1.txt` was discovered locally and contains explicit `/nfs7/.../20260510T085819/...` baseline paths. On local WSL those HPC paths are not mounted/readable, so M161 remains blocked locally and does not claim final all-Rust pipeline parity.
+
+The uploaded parse matrix bundle is diagnostic only. Provide it with one of:
+
+```bash
+PARSE_MATRIX_METADATA_DIR=/path/to/Test_out2.txt
+PARSE_MATRIX_METADATA_TARBALL=/path/to/Test_out2.txt.tar.gz
+```
+
+The parse matrix bundle records PT02 parse option-surface outputs for later parse/parse2 diagnostics. It is not used to pass M161.
 
 When the oracle set is incomplete, the M161 harness prints:
 
 - the expected external input directory
+- the PT01 oracle metadata directory
+- the optional parse matrix metadata directory
 - the discovered FASTQs, chrom sizes, assembly, MAPQ, and BWA index status
-- every expected pairtools oracle file
+- every expected pairtools oracle file from `oracle_baseline_paths.env`
 - every expected all-Rust candidate output path
-- a copy-pasteable command block to generate missing pairtools oracle outputs
+- a copy-pasteable command block to generate missing pairtools oracle outputs without creating symlinked `merged.*` names
 - a copy-pasteable command block to run the all-Rust candidate pipeline
 
 This makes the blocker actionable on local or HPC storage without committing external data.
+
+Example HPC/local invocation:
+
+```bash
+cd /mnt/d/pairtools_RS
+ORACLE_METADATA_DIR=/path/to/Test_ou1.txt \
+PARSE_MATRIX_METADATA_DIR=/path/to/Test_out2.txt \
+TEST_DATA_DIR=/path/to/PT01_inputs \
+BWA_INDEX=/path/to/bwa_mem2/index/prefix \
+PAIRS_RS=/path/to/pairs-rs \
+THREADS=16 \
+SORT_THREADS=16 \
+bash tests/scripts/test_all_rust_pipeline_real_oracle.sh
+```
 
 ## Available Artifact Checks
 
