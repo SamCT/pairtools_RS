@@ -183,7 +183,7 @@ M171 implements scoped `markasdup` duplicate marking for committed `.pairs` and 
 
 M180 expands the safe `select` expression subset for committed oracle fixtures.
 
-M190 is the active next compatibility milestone for advanced `merge` option and header/temp behavior.
+M161 is active again for real-data oracle validation using the supplied PT01 metadata bundle. M190 remains the next implementation milestone after M161 is resolved.
 
 ## Planned Compatibility Expansion Milestones
 

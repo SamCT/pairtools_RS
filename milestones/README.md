@@ -49,12 +49,12 @@ Current registry:
 - `M150-dedup-core.json`: scoped sorted-input `dedup` implementation.
 - `M151-dedup-production-validation.json`: production-shaped dedup validation.
 - `M160-all-rust-hic-pipeline.json`: all-Rust pipeline shell orchestration.
-- `M161-real-data-oracle-validation.json`: external real-data oracle validation, deferred with recorded blockers while command-module work proceeds.
+- `M161-real-data-oracle-validation.json`: external real-data oracle validation; current active milestone using explicit external PT01 baseline metadata.
 - `M162-threading-validation.json`: cross-tool threading option and determinism validation.
 - `M170-flip-core.json`: scoped `flip` implementation, complete for committed oracle fixtures.
 - `M171-markasdup-core.json`: scoped `markasdup` implementation, complete for committed oracle fixtures.
 - `M180-select-expression-engine.json`: expanded safe select expression engine, complete for committed oracle fixtures.
-- `M190-advanced-merge.json`: advanced merge options and temp planning; current active command milestone.
+- `M190-advanced-merge.json`: advanced merge options and temp planning.
 - `M191-dedup-parity-expansion.json`: dedup parent IDs, extra-column matching, and richer stats.
 - `M192-stats-filters-bytile-chrom-subsets.json`: stats filters, by-tile, type casts, and chrom subsets.
 - `M193-sort-custom-columns-memory-semantics.json`: sort custom columns and memory semantics.

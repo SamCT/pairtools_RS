@@ -4,7 +4,7 @@ Last reconciled: 2026-05-05
 
 ## Active milestone
 
-M190: advanced merge.
+M161: real-data oracle validation with PT01 metadata bundle.
 
 M161 is deferred as nearly validated but not complete: parse stats match on available real-data artifacts, while dedup routing still differs and canonical `merged.*` oracle outputs/BWA index files are still missing. M162 is complete and recorded in `milestone_results/M162.json`.
 
@@ -14,7 +14,7 @@ M161 is deferred as nearly validated but not complete: parse stats match on avai
 
 ## Current commit
 
-`uncommitted` M000 transition to M190 is in progress after M180 completion commit `95d8457990cb9fba8f02fa5ee33b3650b90076e0`.
+`uncommitted` M000 transition back to M161 is in progress after PT01 oracle metadata was supplied.
 
 ## Implemented behavior
 
@@ -194,7 +194,7 @@ M250 phase core
 M260 scaling core
 ```
 
-M180 is complete for committed oracle fixtures and M190 is now the active command milestone. M161 remains deferred with blocker notes in `milestone_results/M161.json`; M300 benchmarking remains blocked until real-data validation passes.
+M180 is complete for committed oracle fixtures. M161 is now active again because a PT01 oracle metadata bundle was supplied with explicit external HPC baseline paths. M190 is deferred until M161 validation is actionable. M300 benchmarking remains blocked until real-data validation passes.
 
 ## Intentionally unsupported behavior
 
@@ -351,6 +351,18 @@ python3 scripts/codex_report.py --milestone M000
 git diff --check
 ```
 
+Validation commands for the M000 transition from M190 back to M161:
+
+```bash
+python3 scripts/milestone_gate.py pre --milestone M000 --allow-nonactive
+python3 scripts/check_milestone_schema.py
+python3 scripts/check_docs_sync.py --milestone M000
+python3 scripts/check_cargo_needed.py --milestone M000
+python3 scripts/milestone_gate.py post --milestone M000 --allow-nonactive
+python3 scripts/codex_report.py --milestone M000
+git diff --check
+```
+
 ## Validation not performed and why
 
 - Benchmarks were not run because M162 is a validation-contract milestone and M161 real-data oracle validation has not passed.
@@ -381,7 +393,7 @@ Recommended sequence after M007 completion:
 M005 -> M006 -> M140 -> M141 -> M160 -> M161 -> M300
 ```
 
-M190 is active. Recommended implementation sequence is M190 -> M191 -> M192 -> M193 -> M194 -> M200 -> M210 -> M220 -> M230 -> M240 -> M250 -> M260, with M300 benchmarking only after real-data validation. Add the exact pairtools-generated `merged.*` oracle outputs and BWA index prefix to `/mnt/d/pairtools_RS_test`, then rerun:
+M161 is active. First update and run the real-data oracle harness against the PT01 baseline paths from the uploaded metadata bundle. After M161 passes or records a concrete blocker, recommended implementation sequence is M190 -> M191 -> M192 -> M193 -> M194 -> M200 -> M210 -> M220 -> M230 -> M240 -> M250 -> M260, with M300 benchmarking only after real-data validation.
 
 ```bash
 bash tests/scripts/test_all_rust_pipeline_real_oracle.sh
